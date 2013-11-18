@@ -21,19 +21,24 @@
 #set -eo pipefail
 
 function usage {
-    echo "Usage: $0 -i <fastq_file> -s <sex> [OPTION]..."
-    echo "Execute the Blueprint pipeline on one sample."
     echo ""
-    printf "\t-i\tinput file\n"
-    printf "\t-g\tspecify the sex of the sample [M | F]\n"
+    echo "### Blueprint RNAseq pipeline ###"
+    echo "Run the RNAseq pipeline on one sample."
+    echo ""
+    echo "Usage: $0 -i FASTQ_FILE -g GENOME_FILE -a ANNOTATION_FILE [OPTION]..."
+    echo ""
+    printf "  -i|--input\t\tinput file\n"
+    printf "  -g|--genome\t\treference genome file\n"
+    printf "  -a|--annotation\treference annotation file\n"
     echo ""
     echo "Options:"
-    printf "\t-m\tMax number of mismatches. Default \"4\"\n"
-    printf "\t-s\tflag to specify whether the sample has strandness information for the reads. Deafault \"false\"\n"
-    printf "\t-d\tdirectionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default \"NONE\".\n"
-    printf "\t-l\tLog level (error, warn, info, debug). Default \"info\".\n"
-    printf "\t-p\twrite Flux Capacitor profile file. Default \"false\".\n"
-    printf "\t-t\tTest the pipeline. Writes the command to the standard output.\n"
+    printf "  -m|--mismatches\tMax number of mismatches. Default \"4\"\n"
+    printf "  -n|--hits\t\tMax number of hits. Default \"10\"\n"
+    printf "  -s|--read-strand\tdirectionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default \"NONE\".\n"
+    printf "  -l|--loglevel\t\tLog level (error, warn, info, debug). Default \"info\".\n"
+    printf "  -t|--tmp-dir\t\tSpecify local temporary folder to copy files when running on distributed file systems. Default: no tmp folder.\n"
+    printf "  -h|--help\t\tShow this message and exit.\n"
+    printf "  --dry\t\t\tTest the pipeline. Writes the command to the standard output.\n"
     exit 0
 }
 
@@ -52,6 +57,11 @@ function log {
             printf "$string"
         fi
     fi
+}
+
+function getAbsPath {
+    path=$1
+    echo "`readlink -en $path`"
 }
 
 function run {
@@ -152,59 +162,107 @@ function copyToTmp {
 ## Parsing arguments
 #
 
-while getopts ":i:m:g:std:l:ph" opt; do
-  case $opt in
-    i)
-      input=$OPTARG
-      ;;
-    g)
-      sex=$OPTARG
-      ;;
-    m)
-      mism=$OPTARG
-      ;;
-    s)
-      stranded=1
-      ;;
-    t)
+# Execute getopt
+ARGS=`getopt -o "i:g:a:m:n:std:l:ph" -l "index:,genome:,annotation:,mismatches:,hits:,stranded,dry-run,read-strand:,profile,help" \
+      -n "run.pipeline.sh" -- "$@"`
+
+#Bad arguments
+if [ $? -ne 0 ];
+then
+  exit 1
+fi
+
+# A little magic
+eval set -- "$ARGS"
+
+# Setting defaults
+
+# pipeline
+mism=4
+hits=10
+readStrand="NONE"
+
+# general
+loglevel="info"
+
+while true;
+do
+  case "$1" in
+    -i|--input)
+      if [ -n "$2" ];
+      then
+        input=$(getAbsPath $2)
+      fi
+      shift 2;;
+
+    -g|--genome)
+      if [ -n "$2" ];
+      then
+        genome=$(getAbsPath $2)
+      fi
+      shift 2;;
+
+    -a|--annotation)
+      if [ -n "$2" ];
+      then
+        annotation=$(getAbsPath $2)
+      fi
+      shift 2;;
+ 
+    -m|--mismatches)
+       if [ -n "$2" ];
+       then
+         mism=$2
+       fi
+       shift 2;;
+    
+    -n|--hits)
+       if [ -n "$2" ];
+       then
+         hits=$2
+       fi
+       shift 2;;
+    
+    -r|--read-strand)
+      if [ -n $2 ];
+      then
+        readStrand=$2
+      fi
+      shift 2;;
+    
+    -l|--loglevel)
+      if [ -n $2 ];
+      then
+        loglevel=$2
+      fi
+      shift 2;;
+ 
+    -t|--tmp-dir)
+      if [ -n $2 ];
+      then
+          tmpdir=$(getAbsPath $2)
+      fi
+      shift 2;;
+    
+    --dry-run)
       ECHO="echo "
-      ;;
-    d)
-      readStrand=$OPTARG
-      ;;
-    l)
-      loglevel=$OPTARG
-      ;;
-    p)
-      profile=1
-      ;;
-    h)
+      shift;;
+    
+    -h|--help)
       usage
-      ;;
-    \?)
-      echo "Invalid option: -$OPTARG" >&2
-      ;;
-    :)
-      echo "Option -$OPTARG requires an argument." >&2
-      exit 1
-      ;;
+      shift;;
+    
+    --)
+      shift
+      break;;
   esac
 done
 
-## Setting up the environment
-#
-
-if [[ $VIRTUAL_ENV != /nfs/software/rg/el6.3/virtualenvs/blueprint ]] && [ -d /software/rg/el6.3/virtualenvs ]; then
-    export WORKON_HOME=/software/rg/el6.3/virtualenvs
-    [[ -s /usr/bin/virtualenvwrapper.sh ]] && source /usr/bin/virtualenvwrapper.sh
-    [[ -s /usr/local/bin/virtualenvwrapper.sh  ]] && source /usr/local/bin/virtualenvwrapper.sh
-    # load blueprint virtualenv
-    run "workon blueprint"
-fi
+# Setting up environment
 
 BASEDIR=`dirname ${SGE_O_WORKDIR-$PWD}`
 BINDIR="$BASEDIR/bin"
-export PATH=$BASEDIR/gemtools-1.6.2-i3/bin:/software/rg/el6.3/flux-capacitor-1.2.4/bin:$HOME/bin:$PATH
+export PATH=$BASEDIR/gemtools-1.6.2-i3/bin:$BASEDIR/flux-capacitor-1.2.4/bin:$BINDIR:$PATH
 
 ## Setting variables and input files
 ##
@@ -213,21 +271,14 @@ if [[ $input == "" ]];then
     exit -1
 fi
 
-if [[ $sex == "" ]] || [[ $sex != [MFU] ]];then
-    log "Please specify the sex\n" "ERROR" >&2
+if [[ $genome == "" ]];then
+    log "Please specify the genome file\n" "ERROR" >&2
     exit -1
 fi
 
-if [[ $readStrand == "" ]];then
-    readStrand="NONE"
-fi
-
-if [[ $loglevel == "" ]];then
-    loglevel="info"
-fi
-
-if [[ $mism == "" ]];then
-    mism="4"
+if [[ $annotation == "" ]];then
+    log "Please specify the annotation file\n" "ERROR" >&2
+    exit -1
 fi
 
 basename=$(basename $input)
