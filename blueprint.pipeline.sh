@@ -39,7 +39,7 @@ function usage {
     printf "  -s|--read-strand\tdirectionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default \"NONE\".\n"
     printf "  -l|--loglevel\t\tLog level (error, warn, info, debug). Default \"info\".\n"
     printf "  -t|--tmp-dir\t\tSpecify local temporary folder to copy files when running on distributed file systems. Default: no tmp folder.\n"
-   printf "  -h|--help\t\tShow this message and exit.\n"
+    printf "  -h|--help\t\tShow this message and exit.\n"
     printf "  --dry\t\t\tTest the pipeline. Writes the command to the standard output.\n"
     exit 0
 }
@@ -73,7 +73,6 @@ function run {
     else
         eval ${command[@]}
     fi
-
 }
 
 function copyToTmp {    
@@ -280,7 +279,7 @@ printf "  %-34s %s\n" "Number of threads:" "$threads"
 printf "  %-34s %s\n" "Temporary folder:" "$tmpdir"
 printf "  %-34s %s\n" "Loglevel:" "$loglevel"
 echo ""
-exit 0
+
 ## START
 #
 
