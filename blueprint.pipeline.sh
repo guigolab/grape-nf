@@ -714,22 +714,21 @@ fi
 ##
 step="FLUX"
 
-quantDir="$BASEDIR/quantification"
+quantDir="$BASEDIR/quantification/$sample"
 export FLUX_MEM=${fluxMem-"3G"}
 
-if [ ! -d $quantDir/$sample ]; then
+if [ ! -d i$quantDir ]; then
     log "Creating sample folder in $quantDir..." $step
-    run "mkdir -p $quantDir/$sample" "$ECHO"
+    run "mkdir -p $quantDir" "$ECHO"
     log "done\n"
 fi
 
-outdir="$quantDir/$sample"
-paramFile="$outdir/$sample.par"
-proFile="$outdir/$sample.pro"
+paramFile="$quantDir/$sample.par"
+proFile="$quanDir/$sample.pro"
 
 ## Run transcript quantification
 #
-fluxGtf="$outdir/$sample.gtf"
+fluxGtf="$quanDir/$sample.gtf"
 if [ ! -e $fluxGtf ];then
     startTime=$(date +%s)
     printHeader "Executing Flux quantification step"
@@ -744,7 +743,7 @@ if [ ! -e $fluxGtf ];then
     fi
 
     if [ ! -e $TMPDIR/${annName%.gtf}_sorted.gtf ];then
-        sortLog="$outdir/${sample}_sort_annotation.log"
+        sortLog="$quanDir/${sample}_sort_annotation.log"
         log "Checking if the annotation is sorted" $step
         set -e && run "flux-capacitor -t sortGTF -c -i $annotation -o ${annotation%.gtf}_sorted.gtf > $sortLog 2>&1" "$ECHO"
         log "done\n"
@@ -757,7 +756,7 @@ if [ ! -e $fluxGtf ];then
     fi
 
     if [[ ! -e $proFile ]];then
-        profileLog="$outdir/${sample}_flux_profile.log"
+        profileLog="$quanDir/${sample}_flux_profile.log"
         log "Getting sistematic biases along transcripts\n" $step
         run "flux-capacitor --profile -p $paramFile -i $filteredBam -a $anno --profile-file $proFile > $profileLog 2>&1" "$ECHO"
         log "done\n"
@@ -768,10 +767,13 @@ if [ ! -e $fluxGtf ];then
     fi
 
     log "Running Flux Capacitor\n" $step
-    quantLog=$outdir/${sample}_flux_quantification.log
+    quantLog=$quanDir/${sample}_flux_quantification.log
     run "flux-capacitor -p $paramFile -i $filteredBam -a $anno -o $fluxGtf > $quantLog 2>&1" "$ECHO"
 
-    set -e && finalizeStep "$fluxGtf $tmpdir $outdir"
+    set -e && finalizeStep "$fluxGtf $tmpdir $quanDir"
+    filteredbam="$outdir/`basename $filteredBam`"
+    filteredbai="$outdir/`basename $filteredBai`"
+    fluxGtf="$quantDir/$sample.gtf"
 
     endTime=$(date +%s)
     printHeader "Quantificaton step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
@@ -779,12 +781,12 @@ else
     printHeader "Flux quantification file present...skipping Flux quantification step"
 fi
 
-txFile=$quantDir/$sample/${sample}_transcript.gtf
+txFile=$quantDir/${sample}_transcript.gtf
 if [ ! -e $txFile ];then
     startTime=$(date +%s)
     printHeader "Getting transcript from quantifications"
     log "Generating transcripts file..."
-    run "awk '\$3==\"transcript\"' $TMPDIR/$sample.gtf > $txFile" "$ECHO"
+    run "awk '\$3==\"transcript\"' $fluxGtf > $txFile" "$ECHO"
     log "done\n"
     log "Computing md5sum for transcripts file..." $step
     run "md5sum $txFile > $txFile.md5" "$ECHO"
@@ -795,12 +797,12 @@ else
     printHeader "Transcript file present...skipping transcript step"
 fi
 
-junctionFile=$quantDir/$sample/${sample}_junction.gtf
+junctionFile=$quantDir/${sample}_junction.gtf
 if [ ! -e $junctionFile ];then
     startTime=$(date +%s)
     printHeader "Getting junctions from quantifications"
     log "Generating junctions file..."
-    run "awk '\$3==\"junction\"' $TMPDIR/$sample.gtf > $junctionFile" "$ECHO"
+    run "awk '\$3==\"junction\"' $fluxGtf > $junctionFile" "$ECHO"
     log "done\n"
     log "Computing md5sum for junctions file..." $step
     run "md5sum $junctionFile > $junctionFile.md5" "$ECHO"
@@ -811,11 +813,11 @@ else
     printHeader "Junctions file present...skipping transcript step"
 fi
 
-intronFile=$quantDir/$sample/${sample}_intron.gtf
+intronFile=$quantDir/${sample}_intron.gtf
 if [ ! -e $intronFile ];then
     printHeader "Getting all-intronic regions from quantifications"
     log "Generating introns file..."
-    run "awk '\$3==\"intron\"' $TMPDIR/$sample.gtf > $intronFile" "$ECHO"
+    run "awk '\$3==\"intron\"' $fluxGtf > $intronFile" "$ECHO"
     log "done\n"
     log "Computing md5sum for introns file..." $step
     run "md5sum $intronFile > $intronFile.md5" "$ECHO"
@@ -826,7 +828,8 @@ else
     printHeader "Introns file present...skipping transcript step"
 fi
 
-if [ ! -e $quantDir/$sample/${sample}_distinct_exon_with_rpkm.gff ];then
+exonFile=$quantDir/${sample}_distinct_exon_with_rpkm.gff
+if [ ! -e $exonFile ];then
     step="EXON"
     startTime=$(date +%s)
     printHeader "Executing Exon quantification step"
