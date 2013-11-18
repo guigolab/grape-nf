@@ -1,5 +1,5 @@
 TODO list
 ---------
 
+- remove/change tmp folder usage or add an option for it
 - remove or change cluster configuration
-- remove tmp folder usage or add an option for it
