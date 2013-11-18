@@ -149,7 +149,7 @@ function copyToTmp {
 ## Parsing arguments
 #
 
-while getopts ":i:m:g:std:l:ph" opt; do
+while getopts ":i:m:g:c:std:l:ph" opt; do
   case $opt in
     i)
       input=$OPTARG
@@ -159,6 +159,9 @@ while getopts ":i:m:g:std:l:ph" opt; do
       ;;
     m)
       mism=$OPTARG
+      ;;
+    c)
+      convTable=$OPTARG
       ;;
     s)
       stranded=1
@@ -218,6 +221,11 @@ if [[ $mism == "" ]];then
     mism="4"
 fi
 
+if [[ $convTable == "" ]];then
+    log "Please provide the runId <--> sampleId conversion table" "ERROR" >&2
+    exit -1
+fi
+
 basename=$(basename $input)
 sample=${basename%_1*}
 threads=${NSLOTS-1}
@@ -245,6 +253,7 @@ gt_stats="$BINDIR/gt.stats"
 pigz="$BINDIR/pigz"
 BAMFLAG="/users/rg/dmitri/bamflag/trunk/bamflag"
 makecontig="$BINDIR/contigsNew.py"
+getHeaderMeta="$BINDIR/getHeaderMeta.sh"
 
 hthreads=$((threads/2))
 if [[ $hthreads == 0 ]];then
@@ -394,7 +403,8 @@ if [ ! -e $filteredBam ];then
     copyToTmp "index"
 
     log "Converting  $sample to bam..." $step
-    run "$pigz -p $hthreads -dc $filteredGem | $gem2sam -T $hthreads -I $TMPDIR/`basename $index` --expect-paired-end-reads -q offset-33 -l | sed 's/chrMT/chrM/g' | $addXS $readStrand | $samtools view -@ $threads -Sb - | $samtools sort -@ $threads -m 4G - $TMPDIR/${filteredBam%.bam}" "$ECHO"
+    readGroup=`$getHeaderMeta $sample $convTable`
+    run "$pigz -p $hthreads -dc $filteredGem | $gem2sam -T $hthreads -I $TMPDIR/`basename $index` --expect-paired-end-reads -q offset-33 -l --read-group $readGroup | sed 's/chrMT/chrM/g' | $addXS $readStrand | $samtools view -@ $threads -Sb - | $samtools sort -@ $threads -m 4G - $TMPDIR/${filteredBam%.bam}" "$ECHO"
     log "done\n" $step
     if [ -f $TMPDIR/$filteredBam ]; then
         log "Computing md5sum for filtered file..." $step
