@@ -38,15 +38,20 @@ function usage {
     printf "  -r|--max-read-length\tThe maximum read length (used to compute the transcriptomes). Default: \"150\".\n"    
     printf "  -s|--read-strand\tdirectionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default \"NONE\".\n"
     printf "  -l|--loglevel\t\tLog level (error, warn, info, debug). Default \"info\".\n"
-    printf "  -t|--tmp-dir\t\tSpecify local temporary folder to copy files when running on distributed file systems. Default: no tmp folder.\n"
+    printf "  -t|--threads\t\tNumber of threads. Default \"1\".\n"
     printf "  -h|--help\t\tShow this message and exit.\n"
-    printf "  --dry\t\t\tTest the pipeline. Writes the command to the standard output.\n"
+    printf "  --tmp-dir\t\tSpecify local temporary folder to copy files when running on distributed file systems. Default: \"-\".\n"
+    printf "  --dry-run\t\t\tTest the pipeline. Writes the command to the standard output.\n"
     exit 0
 }
 
 function printHeader {
     local string=$1
-    echo "`date` *** $string ***"
+    local message="*** $string ***"
+    if [ ! $ECHO ]; then
+        message="`date` $message"
+    fi
+    echo "$message"
 }
 
 function log {
@@ -75,7 +80,7 @@ function run {
     fi
 }
 
-function copyToTmp {    
+function copyToTmp {   
     IFS=',' read -ra files <<< "$1"
     for i in ${files[@]};do
         local name=`basename $i`
@@ -87,12 +92,26 @@ function copyToTmp {
     done
 }
 
+function finalizeStep {
+    local file=$1
+    local tmpdir=$2
+    local outdir=$3
+    log "Computing md5sum for $file..." $step
+    run "md5sum $file > $file.md5" "$ECHO"
+    if [ -d $tmpdir ];then
+        local tmpfile=$tmpdir/`basename $file`
+        log "Copying  temporary files..." $step
+        run "cp $tmpfile $tmpfile.md5 $outdir" "$ECHO"
+        log "done\n"
+    fi
+}
+
 ## Parsing arguments
 #
 
 # Execute getopt
 ARGS=`getopt -o "i:g:a:m:n:s:t:l:q:r:h" -l "input:,genome:,annotation:,mismatches:,hits:,read-strand:,threads:,loglevel:,quality:,max-read-length:,tmp-dir:,dry-run,help" \
-      -n "run.pipeline.sh" -- "$@"`
+      -n "$0" -- "$@"`
 
 #Bad arguments
 if [ $? -ne 0 ];
@@ -116,6 +135,7 @@ maxReadLength="150"
 loglevel="info"
 threads="1"
 tmpdir=${TMPDIR-"-"}
+outdir=${SGE_O_WORKDIR-$PWD}
 
 while true;
 do
@@ -213,7 +233,7 @@ done
 
 # Setting up environment
 
-BASEDIR=`dirname ${SGE_O_WORKDIR-$PWD}`
+BASEDIR=`dirname $outdir`
 BINDIR="$BASEDIR/bin"
 export PATH=$BASEDIR/gemtools-1.6.2-i3/bin:$BASEDIR/flux-capacitor-1.2.4/bin:$BINDIR:$PATH
 
@@ -238,6 +258,8 @@ basename=$(basename $input)
 sample=${basename%[_-\.]1*}
 
 index="$genome.gem"
+tindex="$annotation.gem"
+tkeys="$annotation.junctions.keys"
 
 annName=`basename $annotation`
 
@@ -278,7 +300,7 @@ printf "  %-34s %s\n" "Strandedness:" "$readStrand"
 printf "  %-34s %s\n" "Number of threads:" "$threads"
 printf "  %-34s %s\n" "Temporary folder:" "$tmpdir"
 printf "  %-34s %s\n" "Loglevel:" "$loglevel"
-echo ""
+printf "\n\n"
 
 ## START
 #
@@ -288,37 +310,33 @@ pipelineStart=$(date +%s)
 
 ## Mapping
 #
+gemFile="$outdir/$sample.map.gz"
 if [[ `basename $input` =~ fastq ]];then
     if [ ! -e $sample.map.gz ];then
         step="MAP"
         startTime=$(date +%s)
         printHeader "Executing mapping step"
-    
-        ## Copy needed files to TMPDIR
-        copyToTmp "index,annotation,t-index,keys"
+            
+        if [ -d $tmpdir ]; then
+            ## Copy needed files to TMPDIR
+            copyToTmp "$index,$annotation,$tindex,$tkeys"
+            index=$tmpdir/`basename $index`
+            annotation=$tmpdir/$annName
+            gemFile="$tmpdir/$sample.map.gz"
+        fi
     
         log "Running gemtools rna pipeline on ${sample}" $step
-        run "gemtools --loglevel $loglevel rna-pipeline -f $input -q 33 -i $TMPDIR/`basename $index` -a $TMPDIR/$annName -t $threads --no-bam" "$ECHO"
-        #gemtools --loglevel $loglevel rna-pipeline -f $TMPDIR/$basename -i $TMPDIR/`basename $index` -a $TMPDIR/$annName -t $threads -o $TMPDIR --no-bam
-        #gemtools --loglevel $loglevel rna-pipeline -f $TMPDIR/$basename -i $TMPDIR/`basename $index` -a $TMPDIR/$annName -m 150 -t $threads -o $TMPDIR --no-sam
+        run "gemtools --loglevel $loglevel rna-pipeline -f $input -q 33 -i $index -a $annotation -t $threads --no-bam" "$ECHO"
     
-        if [ -f $TMPDIR/${sample}.map.gz ]; then
-            log "Computing md5sum for map file..." $step
-            run "md5sum $TMPDIR/$sample.map.gz > $TMPDIR/$sample.map.gz.md5" "$ECHO"
-            run "cp $TMPDIR/$sample.map.gz.md5 ." "$ECHO"
-            log "done\n"
-            log "Copying map file..." $step
-            run "cp $TMPDIR/${sample}.map.gz ." "$ECHO"
-            log "done\n"
-        #else
-        #    log "Error producing map file" "ERROR" >&2
-        #    exit -1
-        fi
+        set -e && finalizeStep $gemFile $tmpdir $outdir
+        
         endTime=$(date +%s)
         printHeader "Mapping step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
     else
         printHeader "Map file already present...skipping mapping step"
     fi
+
+    exit 0
     
   
     ## Filtering the map file
@@ -391,12 +409,12 @@ if [[ `basename $input` =~ fastq ]];then
         copyToTmp "index"
     
         log "Converting  $sample to bam..." $step
-        readGroup=`$getHeaderMeta -i $indexFile -s $sample -f $format`
-        if [[ $ECHO ]];then
-            echo "$getHeaderMeta -i $indexFile -s $sample -f $format"
-            echo "$readGroup"
+        command="$pigz -p $hthreads -dc $filteredGem | $gem2sam -T $hthreads -I $TMPDIR/`basename $index` --expect-paired-end-reads -q offset-33 -l"
+        if [[ $readGroup ]];
+        then
+            command="$command --read-group $readGroup"
         fi
-        run "$pigz -p $hthreads -dc $filteredGem | $gem2sam -T $hthreads -I $TMPDIR/`basename $index` --expect-paired-end-reads -q offset-33 -l --read-group $readGroup | sed 's/chrMT/chrM/g' | $addXS $readStrand | $samtools view -@ $threads -Sb - | $samtools sort -@ $threads -m 4G - $TMPDIR/${filteredBam%.bam}" "$ECHO"
+        run "$command | $addXS $readStrand | $samtools view -@ $threads -Sb - | $samtools sort -@ $threads -m 4G - $TMPDIR/${filteredBam%.bam}" "$ECHO"
         log "done\n" $step
         if [ -f $TMPDIR/$filteredBam ]; then
             log "Computing md5sum for filtered file..." $step
