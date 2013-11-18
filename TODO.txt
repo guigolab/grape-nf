@@ -1,0 +1,6 @@
+TODO list
+---------
+
+- add options to spcify henome and annotation from command line
+- remove or change cluster configuration
+- remove tmp folder usage or add an option for it
