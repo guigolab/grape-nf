@@ -45,13 +45,13 @@ function usage {
 }
 
 function printHeader {
-    string=$1
+    local string=$1
     echo "`date` *** $string ***"
 }
 
 function log {
-    string=$1
-    label=$2
+    local string=$1
+    local label=$2
     if [[ ! $ECHO ]];then
         if [[ $label != "" ]];then
             printf "[$label] $string"
@@ -62,12 +62,12 @@ function log {
 }
 
 function getAbsPath {
-    path=$1
+    local path=$1
     echo "`readlink -en $path`"
 }
 
 function run {
-    command=($1)
+    local command=($1)
     if [[ $2 ]];then
         ${2}${command[@]}
     else
@@ -76,88 +76,15 @@ function run {
 
 }
 
-function copyToTmp {
+function copyToTmp {    
     IFS=',' read -ra files <<< "$1"
     for i in ${files[@]};do
-        case $i in
-            "annotation")
-                if [ ! -e $TMPDIR/$annName ];then
-                    log "Copying annotation file to $TMPDIR..." $step
-                    run "cp $annotation $TMPDIR" "$ECHO"
-                    log "done\n"
-                fi
-                ;;
-            "index")
-                if [ ! -e $TMPDIR/`basename $index` ];then
-                    log "Copying genome index file to $TMPDIR..." $step
-                    run "cp $index $TMPDIR" "$ECHO"
-                    log "done\n"
-                fi
-                ;;
-            "t-index")
-                if [ ! -e $TMPDIR/$annName.gem ];then
-                    log "Copying annotated transcriptome index file to $TMPDIR..." $step
-                    run "cp $annotation.gem $TMPDIR" "$ECHO"
-                    log "done\n"
-                fi
-                ;;
-            "keys")
-                if [ ! -e $TMPDIR/$annName.junctions.keys ];then
-                    log "Copying annotated transcriptome keys file to $TMPDIR..." $step
-                    run "cp $annotation.junctions.keys $TMPDIR" "$ECHO"
-                    log "done\n"
-                fi
-                ;;
-            "fastq")
-                if [ ! -e $TMPDIR/`basename $input` ];then
-                    log "Copying fastq files to $TMPDIR..." $step
-                    run "cp $input $TMPDIR" "$ECHO"
-                    run "cp ${input/_1.fastq/_2.fastq} $TMPDIR" "$ECHO"
-                    log "done\n"
-                fi
-                ;;
-            "map.gz")
-                if [ ! -e $TMPDIR/$sample.map.gz ]; then
-                    log "Copying map file to $TMPDIR..." $step
-                    run "cp $sample.map.gz $TMPDIR" "$ECHO"
-                    log "done\n"
-                fi
-                ;;
-            "bam")
-                if [ ! -e $TMPDIR/$sample.bam ]; then
-                    log "Copying bam file to $TMPDIR..." $step
-                    run "cp $sample.bam $TMPDIR" "$ECHO"
-                    log "done\n"
-                fi
-                ;;
-            "filtered-bam")
-                if [ ! -e $TMPDIR/$filteredBam ]; then
-                    log "Copying filtered bam file to $TMPDIR..." $step
-                    run "cp $filteredBam $TMPDIR" "$ECHO"
-                    log "done\n"
-                fi
-                ;;
-            "filtered-bai")
-                if [ ! -e $TMPDIR/$filteredBam.bai ];then
-                    log "Copying index for filtered bam file to $TMPDIR..." $step
-                    run "cp $filteredBam.bai $TMPDIR" "$ECHO"
-                    log "done\n"
-                fi
-                ;;
-            "flux-profile")
-                if [ ! -e $TMPDIR/$sample.profile ];then
-                    log "Copying profile file to $TMPDIR..." $step
-                    run "cp $quantDir/$sample/$sample.profile $TMPDIR" "$ECHO"
-                    log "done\n"
-                fi
-                ;;
-            "flux-gtf")
-               if [ ! -e $TMPDIR/$sample.gtf ];then
-                   log "Copying Flux file to $TMPDIR..." $step
-                   run "cp $quantDir/$sample/$sample.gtf $TMPDIR" "$ECHO"
-                   log "done\n"
-               fi
-            esac
+        local name=`basename $i`
+        if [ ! -e $tmpdir/$name ];then
+            log "Copying $i to $TMPDIR..." $step
+            run "cp $i $tmpdir" "$ECHO"
+            log "done\n"
+        fi
     done
 }
 
@@ -189,6 +116,7 @@ maxReadLength="150"
 # general
 loglevel="info"
 threads="1"
+tmpdir=${TMPDIR-"-"}
 
 while true;
 do
@@ -349,10 +277,10 @@ printf "  %-34s %s\n" "Quality offset:" "$qualityOffset"
 printf "  %-34s %s\n" "Max read length:" "$maxReadLength"
 printf "  %-34s %s\n" "Strandedness:" "$readStrand"
 printf "  %-34s %s\n" "Number of threads:" "$threads"
-printf "  %-34s %s\n" "Temporary folder:" "${tmpdir-"-"}"
+printf "  %-34s %s\n" "Temporary folder:" "$tmpdir"
 printf "  %-34s %s\n" "Loglevel:" "$loglevel"
 echo ""
-
+exit 0
 ## START
 #
 
