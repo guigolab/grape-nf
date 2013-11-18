@@ -1,6 +1,7 @@
 TODO list
 ---------
 
+- switch to getopt
 - add options to specify genome and annotation from command line
 - update usage docs
 - remove or change cluster configuration
