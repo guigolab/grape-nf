@@ -11,12 +11,15 @@
 # -m b
 #
 #$ -pe smp 8
-#$ -q rg-el6
-#$ -l virtual_free=64G
+#$ -q rg-el6,long
+#$ -l virtual_free=64G,h_rt=240:00:00
 #
 #$ -o $JOB_NAME.out
 #$ -e $JOB_NAME.err
 #
+
+#set -eo pipefail
+
 function usage {
     echo "Usage: $0 -i <fastq_file> -s <sex> [OPTION]..."
     echo "Execute the Blueprint pipeline on one sample."
@@ -54,7 +57,7 @@ function log {
 function run {
     command=($1)
     if [[ $2 ]];then
-         ${2}${command[@]}
+        ${2}${command[@]}
     else
         eval ${command[@]}
     fi
@@ -149,7 +152,7 @@ function copyToTmp {
 ## Parsing arguments
 #
 
-while getopts ":i:m:g:c:std:l:ph" opt; do
+while getopts ":i:m:g:std:l:ph" opt; do
   case $opt in
     i)
       input=$OPTARG
@@ -159,9 +162,6 @@ while getopts ":i:m:g:c:std:l:ph" opt; do
       ;;
     m)
       mism=$OPTARG
-      ;;
-    c)
-      convTable=$OPTARG
       ;;
     s)
       stranded=1
@@ -193,9 +193,18 @@ done
 
 ## Setting up the environment
 #
+
+if [[ $VIRTUAL_ENV != /nfs/software/rg/el6.3/virtualenvs/blueprint ]] && [ -d /software/rg/el6.3/virtualenvs ]; then
+    export WORKON_HOME=/software/rg/el6.3/virtualenvs
+    [[ -s /usr/bin/virtualenvwrapper.sh ]] && source /usr/bin/virtualenvwrapper.sh
+    [[ -s /usr/local/bin/virtualenvwrapper.sh  ]] && source /usr/local/bin/virtualenvwrapper.sh
+    # load blueprint virtualenv
+    run "workon blueprint"
+fi
+
 BASEDIR=`dirname ${SGE_O_WORKDIR-$PWD}`
 BINDIR="$BASEDIR/bin"
-export PATH=$BASEDIR/gemtools-1.6-i3/bin:/software/rg/el6.3/flux-capacitor-1.2.4-SNAPSHOT/bin:$HOME/bin:$PATH
+export PATH=$BASEDIR/gemtools-1.6.2-i3/bin:/software/rg/el6.3/flux-capacitor-1.2.4/bin:$HOME/bin:$PATH
 
 ## Setting variables and input files
 ##
@@ -204,7 +213,7 @@ if [[ $input == "" ]];then
     exit -1
 fi
 
-if [[ $sex == "" ]] || [[ $sex != [MFX] ]];then
+if [[ $sex == "" ]] || [[ $sex != [MFU] ]];then
     log "Please specify the sex\n" "ERROR" >&2
     exit -1
 fi
@@ -219,11 +228,6 @@ fi
 
 if [[ $mism == "" ]];then
     mism="4"
-fi
-
-if [[ $convTable == "" ]];then
-    log "Please provide the runId <--> sampleId conversion table" "ERROR" >&2
-    exit -1
 fi
 
 basename=$(basename $input)
@@ -248,12 +252,13 @@ trToGn="$BINDIR/TrtoGn_RPKM.sh"
 trToEx="$BINDIR/TrtoEx_RPKM.sh"
 bamToContigs="$BINDIR/bamToContigs.sh"
 gt_quality="$BINDIR/gt.quality"
-gt_filter="$BINDIR/gt.filter"
+#gt_filter="$BINDIR/gt.filter"
+gt_filter="$BINDIR/gt.filter.remove"
 gt_stats="$BINDIR/gt.stats"
 pigz="$BINDIR/pigz"
 BAMFLAG="/users/rg/dmitri/bamflag/trunk/bamflag"
 makecontig="$BINDIR/contigsNew.py"
-getHeaderMeta="$BINDIR/getHeaderMeta.sh"
+getHeaderMeta="$BINDIR/samRG.py"
 
 hthreads=$((threads/2))
 if [[ $hthreads == 0 ]];then
@@ -262,170 +267,186 @@ fi
 
 ## START
 #
+
 printHeader "Starting Blueprint pipeline for $sample"
 pipelineStart=$(date +%s)
 
 ## Mapping
 #
-if [ ! -e $sample.map.gz ];then
-    step="MAP"
-    startTime=$(date +%s)
-    printHeader "Executing mapping step"
-
-    ## Activate the python virtualenv
-    run ". $BASEDIR/venv/bin/activate" "$ECHO"
-
-    ## Copy needed files to TMPDIR
-    copyToTmp "index,annotation,t-index,keys"
-
-    log "Running gemtools rna pipeline on ${sample}" $step
-    run "gemtools --loglevel $loglevel rna-pipeline -f $input -i $TMPDIR/`basename $index` -a $TMPDIR/$annName -t $threads --no-bam" "$ECHO"
-    #gemtools --loglevel $loglevel rna-pipeline -f $TMPDIR/$basename -i $TMPDIR/`basename $index` -a $TMPDIR/$annName -t $threads -o $TMPDIR --no-bam
-    #gemtools --loglevel $loglevel rna-pipeline -f $TMPDIR/$basename -i $TMPDIR/`basename $index` -a $TMPDIR/$annName -m 150 -t $threads -o $TMPDIR --no-sam
-
-    if [ -f $TMPDIR/${sample}.map.gz ]; then
-        log "Computing md5sum for map file..." $step
-        run "md5sum $TMPDIR/$sample.map.gz > $TMPDIR/$sample.map.gz.md5" "$ECHO"
-        run "cp $TMPDIR/$sample.map.gz.md5 ." "$ECHO"
-        log "done\n"
-        log "Copying map file..." $step
-        run "cp $TMPDIR/${sample}.map.gz ." "$ECHO"
-        log "done\n"
-    #else
-    #    log "Error producing map file" "ERROR" >&2
-    #    exit -1
+if [[ `basename $input` =~ fastq ]];then
+    if [ ! -e $sample.map.gz ];then
+        step="MAP"
+        startTime=$(date +%s)
+        printHeader "Executing mapping step"
+    
+        ## Copy needed files to TMPDIR
+        copyToTmp "index,annotation,t-index,keys"
+    
+        log "Running gemtools rna pipeline on ${sample}" $step
+        run "gemtools --loglevel $loglevel rna-pipeline -f $input -q 33 -i $TMPDIR/`basename $index` -a $TMPDIR/$annName -t $threads --no-bam" "$ECHO"
+        #gemtools --loglevel $loglevel rna-pipeline -f $TMPDIR/$basename -i $TMPDIR/`basename $index` -a $TMPDIR/$annName -t $threads -o $TMPDIR --no-bam
+        #gemtools --loglevel $loglevel rna-pipeline -f $TMPDIR/$basename -i $TMPDIR/`basename $index` -a $TMPDIR/$annName -m 150 -t $threads -o $TMPDIR --no-sam
+    
+        if [ -f $TMPDIR/${sample}.map.gz ]; then
+            log "Computing md5sum for map file..." $step
+            run "md5sum $TMPDIR/$sample.map.gz > $TMPDIR/$sample.map.gz.md5" "$ECHO"
+            run "cp $TMPDIR/$sample.map.gz.md5 ." "$ECHO"
+            log "done\n"
+            log "Copying map file..." $step
+            run "cp $TMPDIR/${sample}.map.gz ." "$ECHO"
+            log "done\n"
+        #else
+        #    log "Error producing map file" "ERROR" >&2
+        #    exit -1
+        fi
+        endTime=$(date +%s)
+        printHeader "Mapping step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
+    else
+        printHeader "Map file already present...skipping mapping step"
     fi
-    endTime=$(date +%s)
-    printHeader "Mapping step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
-else
-    printHeader "Map file already present...skipping mapping step"
-fi
-
-## Converting to bam
-##
-
-# if [ ! -e $sample.bam ];then
-#     step="CONVERT"
-#     startTime=$(date +%s)
-#     printHeader "Executing conversion step"
-
-#     ## Copy needed files to TMPDIR
-#     copyToTmp "index"
-
-#     log "Converting ${sample} to bam\n" $step
-
-#     run "pigz -p $hthreads -dc $sample.map.gz | $gem2sam -T $hthreads -I $TMPDIR/`basename $index` --expect-paired-end-reads -q offset-33 | $samtools view -@ $hthreads -Sb - | $samtools sort -@ $hthreads -m `echo $((4<<30))` - $sample" "$ECHO"
-#     #pigz -p $threads -dc $TMPDIR/$sample.map.gz | $gem2sam -T $hthreads -I $TMPDIR/`basename $index` --expect-paired-end-reads -q offset-33 | $samtools view -Sb - | $samtools sort -m $((8<<30)) - $TMPDIR/$sample
-#     if [ -f $TMPDIR/${sample}.bam ]; then
-#         log "Computing md5sum for bam file..." $step
-#         run "md5sum $TMPDIR/$sample.bam > $TMPDIR/$sample.bam.md5" "$ECHO"
-#         run "cp $TMPDIR/$sample.bam.md5 ." "$ECHO"
-#         log "done\n"
-
-#         log "Copying bam file to mapping dir..." $step
-#         run "cp $TMPDIR/${sample}.bam ." "$ECHO"
-#         log "done\n"
-#     #else
-#     #    log "Error producing bam file" "ERROR" >&2
-#     #    exit -1
-#     fi
-#     endTime=$(date +%s)
-#     printHeader "Conversion step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
-# else
-#     printHeader "Bam file already present...skipping conversion step"
-# fi
-
-## Filtering the map file
-##
-filteredGem=${sample}_mism_$mism.map.gz
-
-if [ ! -e $filteredGem ];then
-    step="FILTER"
-    startTime=$(date +%s)
-    printHeader "Executing filtering step"
-
-    log "Filtering map file..." $step
-    run "$gt_quality -i $sample.map.gz -t $threads | $gt_filter --max-levenshtein-error $mism -t $threads | $pigz -p $threads -c > $filteredGem" "$ECHO"
-    log "done\n" $step
-    if [ -f $filteredGem ]; then
-        log "Computing md5sum for filtered file..." $step
-        run "md5sum $filteredGem > $filteredGem.md5" "$ECHO"
-        log "done\n"
+    
+    ## Converting to bam
+    ##
+    
+    # if [ ! -e $sample.bam ];then
+    #     step="CONVERT"
+    #     startTime=$(date +%s)
+    #     printHeader "Executing conversion step"
+    
+    #     ## Copy needed files to TMPDIR
+    #     copyToTmp "index"
+    
+    #     log "Converting ${sample} to bam\n" $step
+    
+    #     run "pigz -p $hthreads -dc $sample.map.gz | $gem2sam -T $hthreads -I $TMPDIR/`basename $index` --expect-paired-end-reads -q offset-33 | $samtools view -@ $hthreads -Sb - | $samtools sort -@ $hthreads -m `echo $((4<<30))` - $sample" "$ECHO"
+    #     #pigz -p $threads -dc $TMPDIR/$sample.map.gz | $gem2sam -T $hthreads -I $TMPDIR/`basename $index` --expect-paired-end-reads -q offset-33 | $samtools view -Sb - | $samtools sort -m $((8<<30)) - $TMPDIR/$sample
+    #     if [ -f $TMPDIR/${sample}.bam ]; then
+    #         log "Computing md5sum for bam file..." $step
+    #         run "md5sum $TMPDIR/$sample.bam > $TMPDIR/$sample.bam.md5" "$ECHO"
+    #         run "cp $TMPDIR/$sample.bam.md5 ." "$ECHO"
+    #         log "done\n"
+    
+    #         log "Copying bam file to mapping dir..." $step
+    #         run "cp $TMPDIR/${sample}.bam ." "$ECHO"
+    #         log "done\n"
+    #     #else
+    #     #    log "Error producing bam file" "ERROR" >&2
+    #     #    exit -1
+    #     fi
+    #     endTime=$(date +%s)
+    #     printHeader "Conversion step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
     # else
-    #    log "Error producing filtered map file" "ERROR" >&2
-    #    exit -1
+    #     printHeader "Bam file already present...skipping conversion step"
+    # fi
+    
+    ## Filtering the map file
+    ##
+    filteredGem=${sample}_mism_${mism}_mmaps.map.gz
+    
+    if [ ! -e $filteredGem ];then
+        step="FILTER"
+        startTime=$(date +%s)
+        printHeader "Executing filtering step"
+    
+        log "Filtering map file..." $step
+        run "$gt_quality -i $sample.map.gz -t $threads | $gt_filter --max-levenshtein-error $mism -t $threads | $gt_filter --max-matches 10 -t $threads | $pigz -p $threads -c > $filteredGem" "$ECHO"
+        log "done\n" $step
+        if [ -f $filteredGem ]; then
+            log "Computing md5sum for filtered file..." $step
+            run "md5sum $filteredGem > $filteredGem.md5" "$ECHO"
+            log "done\n"
+        # else
+        #    log "Error producing filtered map file" "ERROR" >&2
+        #    exit -1
+        fi
+        endTime=$(date +%s)
+        printHeader "Filtering step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
+    else
+        printHeader "Filtered map file is present...skipping fltering step"
     fi
-    endTime=$(date +%s)
-    printHeader "Filtering step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
+    
+    ## Filtering the map file
+    ##
+    filteredGemStats=${filteredGem%.map.gz}.stats
+    
+    if [ $filteredGemStats -ot $filteredGem ];then
+        step="GEM-STATS"
+        startTime=$(date +%s)
+        printHeader "Executing GEM stats step"
+    
+        ## Copy needed files to TMPDIR
+        # copyToTmp "index"
+    
+        log "Producing stats for $filteredGem..." $step
+        run "$gt_stats -i $filteredGem -t $threads -a -p 2> $filteredGemStats" "$ECHO"
+        log "done\n" $step
+        if [ -f $filteredGemStats ]; then
+            log "Computing md5sum for stats file..." $step
+            run "md5sum $filteredGemStats > $filteredGemStats.md5" "$ECHO"
+            log "done\n"
+        # else
+        #    log "Error producing GEM stats" "ERROR" >&2
+        #    exit -1
+        fi
+        endTime=$(date +%s)
+        printHeader "GEM stats step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
+    else
+        printHeader "GEM stats file is present...skipping GEM stats step"
+    fi
+    
+    ## Convert to bam and adding the XS field
+    ##
+    filteredBam=${sample}_filtered_cuff.bam
+    indexFile="$BASEDIR/bp_rna_dashboard_20130809_temp.crg.txt"
+    format="$BASEDIR/../tsv_format.json"
+    
+    if [ ! -e $filteredBam ];then
+        step="CONVERT"
+        startTime=$(date +%s)
+        printHeader "Executing conversion step"
+        
+        ## Copy needed files to TMPDIR
+        copyToTmp "index"
+    
+        log "Converting  $sample to bam..." $step
+        readGroup=`$getHeaderMeta -i $indexFile -s $sample -f $format`
+        if [[ $ECHO ]];then
+            echo "$getHeaderMeta -i $indexFile -s $sample -f $format"
+            echo "$readGroup"
+        fi
+        run "$pigz -p $hthreads -dc $filteredGem | $gem2sam -T $hthreads -I $TMPDIR/`basename $index` --expect-paired-end-reads -q offset-33 -l --read-group $readGroup | sed 's/chrMT/chrM/g' | $addXS $readStrand | $samtools view -@ $threads -Sb - | $samtools sort -@ $threads -m 4G - $TMPDIR/${filteredBam%.bam}" "$ECHO"
+        log "done\n" $step
+        if [ -f $TMPDIR/$filteredBam ]; then
+            log "Computing md5sum for filtered file..." $step
+            run "md5sum $TMPDIR/$filteredBam > $TMPDIR/$filteredBam.md5" "$ECHO"
+            run "cp $TMPDIR/$filteredBam.md5 ." "$ECHO"
+            log "done\n"
+            log "Copying filtered bam file to mapping dir..." $step
+            run "cp $TMPDIR/$filteredBam ." "$ECHO"
+            log "done\n"
+        #else
+        #    log "Error producing filtered bam file" "ERROR" >&2
+        #    exit -1
+        fi
+        endTime=$(date +%s)
+        printHeader "Conversion step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
+    else
+        printHeader "Bam file is present...skipping conversion step"
+    fi
 else
-    printHeader "Filtered map file is present...skipping fltering step"
+    printHeader "Input file is $input...skipping mapping steps"
 fi
 
-## Filtering the map file
-##
-filteredGemStats=${filteredGem%.map.gz}.stats
-
-if [ $filteredGemStats -ot $filteredGem ];then
-    step="GEM-STATS"
-    startTime=$(date +%s)
-    printHeader "Executing GEM stats step"
-
-    ## Copy needed files to TMPDIR
-    # copyToTmp "index"
-
-    log "Producing stats for $filteredGem..." $step
-    run "$gt_stats -i $filteredGem -t $threads -a -p 2> $filteredGemStats" "$ECHO"
-    log "done\n" $step
-    if [ -f $filteredGemStats ]; then
-        log "Computing md5sum for stats file..." $step
-        run "md5sum $filteredGemStats > $filteredGemStats.md5" "$ECHO"
-        log "done\n"
-    # else
-    #    log "Error producing GEM stats" "ERROR" >&2
-    #    exit -1
-    fi
-    endTime=$(date +%s)
-    printHeader "GEM stats step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
-else
-    printHeader "GEM stats file is present...skipping GEM stats step"
-fi
-
-## Convert to bam and adding the XS field
-##
-filteredBam=${sample}_filtered_cuff.bam
-
-if [ ! -e $filteredBam ];then
-    step="CONVERT"
-    startTime=$(date +%s)
-    printHeader "Executing conversion step"
-
-    ## Copy needed files to TMPDIR
-    copyToTmp "index"
-
-    log "Converting  $sample to bam..." $step
-    readGroup=`$getHeaderMeta $sample $convTable`
-    run "$pigz -p $hthreads -dc $filteredGem | $gem2sam -T $hthreads -I $TMPDIR/`basename $index` --expect-paired-end-reads -q offset-33 -l --read-group $readGroup | sed 's/chrMT/chrM/g' | $addXS $readStrand | $samtools view -@ $threads -Sb - | $samtools sort -@ $threads -m 4G - $TMPDIR/${filteredBam%.bam}" "$ECHO"
-    log "done\n" $step
-    if [ -f $TMPDIR/$filteredBam ]; then
-        log "Computing md5sum for filtered file..." $step
-        run "md5sum $TMPDIR/$filteredBam > $TMPDIR/$filteredBam.md5" "$ECHO"
-        run "cp $TMPDIR/$filteredBam.md5 ." "$ECHO"
-        log "done\n"
-        log "Copying filtered bam file to mapping dir..." $step
-        run "cp $TMPDIR/$filteredBam ." "$ECHO"
-        log "done\n"
-    #else
-    #    log "Error producing filtered bam file" "ERROR" >&2
-    #    exit -1
-    fi
-    endTime=$(date +%s)
-    printHeader "Conversion step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
-else
-    printHeader "Bam file is present...skipping conversion step"
-fi
+#pipelineEnd=$(date +%s)
+#    
+#log "\n"
+#printHeader "Blueprint pipeline for $sample completed in $(echo "($pipelineEnd-$pipelineStart)/60" | bc -l | xargs printf "%.2f\n") min "
+#exit 0
 
 ## Indexing the filtered bam file
 ##
+
+[[ `basename $input` =~ bam ]] && filteredBam=`basename $input` && sample=`basename $input | sed 's/_filtered_cuff.bam//g'`
 
 if [ $filteredBam.bai -ot $filteredBam ];then
     step="INDEX"
@@ -461,7 +482,7 @@ fi
 ##
 statsDir=$BASEDIR/$sample/stats
 stats=true
-if [ $stats ];then
+if [ $stats ] && [ ! -d $statsDir ];then
     step="BAM-STATS"
     startTime=$(date +%s)
     printHeader "Executing bam stats step on the filtered bam file"
@@ -572,8 +593,13 @@ fi
 
 ## Producing bigWig files
 ##
-
-if [ ! -e $sample.plusRaw.bigwig ] || [ ! -e $sample.minusRaw.bigwig ];then
+doBigWig=0
+if [[ $stranded == "1" ]];then
+    eval "if [ ! -e $sample.plusRaw.bigwig ] || [ ! -e $sample.minusRaw.bigwig ];then doBigWig=1;fi"
+else 
+    eval "if [ ! -e $sample.bigwig ];then doBigWig=1;fi"
+fi
+if [[ $doBigWig == "1" ]];then
     step="BIGWIG"
     startTime=$(date +%s)
     printHeader "Executing BigWig step"
