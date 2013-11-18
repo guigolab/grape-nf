@@ -40,6 +40,7 @@ function usage {
     printf "  -l|--loglevel\t\tLog level (error, warn, info, debug). Default \"info\".\n"
     printf "  -t|--threads\t\tNumber of threads. Default \"1\".\n"
     printf "  -h|--help\t\tShow this message and exit.\n"
+    printf "  --flux-mem\t\tSpecify the amount of ram the Flux Capacitor can use. Default: \"3G\".\n"
     printf "  --tmp-dir\t\tSpecify local temporary folder to copy files when running on distributed file systems. Default: \"-\".\n"
     printf "  --dry-run\t\t\tTest the pipeline. Writes the command to the standard output.\n"
     exit 0
@@ -88,6 +89,8 @@ function copyToTmp {
             log "Copying $i to $TMPDIR..." $step
             run "cp $i $tmpdir" "$ECHO"
             log "done\n"
+        else
+            log "Skipping $i...tmp copy already exists\n" $step
         fi
     done
 }
@@ -96,6 +99,7 @@ function finalizeStep {
     local file=$1
     local tmpdir=$2
     local outdir=$3
+    printf "\n$file $tmpdir $outdir\n"
     log "Computing md5sum for $file..." $step
     run "md5sum $file > $file.md5" "$ECHO"
     if [ -d $tmpdir ];then
@@ -110,7 +114,7 @@ function finalizeStep {
 #
 
 # Execute getopt
-ARGS=`getopt -o "i:g:a:m:n:s:t:l:q:r:h" -l "input:,genome:,annotation:,mismatches:,hits:,read-strand:,threads:,loglevel:,quality:,max-read-length:,tmp-dir:,dry-run,help" \
+ARGS=`getopt -o "i:g:a:m:n:s:t:l:q:r:h" -l "input:,genome:,annotation:,mismatches:,hits:,read-strand:,threads:,loglevel:,quality:,max-read-length:,tmp-dir:,flux-mem:,dry-run,help" \
       -n "$0" -- "$@"`
 
 #Bad arguments
@@ -257,7 +261,8 @@ fi
 basename=$(basename $input)
 sample=${basename%[_-\.]1*}
 
-index="$genome.gem"
+genomeFai="$genome.fai"
+gemIndex="$genome.gem"
 tindex="$annotation.gem"
 tkeys="$annotation.junctions.keys"
 
@@ -310,25 +315,26 @@ pipelineStart=$(date +%s)
 
 ## Mapping
 #
-gemFile="$outdir/$sample.map.gz"
-if [[ `basename $input` =~ fastq ]];then
-    if [ ! -e $sample.map.gz ];then
+if [[ `basename $input` =~ fastq ]];then 
+    gem="$outdir/$sample.map.gz"
+    if [ ! -e $gem ];then
         step="MAP"
         startTime=$(date +%s)
         printHeader "Executing mapping step"
             
         if [ -d $tmpdir ]; then
             ## Copy needed files to TMPDIR
-            copyToTmp "$index,$annotation,$tindex,$tkeys"
-            index=$tmpdir/`basename $index`
+            copyToTmp "$gemIndex,$annotation,$tindex,$tkeys"
+            index=$tmpdir/`basename $gemIndex`
             annotation=$tmpdir/$annName
-            gemFile="$tmpdir/$sample.map.gz"
+            gem="$tmpdir/$sample.map.gz"
         fi
     
         log "Running gemtools rna pipeline on ${sample}" $step
-        run "gemtools --loglevel $loglevel rna-pipeline -f $input -q 33 -i $index -a $annotation -t $threads --no-bam" "$ECHO"
+        run "gemtools --loglevel $loglevel rna-pipeline -f $input -q 33 -i $gemIndex -a $annotation -t $threads --no-bam" "$ECHO"
     
-        set -e && finalizeStep $gemFile $tmpdir $outdir
+        set -e && finalizeStep "$gem $tmpdir $outdir"
+        gem="$outdir/$sample.map.gz"
         
         endTime=$(date +%s)
         printHeader "Mapping step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
@@ -336,58 +342,43 @@ if [[ `basename $input` =~ fastq ]];then
         printHeader "Map file already present...skipping mapping step"
     fi
 
-    exit 0
-    
   
     ## Filtering the map file
     ##
-    filteredGem=${sample}_mism_${mism}_mmaps.map.gz
+    filteredGem=${gem%.map.gz}_m${mism}_n${hits}.map.gz
     
-    if [ ! -e $filteredGem ];then
+    if [ ! -e $filteredGm ];then
         step="FILTER"
         startTime=$(date +%s)
         printHeader "Executing filtering step"
-    
+        
         log "Filtering map file..." $step
-        run "$gt_quality -i $sample.map.gz -t $threads | $gt_filter --max-levenshtein-error $mism -t $threads | $gt_filter --max-matches 10 -t $threads | $pigz -p $threads -c > $filteredGem" "$ECHO"
+        run "$gt_quality -i $gem -t $threads | $gt_filter --max-levenshtein-error $mism -t $threads | $gt_filter --max-matches $hits -t $threads | $pigz -p $threads -c > $filteredGem" "$ECHO"
         log "done\n" $step
-        if [ -f $filteredGem ]; then
-            log "Computing md5sum for filtered file..." $step
-            run "md5sum $filteredGem > $filteredGem.md5" "$ECHO"
-            log "done\n"
-        # else
-        #    log "Error producing filtered map file" "ERROR" >&2
-        #    exit -1
-        fi
+
+        set -e && finalizeStep "$filteredGem - $outdir"
+
         endTime=$(date +%s)
         printHeader "Filtering step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
     else
         printHeader "Filtered map file is present...skipping fltering step"
     fi
-    
+ 
     ## Filtering the map file
     ##
     filteredGemStats=${filteredGem%.map.gz}.stats
     
-    if [ $filteredGemStats -ot $filteredGem ];then
+    if [ $filteredGemStats -ot $filteredGem ]; then
         step="GEM-STATS"
         startTime=$(date +%s)
         printHeader "Executing GEM stats step"
     
-        ## Copy needed files to TMPDIR
-        # copyToTmp "index"
-    
         log "Producing stats for $filteredGem..." $step
         run "$gt_stats -i $filteredGem -t $threads -a -p 2> $filteredGemStats" "$ECHO"
         log "done\n" $step
-        if [ -f $filteredGemStats ]; then
-            log "Computing md5sum for stats file..." $step
-            run "md5sum $filteredGemStats > $filteredGemStats.md5" "$ECHO"
-            log "done\n"
-        # else
-        #    log "Error producing GEM stats" "ERROR" >&2
-        #    exit -1
-        fi
+
+        set -e && finalizeStep "$filteredGemStats - $outdir"
+
         endTime=$(date +%s)
         printHeader "GEM stats step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
     else
@@ -396,38 +387,32 @@ if [[ `basename $input` =~ fastq ]];then
     
     ## Convert to bam and adding the XS field
     ##
-    filteredBam=${sample}_filtered_cuff.bam
-    indexFile="$BASEDIR/bp_rna_dashboard_20130809_temp.crg.txt"
-    format="$BASEDIR/../tsv_format.json"
+    filteredBam=${filteredGem%.map.gz}.bam
     
-    if [ ! -e $filteredBam ];then
+    if [ ! -e $filteredBam ]; then
         step="CONVERT"
         startTime=$(date +%s)
         printHeader "Executing conversion step"
-        
-        ## Copy needed files to TMPDIR
-        copyToTmp "index"
-    
+
+        if [ -d $tmpdir ]; then
+            ## Copy needed files to TMPDIR
+            copyToTmp "$gemIndex"
+            index=$tmpdir/`basename $gemIndex`
+            filteredBam="$tmpdir/`basename $filteredBam`"
+        fi
+       
         log "Converting  $sample to bam..." $step
-        command="$pigz -p $hthreads -dc $filteredGem | $gem2sam -T $hthreads -I $TMPDIR/`basename $index` --expect-paired-end-reads -q offset-33 -l"
+        command="$pigz -p $hthreads -dc $filteredGem | $gem2sam -T $hthreads -I $TMPDIR/`basename $gemIndex` --expect-paired-end-reads -q offset-33 -l"
         if [[ $readGroup ]];
         then
             command="$command --read-group $readGroup"
         fi
-        run "$command | $addXS $readStrand | $samtools view -@ $threads -Sb - | $samtools sort -@ $threads -m 4G - $TMPDIR/${filteredBam%.bam}" "$ECHO"
+        run "$command | $addXS $readStrand | $samtools view -@ $threads -Sb - | $samtools sort -@ $threads -m 4G - ${filteredBam%.bam}" "$ECHO"
         log "done\n" $step
-        if [ -f $TMPDIR/$filteredBam ]; then
-            log "Computing md5sum for filtered file..." $step
-            run "md5sum $TMPDIR/$filteredBam > $TMPDIR/$filteredBam.md5" "$ECHO"
-            run "cp $TMPDIR/$filteredBam.md5 ." "$ECHO"
-            log "done\n"
-            log "Copying filtered bam file to mapping dir..." $step
-            run "cp $TMPDIR/$filteredBam ." "$ECHO"
-            log "done\n"
-        #else
-        #    log "Error producing filtered bam file" "ERROR" >&2
-        #    exit -1
-        fi
+        
+        set -e && finalizeStep "$filteredBam $tmpdir $outdir"        
+        filteredBam=${filteredGem%.map.gz}.bam
+
         endTime=$(date +%s)
         printHeader "Conversion step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
     else
@@ -437,41 +422,26 @@ else
     printHeader "Input file is $input...skipping mapping steps"
 fi
 
-#pipelineEnd=$(date +%s)
-#    
-#log "\n"
-#printHeader "Blueprint pipeline for $sample completed in $(echo "($pipelineEnd-$pipelineStart)/60" | bc -l | xargs printf "%.2f\n") min "
-#exit 0
-
 ## Indexing the filtered bam file
 ##
-
-[[ `basename $input` =~ bam ]] && filteredBam=`basename $input` && sample=`basename $input | sed 's/_filtered_cuff.bam//g'`
 
 if [ $filteredBam.bai -ot $filteredBam ];then
     step="INDEX"
     startTime=$(date +%s)
     printHeader "Executing indexing step on the filtered bam file"
 
-    ## Copy needed files to TMPDIR
-    copyToTmp "filtered-bam"
+    if [ -d $tmpdir ]; then
+        ## Copy needed files to TMPDIR
+        copyToTmp "$filteredbam"
+        filteredBam=$tmpdir/`basename $filteredBam`
+    fi
 
     log "Indexing the filtered bam file\n" $step
-    run "$samtools index $TMPDIR/$filteredBam" "$ECHO"
-    if [ -f $TMPDIR/$filteredBam.bai ]; then
-        log "Computing md5sum for filtered bam file index..." $step
-        run "md5sum $TMPDIR/$filteredBam.bai > $TMPDIR/$filteredBam.bai.md5" "$ECHO"
-        run "cp $TMPDIR/$filteredBam.bai.md5 ." "$ECHO"
-        log "done\n"
-        log "Copying bam index file to mapping dir..." $step
-        run "cp $TMPDIR/$filteredBam.bai ." "$ECHO"
-        log "done\n"
-    else
-        if [[ ! $ECHO ]];then
-            log "Error producing bam index file" "ERROR" >&2
-            exit -1
-        fi
-    fi
+    run "$samtools index $filteredBam" "$ECHO"
+    
+    set -e && finalizeStep "$filteredBam $tmpdir $outdir"        
+    filteredBam=${filteredGem%.map.gz}.bam
+
     endTime=$(date +%s)
     printHeader "Indexing step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
 else
@@ -481,7 +451,7 @@ fi
 ## Producing stats for bam file
 ##
 statsDir=$BASEDIR/$sample/stats
-stats=true
+stats=false
 if [ $stats ] && [ ! -d $statsDir ];then
     step="BAM-STATS"
     startTime=$(date +%s)
@@ -583,14 +553,11 @@ else
     printHeader "Skipping BAM stats step"
 fi
 
-## Setting genome index files
-#
-genomeFai="$genome.fai"
 
 ## Producing bigWig files
 ##
 doBigWig=0
-if [[ $stranded == "1" ]];then
+if [[ $readStrand != "NONE" ]];then
     eval "if [ ! -e $sample.plusRaw.bigwig ] || [ ! -e $sample.minusRaw.bigwig ];then doBigWig=1;fi"
 else 
     eval "if [ ! -e $sample.bigwig ];then doBigWig=1;fi"
@@ -605,12 +572,16 @@ if [[ $doBigWig == "1" ]];then
 
     log "Producing bigWig files\n" $step
 
-    if [[ $stranded == 1 ]];then
+    if [[ $readStrand != "NONE" ]];then
 
         ## Producing temporary bam with mate1 reversed
-        revBam=$TMPDIR/${filteredBam%.bam}_rev1.bam
+        revBam="$outdir/${filteredBam%.bam}_1rev.bam"
+        if [ -d $tmpdir ];then
+            copyToTmp $revBam
+            revBam="$tmpdir/${filteredBam%.bam}_1rev.bam"
+        fi
         log "Making temporary bam file with mate1 strand reversed..." $step
-        run "$samtools view -h -@ $hthreads $TMPDIR/$filteredBam | awk -v MateBit=64 'BEGIN {OFS=\"\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}' | $samtools view -@ $hthreads -Sb - > $revBam" "$ECHO"
+        run "$samtools view -h -@ $hthreads $filteredBam | awk -v MateBit=64 'BEGIN {OFS=\"\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}' | $samtools view -@ $hthreads -Sb - > $revBam" "$ECHO"
         log "done\n"
 
         for strand in + -;
@@ -619,52 +590,34 @@ if [[ $doBigWig == "1" ]];then
             if [[ $strand == "-" ]];then
                 suffix="minusRaw"
             fi
-            bedGraph=$TMPDIR/$sample.$suffix.bedgraph
-            bigWig=$TMPDIR/$sample.$suffix.bigwig
+
+            bedGraph=$outdir/$sample.$suffix.bedgraph
+            bigWig=$outdir/$sample.$suffix.bigwig
+            if [ -d $tmpdir ]; then                
+                bedGraph=$tmpdir/$sample.$suffix.bedgraph
+                bigWig=$tmpdir/$sample.$suffix.bigwig
+            fi
             log "Making bedGraph $strand strand\n" "$step"
             run "genomeCoverageBed -strand $strand -split -bg -ibam $revBam > $bedGraph" "$ECHO"
             log "Making bigWig $strand strand\n" $step
             run "bedGraphToBigWig $bedGraph $genomeFai $bigWig" "$ECHO"
-        done
 
-        if [ -f $TMPDIR/$sample.plusRaw.bigwig ] && [ -f $TMPDIR/$sample.minusRaw.bigwig ];then
-            log "Computing md5sum for bigWig files..." $step
-            run "md5sum $TMPDIR/$sample.plusRaw.bigwig > $TMPDIR/$sample.plusRaw.bigwig.md5" "$ECHO"
-            run "md5sum $TMPDIR/$sample.minusRaw.bigwig > $TMPDIR/$sample.minusRaw.bigwig.md5" "$ECHO"
-            run "cp $TMPDIR/$sample.plusRaw.bigwig.md5 ." "$ECHO"
-            run "cp $TMPDIR/$sample.minusRaw.bigwig.md5 ." "$ECHO"
-            log "done\n"
-            log "Copying bigwig files to mapping dir..." $step
-            run "cp $TMPDIR/$sample*.bigwig ." "$ECHO"
-            log "done\n"
-        else
-            if [[ ! $ECHO ]];then
-                log "Error producing bigWig files" "ERROR" >&2
-                exit -1
-            fi
-        fi
+            set -e && finalizeStep "$bigWig $tmpdir $outdir"
+        done
     else
-        bedGraph=$TMPDIR/$sample.bedgraph
-        bigWig=$TMPDIR/$sample.bigwig
+        bedGraph=$outdir/$sample.bedgraph
+        bigWig=$outdir/$sample.bigwig
+        if [ -d $tmpdir ]; then                
+            bedGraph=$tmpdir/$sample.bedgraph
+            bigWig=$tmpdir/$sample.bigwig
+        fi
+
         log "Making bedGraph\n" "BEDGRAPH"
-        run "genomeCoverageBed -split -bg -ibam $TMPDIR/${filteredBam} > $bedGraph" "$ECHO"
+        run "genomeCoverageBed -split -bg -ibam $filteredBam > $bedGraph" "$ECHO"
         log "Making bigWig\n" $step
         run "bedGraphToBigWig $bedGraph $genomeFai $bigWig" "$ECHO"
 
-        if [ -f $bigWig ];then
-            log "Computing md5sum for bigWig file..." $step
-            run "md5sum $bigWig > $bigWig.md5" "$ECHO"
-            run "cp $bigWig.md5 ." "$ECHO"
-            log "done\n"
-            log "Copying bigwig file to mapping dir..." $step
-            run "cp $bigWig ." "$ECHO"
-            log "done\n"
-        else
-            if [[ ! $ECHO ]];then
-                log "Error producing bigWig files" "ERROR" >&2
-                exit -1
-            fi
-        fi
+        set -e && finalizeStep "$bigWig $tmpdir $outdir"
     fi
 
     endTime=$(date +%s)
@@ -672,10 +625,6 @@ if [[ $doBigWig == "1" ]];then
 else
     printHeader "BigWig files present...skipping bigwig step"
 fi
-
-## Setting genome index files
-#
-genomeFai="$genome.fai"
 
 ## Producing contig files
 ##
@@ -766,118 +715,64 @@ fi
 step="FLUX"
 
 quantDir="$BASEDIR/quantification"
-export FLUX_MEM=16G
+export FLUX_MEM=${fluxMem-"3G"}
 
-paramFile="$quantDir/param_file_Unstranded.par"
-if [[ $stranded == 1 ]];then
-    paramFile="$quantDir/param_file_Stranded.par"
-fi
-
-sample=${sample}
 if [ ! -d $quantDir/$sample ]; then
     log "Creating sample folder in $quantDir..." $step
     run "mkdir -p $quantDir/$sample" "$ECHO"
     log "done\n"
 fi
 
-## Get profile file if required
-#
-if [[ $profile == 1 ]];then
-    startTime=$(date +%s)
-    printHeader "Executing Flux profiling step"
-
-    ## Copy needed files to TMPDIR
-    copyToTmp "filtered-bam,filtered-bai,annotation"
-
-    if [ ! -e $TMPDIR/${annName%.gtf}_sorted.gtf ];then
-        log "Checking if the annotation is sorted..." $step
-        run "flux-capacitor -t sortGTF -c -i $TMPDIR/$annName -o $TMPDIR/${annName%.gtf}_sorted.gtf > $quantDir/$sample/${sample}_sort_annotation.log 2>&1" "$ECHO"
-        log "done\n"
-    fi
-
-    annFile=$TMPDIR/${annName}
-    if [ -e $TMPDIR/${annName%.gtf}_sorted.gtf ];then
-        log "Using sorted annotation\n" $step
-        annFile=$TMPDIR/${annName%.gtf}_sorted.gtf
-    fi
-
-    log "Preparing the parameter file..." $step
-    run "cp $paramFile $TMPDIR" "$ECHO"
-    paramFile=$TMPDIR/`basename $paramFile`
-    run "echo \"PROFILE_FILE $TMPDIR/$sample.profile\" >> $paramFile" "$ECHO"
-    #### TODO remove for new BAM files
-    #run "echo \"USE_FLAGS false\" >> $paramFile" "$ECHO"
-    log "done\n"
-
-    if [ ! -e $quantDir/$sample/$sample.profile ];then
-        log "Getting sistematic biases along transcripts\n" $step
-        run "flux-capacitor --profile -p $paramFile -i $TMPDIR/$filteredBam -a $annFile > $quantDir/$sample/${sample}_flux_profile.log 2>&1" "$ECHO"
-        if [ -e $TMPDIR/$sample.profile ];then
-            log "Copying profile file to quantification dir..." $step
-            run "cp $TMPDIR/$sample.profile $quantDir/$sample" "$ECHO"
-        else
-            if [[ ! $ECHO ]];then
-                log "Error getting sistematic biases along transcripts" "ERROR" >&2
-                exit -1
-            fi
-        fi
-        log "done\n"
-    else
-        log "Copying profile file to $TMPDIR..." $step
-        run "cp $quantDir/$sample/$sample.profile $TMPDIR" "$ECHO"
-        log "done\n"
-    fi
-    endTime=$(date +%s)
-    printHeader "Profiling step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
-fi
+outdir="$quantDir/$sample"
+paramFile="$outdir/$sample.par"
+proFile="$outdir/$sample.pro"
 
 ## Run transcript quantification
 #
-if [ ! -e $quantDir/$sample/$sample.gtf ];then
+fluxGtf="$outdir/$sample.gtf"
+if [ ! -e $fluxGtf ];then
     startTime=$(date +%s)
     printHeader "Executing Flux quantification step"
 
-    ## Copy needed files to TMPDIR
-    copyToTmp "filtered-bam,filtered-bai,annotation"
+    if [ -d $tmpdir ];then
+        ## Copy needed files to TMPDIR
+        copyToTmp "$filteredBam,$filteredBai,$annotation"
+        filteredbam="$tmpdir/`basename $filteredBam`"
+        filteredbai="$tmpdir/`basename $filteredBai`"
+        annotation="$tmpdir/`basename $annotation`"
+        fluxGtf="$tmpdir/$sample.gtf"
+    fi
 
     if [ ! -e $TMPDIR/${annName%.gtf}_sorted.gtf ];then
+        sortLog="$outdir/${sample}_sort_annotation.log"
         log "Checking if the annotation is sorted" $step
-        run "flux-capacitor -t sortGTF -c -i $TMPDIR/$annName -o $TMPDIR/${annName%.gtf}_sorted.gtf > $quantDir/$sample/${sample}_sort_annotation.log 2>&1" "$ECHO"
+        set -e && run "flux-capacitor -t sortGTF -c -i $annotation -o ${annotation%.gtf}_sorted.gtf > $sortLog 2>&1" "$ECHO"
         log "done\n"
     fi
 
-    annFile=$TMPDIR/${annName}
-    if [ -e $TMPDIR/${annName%.gtf}_sorted.gtf ];then
-        log "Using sorted annotation\n" $step
-        annFile=$TMPDIR/${annName%.gtf}_sorted.gtf
+    anno=$annotation
+    if [ -e {$anno%.gtf}_sorted.gtf ];then
+        anno=${anno%.gtf}_sorted.gtf
+        log "Using sorted annotation: $anno\n" $step
     fi
 
-    if [[ $profile == 1 ]];then
-        ## Copy profile file to TMPDIR if not there
-        copyToTmp "flux-profile"
+    if [[ ! -e $proFile ]];then
+        profileLog="$outdir/${sample}_flux_profile.log"
+        log "Getting sistematic biases along transcripts\n" $step
+        run "flux-capacitor --profile -p $paramFile -i $filteredBam -a $anno --profile-file $proFile > $profileLog 2>&1" "$ECHO"
+        log "done\n"
     fi
 
-    if [ -e $TMPDIR/$sample.gtf ];then
-        rm $TMPDIR/$sample.gtf
+    if [ -e $fluxGtf ];then
+        rm $fluxGtf
     fi
 
     log "Running Flux Capacitor\n" $step
-    run "flux-capacitor -p $paramFile -i $TMPDIR/$filteredBam -a $TMPDIR/${annName} -o $TMPDIR/$sample.gtf > $quantDir/$sample/${sample}_flux_quantification.log 2>&1" "$ECHO"
+    quantLog=$outdir/${sample}_flux_quantification.log
+    run "flux-capacitor -p $paramFile -i $filteredBam -a $anno -o $fluxGtf > $quantLog 2>&1" "$ECHO"
 
-    if [ -f $TMPDIR/$sample.gtf ]; then
-        log "Computing md5sum for gtf file..." $step
-        run "md5sum $TMPDIR/$sample.gtf > $TMPDIR/$sample.gtf.md5" "$ECHO"
-        run "cp $TMPDIR/$sample.gtf.md5 $quantDir/$sample" "$ECHO"
-        log "done\n"
-        log "Copying gtf file to quantification dir..." $step
-        run "cp $TMPDIR/$sample.gtf $quantDir/$sample" "$ECHO"
-        log "done\n"
-    else
-        if [[ ! $ECHO ]];then
-            log "Error running Flux Capacitor" "ERROR" >&2
-            exit -1
-        fi
-    fi
+    set -e && finalizeStep "$fluxGtf $tmpdir $outdir"
+
     endTime=$(date +%s)
     printHeader "Quantificaton step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
 else
