@@ -29,15 +29,17 @@ function usage {
     echo ""
     printf "  -i|--input\t\tinput file\n"
     printf "  -g|--genome\t\treference genome file\n"
-    printf "  -a|--annotation\treference annotation file\n"
+    printf "  -a|--annotation\treference gene annotation file\n"
     echo ""
     echo "Options:"
     printf "  -m|--mismatches\tMax number of mismatches. Default \"4\"\n"
     printf "  -n|--hits\t\tMax number of hits. Default \"10\"\n"
+    printf "  -q|--quality-offset\tThe quality offset of the fastq files. Default: \"33\".\n"    
+    printf "  -r|--max-read-length\tThe maximum read length (used to compute the transcriptomes). Default: \"150\".\n"    
     printf "  -s|--read-strand\tdirectionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default \"NONE\".\n"
     printf "  -l|--loglevel\t\tLog level (error, warn, info, debug). Default \"info\".\n"
     printf "  -t|--tmp-dir\t\tSpecify local temporary folder to copy files when running on distributed file systems. Default: no tmp folder.\n"
-    printf "  -h|--help\t\tShow this message and exit.\n"
+   printf "  -h|--help\t\tShow this message and exit.\n"
     printf "  --dry\t\t\tTest the pipeline. Writes the command to the standard output.\n"
     exit 0
 }
@@ -163,7 +165,7 @@ function copyToTmp {
 #
 
 # Execute getopt
-ARGS=`getopt -o "i:g:a:m:n:std:l:ph" -l "index:,genome:,annotation:,mismatches:,hits:,stranded,dry-run,read-strand:,profile,help" \
+ARGS=`getopt -o "i:g:a:m:n:s:t:l:q:r:h" -l "input:,genome:,annotation:,mismatches:,hits:,read-strand:,threads:,loglevel:,quality:,max-read-length:,tmp-dir:,dry-run,help" \
       -n "run.pipeline.sh" -- "$@"`
 
 #Bad arguments
@@ -181,9 +183,12 @@ eval set -- "$ARGS"
 mism=4
 hits=10
 readStrand="NONE"
+qualityOffset="33"
+maxReadLength="150"
 
 # general
 loglevel="info"
+threads="1"
 
 while true;
 do
@@ -223,13 +228,27 @@ do
        fi
        shift 2;;
     
-    -r|--read-strand)
+    -s|--read-strand)
       if [ -n $2 ];
       then
         readStrand=$2
       fi
       shift 2;;
-    
+     
+    -q|--quality)
+      if [ -n $2 ];
+      then
+        qualityOffset=$2
+      fi
+      shift 2;;
+     
+    -r|--max-read-length)
+      if [ -n $2 ];
+      then
+        maxReadLength=$2
+      fi
+      shift 2;;
+
     -l|--loglevel)
       if [ -n $2 ];
       then
@@ -237,10 +256,17 @@ do
       fi
       shift 2;;
  
-    -t|--tmp-dir)
+    -t|--threads)
       if [ -n $2 ];
       then
-          tmpdir=$(getAbsPath $2)
+        threads=$2
+      fi
+      shift 2;;
+ 
+    --tmp-dir)
+      if [ -n $2 ];
+      then
+        tmpdir=$(getAbsPath $2)
       fi
       shift 2;;
     
@@ -282,39 +308,50 @@ if [[ $annotation == "" ]];then
 fi
 
 basename=$(basename $input)
-sample=${basename%_1*}
-threads=${NSLOTS-1}
+sample=${basename%[_-\.]1*}
 
-index="$BASEDIR/Homo_sapiens.GRCh37.chromosomes.chr.gem"
-annotation="$BASEDIR/gencode.v15.annotation.gtf"
-if [[ $sex == "F" ]];then
-    index="$BASEDIR/Homo_sapiens.GRCh37.chromosomes.female.chr.gem"
-    annotation="$BASEDIR/gencode.v15.annotation.female.gtf"
-fi
+index="$genome.gem"
 
 annName=`basename $annotation`
-
-## Binaries
-#
-gem2sam="$BINDIR/gem-2-sam"
-samtools="$BINDIR/samtools"
-addXS="$BINDIR/sam2cufflinks.sh"
-trToGn="$BINDIR/TrtoGn_RPKM.sh"
-trToEx="$BINDIR/TrtoEx_RPKM.sh"
-bamToContigs="$BINDIR/bamToContigs.sh"
-gt_quality="$BINDIR/gt.quality"
-#gt_filter="$BINDIR/gt.filter"
-gt_filter="$BINDIR/gt.filter.remove"
-gt_stats="$BINDIR/gt.stats"
-pigz="$BINDIR/pigz"
-BAMFLAG="/users/rg/dmitri/bamflag/trunk/bamflag"
-makecontig="$BINDIR/contigsNew.py"
-getHeaderMeta="$BINDIR/samRG.py"
 
 hthreads=$((threads/2))
 if [[ $hthreads == 0 ]];then
     hthreads=1
 fi
+
+## Binaries
+#
+gem2sam="gem-2-sam"
+samtools="samtools"
+addXS="sam2cufflinks.sh"
+trToGn="TrtoGn_RPKM.sh"
+trToEx="TrtoEx_RPKM.sh"
+bamToContigs="bamToContigs.sh"
+gt_quality="gt.quality"
+gt_filter="gt.filter"
+gt_stats="gt.stats"
+pigz="pigz"
+BAMFLAG="bamflag"
+makecontig="contigsNew.py"
+
+## Print pipeline configuration
+
+header="Pipeline configuration for $sample"
+echo $header
+eval "for i in {1..${#header}};do printf \"-\";done"
+printf "\n\n"
+printf "%-34s %s\n" "Input file:" "$input"
+printf "%-34s %s\n" "Reference genome file:" "$genome"
+printf "%-34s %s\n" "Reference gene annotation file:" "$annotation"
+printf "%-34s %s\n" "Max number of allowed mismatches:" "$mism"
+printf "%-34s %s\n" "Max number of hits:" "$hits"
+printf "%-34s %s\n" "Quality offset:" "$qualityOffset"
+printf "%-34s %s\n" "Max read length:" "$maxReadLength"
+printf "%-34s %s\n" "Strandedness:" "$readStrand"
+printf "%-34s %s\n" "Number of threads:" "$threads"
+printf "%-34s %s\n" "Temporary folder:" "${tmpdir-"-"}"
+printf "%-34s %s\n" "Loglevel:" "$loglevel"
+echo ""
 
 ## START
 #
@@ -356,40 +393,7 @@ if [[ `basename $input` =~ fastq ]];then
         printHeader "Map file already present...skipping mapping step"
     fi
     
-    ## Converting to bam
-    ##
-    
-    # if [ ! -e $sample.bam ];then
-    #     step="CONVERT"
-    #     startTime=$(date +%s)
-    #     printHeader "Executing conversion step"
-    
-    #     ## Copy needed files to TMPDIR
-    #     copyToTmp "index"
-    
-    #     log "Converting ${sample} to bam\n" $step
-    
-    #     run "pigz -p $hthreads -dc $sample.map.gz | $gem2sam -T $hthreads -I $TMPDIR/`basename $index` --expect-paired-end-reads -q offset-33 | $samtools view -@ $hthreads -Sb - | $samtools sort -@ $hthreads -m `echo $((4<<30))` - $sample" "$ECHO"
-    #     #pigz -p $threads -dc $TMPDIR/$sample.map.gz | $gem2sam -T $hthreads -I $TMPDIR/`basename $index` --expect-paired-end-reads -q offset-33 | $samtools view -Sb - | $samtools sort -m $((8<<30)) - $TMPDIR/$sample
-    #     if [ -f $TMPDIR/${sample}.bam ]; then
-    #         log "Computing md5sum for bam file..." $step
-    #         run "md5sum $TMPDIR/$sample.bam > $TMPDIR/$sample.bam.md5" "$ECHO"
-    #         run "cp $TMPDIR/$sample.bam.md5 ." "$ECHO"
-    #         log "done\n"
-    
-    #         log "Copying bam file to mapping dir..." $step
-    #         run "cp $TMPDIR/${sample}.bam ." "$ECHO"
-    #         log "done\n"
-    #     #else
-    #     #    log "Error producing bam file" "ERROR" >&2
-    #     #    exit -1
-    #     fi
-    #     endTime=$(date +%s)
-    #     printHeader "Conversion step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
-    # else
-    #     printHeader "Bam file already present...skipping conversion step"
-    # fi
-    
+  
     ## Filtering the map file
     ##
     filteredGem=${sample}_mism_${mism}_mmaps.map.gz
@@ -636,11 +640,7 @@ fi
 
 ## Setting genome index files
 #
-indexDir="/users/rg/projects/references/Genome"
-genomeFai="$indexDir/Homo_sapiens.GRCh37.chromosomes.chr.M.fa.fai"
-if [[ $sex == "F" ]];then
-    genomeFai="$indexDir/Homo_sapiens.GRCh37.chromosomes.female.chr.M.fa.fai"
-fi
+genomeFai="$genome.fai"
 
 ## Producing bigWig files
 ##
@@ -730,11 +730,7 @@ fi
 
 ## Setting genome index files
 #
-indexDir="/users/rg/projects/references/Genome"
-genomeFai="$indexDir/hg19_male.txt"
-if [[ $sex == "F" ]];then
-    genomeFai="$indexDir/hg19_female.txt"
-fi
+genomeFai="$genome.fai"
 
 ## Producing contig files
 ##
