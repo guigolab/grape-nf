@@ -1,20 +1,29 @@
 #!/bin/bash
+
+log() {
+    msg=$1
+    date=`date`
+    printf "$date - $msg\n"
+}
+
 set -e
 
 python=${1-"python"}
 
 echo "### Blueprint RNAseq pipeline buildout  ###"
 # set up binaries
-echo "Download binaries..."
-bintar=bp_pipeline_bin.tgz
-wget -q http://genome.crg.es/~epalumbo/$bintar
-tar xf $bintar
-rm $bintar
+if [ ! -d bin ]; then
+    log "Download binaries..."
+    bintar="bp_pipeline_bin.tgz"
+    wget -q http://genome.crg.es/~epalumbo/$bintar
+    tar xf $bintar
+    rm $bintar
+fi
 
 # Install GEMtools
 gemtools="GEMTools-static-i3-1.6.2"
 if [ ! -d bin/gemtools-1.6.2-i3 ]; then
-  echo "Install $gemtools"
+  log "Install $gemtools"
   cd bin
   wget -q http://barnaserver.com/gemtools/releases/$gemtools.tar.gz
   tar xf $gemtools.tar.gz && rm $gemtools.tar.gz
@@ -25,7 +34,7 @@ fi
 flux_ver="1.2.4"
 flux="flux-capacitor-$flux_ver"
 if [ ! -d bin/$flux ]; then
-  echo "Install $flux"
+  log "Install $flux"
   cd bin
   wget -q http://sammeth.net/artifactory/barna/barna/barna.capacitor/$flux_ver/$flux.tgz
   tar xf $flux.tgz && rm $flux.tgz
@@ -33,26 +42,47 @@ if [ ! -d bin/$flux ]; then
 fi
 
 # set up virtual env
-echo "Set up the Python virtualenv..."
-virtualenv -q --no-site-packages -p $python env
-echo "Activate the virtualenv..."
+if [ ! -d env ]; then
+    log "Set up the Python virtualenv..."
+    virtualenv -q --no-site-packages -p $python env
+fi
+log "Activate the virtualenv..."
 . env/bin/activate
-echo "Install required Python packages..."
-pip -q install -r pip-requirements.txt
+numpy=`python -c 'import numpy; print numpy.__version__' 2> /dev/null | cut -f1,2. -d.`
+if [[ "`echo "$numpy >= 1.7" | bc -l`" != 1 ]];then     
+    log "Install required Python packages..."
+    pip -q install -r pip-requirements.txt
+fi
 
-# install RSeQC
-echo "Download RSeQC 2.3.7..."
-wget -q http://downloads.sourceforge.net/project/rseqc/RSeQC-2.3.7.tar.gz
-tar xf RSeQC-2.3.7.tar.gz
-rm RSeQC-2.3.7.tar.gz
-cd RSeQC-2.3.7
-echo "Install RSeQC 2.3.7..."
-python setup.py install &> install.log
-cd ..
-cd env/lib/python2.7/site-packages/RSeQC-2.3.7-py2.7-linux-x86_64.egg
-mv pysam pysam_old
-ln -s ../pysam
-rm -rf RSeQC-2.3.7
-echo "Deactivate the virtualenv"
-deactivate
-echo "### done ###"
+# download and unpack RSeQC
+if [ ! -d RSeQC-2.3.7 ]; then
+    log "Download RSeQC 2.3.7..."
+    wget -q http://downloads.sourceforge.net/project/rseqc/RSeQC-2.3.7.tar.gz
+    tar xf RSeQC-2.3.7.tar.gz
+    rm RSeQC-2.3.7.tar.gz
+    cd RSeQC-2.3.7
+fi
+
+# check if the virtual env is already active or activate it
+if [[ ! $VIRTUAL_ENV ]];then
+    log "Activate the virtualenv..."
+    . env/bin/activate
+fi
+
+# instal RSeQC
+if [ ! `python -c 'import bx; print bx.__version__'` ]; then
+    log "Install RSeQC 2.3.7..."
+    python setup.py install &> install.log
+    cd ..
+    cd env/lib/python2.7/site-packages/RSeQC-2.3.7-py2.7-linux-x86_64.egg
+    mv pysam pysam_old
+    ln -s ../pysam
+    rm -rf RSeQC-2.3.7
+fi
+
+# deactivate the virtualenv if active
+if [[ $VIRTUAL_ENV ]]; then
+    log "Deactivate the virtualenv"
+    deactivate
+fi
+log "### done ###"
