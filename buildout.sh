@@ -29,6 +29,9 @@ cd RSeQC-2.3.7
 echo "Install RSeQC 2.3.7..."
 python setup.py install &> install.log
 cd ..
+cd env/lib/python2.7/site-packages/RSeQC-2.3.7-py2.7-linux-x86_64.egg
+mv pysam pysam_old
+ln -s ../pysam
 echo "Deactivate the virtualenv"
 deactivate
 echo "### done ###"
