@@ -76,7 +76,7 @@ if [ ! `python -c 'import bx; print bx.__version__'` ]; then
     python setup.py install &> install.log
     cd ..
     rm -rf RSeQC-2.3.7
-    cd env/lib/python2.7/site-packages/RSeQC-2.3.7-py2.7-linux-x86_64.egg
+    cd $env/lib/python2.7/site-packages/RSeQC-2.3.7-py2.7-linux-x86_64.egg
     mv pysam pysam_old
     ln -s ../pysam
 fi
