@@ -49,7 +49,7 @@ fi
 log "Activate the virtualenv"
 . env/bin/activate
 numpy=`python -c 'import numpy; print numpy.__version__' 2> /dev/null | cut -f1,2 -d.`
-if [[ "`echo "$numpy >= 1.7" | bc -l`" != 1 ]];then     
+if [[ "`echo $numpy >= 1.7 | bc -l`" != 1 ]];then
     log "Install required Python packages"
     pip -q install -r pip-requirements.txt
 fi
