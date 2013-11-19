@@ -484,7 +484,7 @@ if [ $bamstats ]; then
     uniqBam=${filteredBam%.bam}_uniq.bam
     if [ ! -e $uniqBam ];then
         log "Making a bam file of unique mappings..." $step
-        run "$bamflag -in $filteredBam -out $uniqBam -m 3" "$ECHO"
+        set +e && run "$bamflag -in $filteredBam -out $uniqBam -m 3" "$ECHO"
         log "done\n"
     fi
 
