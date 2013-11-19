@@ -105,9 +105,9 @@ function finalizeStep {
     local tmpdir=$2
     local outdir=$3
     paths=${paths}${outdir}/`basename $file`
-    printf "\n$file $tmpdir $outdir\n"
     log "Computing md5sum for $file..." $step
     run "md5sum $file > $file.md5" "$ECHO"
+    log "done\n"
     if [ -d $tmpdir ];then
         local tmpfile=$tmpdir/`basename $file`        
         log "Copying  temporary files..." $step
@@ -276,8 +276,8 @@ basename=$(basename $input)
 sample=${basename%[_-\.]1*}
 
 genomeFai="$genome.fai"
-gemIndex="$genome.gem"
-tindex="$annotation.gem"
+gemIndex="${genome%.fa}.gem"
+tindex="$annotation.junctions.gem"
 tkeys="$annotation.junctions.keys"
 
 annName=`basename $annotation`
@@ -291,7 +291,6 @@ fi
 #
 gem2sam="gem-2-sam"
 samtools="samtools"
-addXS="sam2cufflinks.sh"
 trToGn="TrtoGn_RPKM.sh"
 trToEx="TrtoEx_RPKM.sh"
 bamToContigs="bamToContigs.sh"
@@ -344,9 +343,9 @@ if [[ `basename $input` =~ fastq ]];then
         fi
     
         log "Running gemtools rna pipeline on ${sample}" $step
-        run "gemtools --loglevel $loglevel rna-pipeline -f $input -q 33 -i $gemIndex -a $annotation -t $threads --no-bam" "$ECHO"
-    
-        set -e && finalizeStep "$gem $tmpdir $outdir"
+        run "gemtools --loglevel $loglevel rna-pipeline -f $input -q 33 -i $gemIndex -a $annotation -t $threads --no-stats --no-bam" "$ECHO"
+   
+        set -e && finalizeStep $gem $tmpdir $outdir
         IFS=',' read gem <<< "$paths"
         
         endTime=$(date +%s)
@@ -354,12 +353,12 @@ if [[ `basename $input` =~ fastq ]];then
     else
         printHeader "Map file already present...skipping mapping step"
     fi
-  
+ 
     ## Filtering the map file
     ##
-    filteredGem=${gem%.map.gz}_m${mism}_n${hits}.map.gz
+    filteredGem=${gem%.map.gz}_m${mism}_n${hits}.map.gz    
     
-    if [ ! -e $filteredGm ];then
+    if [ ! -e $filteredGem ];then
         step="FILTER"
         startTime=$(date +%s)
         printHeader "Executing filtering step"
@@ -368,7 +367,7 @@ if [[ `basename $input` =~ fastq ]];then
         run "$gt_quality -i $gem -t $threads | $gt_filter --max-levenshtein-error $mism -t $threads | $gt_filter --max-matches $hits -t $threads | $pigz -p $threads -c > $filteredGem" "$ECHO"
         log "done\n" $step
 
-        set -e && finalizeStep "$filteredGem - $outdir"
+        set -e && finalizeStep $filteredGem "-" $outdir
 
         endTime=$(date +%s)
         printHeader "Filtering step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
@@ -376,7 +375,7 @@ if [[ `basename $input` =~ fastq ]];then
         printHeader "Filtered map file is present...skipping fltering step"
     fi
  
-    ## Filtering the map file
+    ## Getting stats for the filtered map file
     ##
     filteredGemStats=${filteredGem%.map.gz}.stats
     
@@ -389,15 +388,15 @@ if [[ `basename $input` =~ fastq ]];then
         run "$gt_stats -i $filteredGem -t $threads -a -p 2> $filteredGemStats" "$ECHO"
         log "done\n" $step
 
-        set -e && finalizeStep "$filteredGemStats - $outdir"
+        set -e && finalizeStep $filteredGemStats "-" $outdir
 
         endTime=$(date +%s)
         printHeader "GEM stats step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
     else
         printHeader "GEM stats file is present...skipping GEM stats step"
     fi
-    
-    ## Convert to bam and adding the XS field
+
+    ## Convert to bam 
     ##
     filteredBam=${filteredGem%.map.gz}.bam
     
@@ -414,15 +413,15 @@ if [[ `basename $input` =~ fastq ]];then
         fi
        
         log "Converting  $sample to bam..." $step
-        command="$pigz -p $hthreads -dc $filteredGem | $gem2sam -T $hthreads -I $TMPDIR/`basename $gemIndex` --expect-paired-end-reads -q offset-33 -l"
+        command="$pigz -p $hthreads -dc $filteredGem | $gem2sam -T $hthreads -I $gemIndex --expect-paired-end-reads -q offset-33 -l"
         if [[ $readGroup ]];
         then
             command="$command --read-group $readGroup"
         fi
-        run "$command | $addXS $readStrand | $samtools view -@ $threads -Sb - | $samtools sort -@ $threads -m 4G - ${filteredBam%.bam}" "$ECHO"
+        run "$command | $samtools view -@ $threads -Sb - | $samtools sort -@ $threads -m 4G - ${filteredBam%.bam}" "$ECHO"
         log "done\n" $step
         
-        set -e && finalizeStep "$filteredBam $tmpdir $outdir"        
+        set -e && finalizeStep $filteredBam $tmpdir $outdir       
         IFS=',' read filteredBam <<< "$paths"
 
         endTime=$(date +%s)
@@ -451,7 +450,7 @@ if [ $filteredBam.bai -ot $filteredBam ];then
     log "Indexing the filtered bam file\n" $step
     run "$samtools index $filteredBam" "$ECHO"
     
-    set -e && finalizeStep "$filteredBai $tmpdir $outdir"        
+    set -e && finalizeStep $filteredBam.bai $tmpdir $outdir        
     IFS=',' read filteredBai <<< "$paths"
 
     endTime=$(date +%s)
@@ -476,17 +475,14 @@ if [ $bamstats ]; then
 
     if [ -d $tmpdir ]; then
         ## Copy needed files to TMPDIR
-        copyToTmp "$filteredBam"
-        IFS=',' read filteredBam <<< "$paths"
+        copyToTmp "$filteredBam,$annotation"
+        IFS=',' read filteredBam annotation <<< "$paths"
     fi
 
     log "Producing mapping stats for the bam file\n" $step
 
     ## Create another bam with only uniquely mapping reads
-    uniqBam=$outdir/${filteredBam%.bam}_uniq.bam
-    if [ -d $tmpdir ];then
-        uniqBam=$tmpdir/${filteredBam%.bam}_uniq.bam
-    fi
+    uniqBam=${filteredBam%.bam}_uniq.bam
     if [ ! -e $uniqBam ];then
         log "Making a bam file of unique mappings..." $step
         run "$bamflag -in $filteredBam -out $uniqBam -m 3" "$ECHO"
@@ -494,12 +490,8 @@ if [ $bamstats ]; then
     fi
 
     ## Create a bed12 from gtf
-    genePred=$outdir/${annName%.gtf}.GenePred
-    bed12=$outdir/${annName%.gtf}.bed12
-    if [ -d $tmpdir ]; then
-        genePred=$tmpdir/${annName%.gtf}.GenePred
-        bed12=$tmpdir/${annName%.gtf}.bed12
-    fi
+    genePred=${annotation%.gtf}.GenePred
+    bed12=${annotation%.gtf}.bed12
     if [ ! -e $genePred ];then
         run "/users/rg/abreschi/bioprogs/Jim_Kent_source_tree/gtfToGenePred $annotation -allErrors $genePred 2> $genePred.err" "$ECHO"
         run "cat $genePred | ~abreschi/bioprogs/Jim_Kent_source_tree/genePredToBed12 > $bed12" "$ECHO"
@@ -623,7 +615,7 @@ if [[ $doBigWig == "1" ]];then
             log "Making bigWig $strand strand\n" $step
             run "bedGraphToBigWig $bedGraph $genomeFai $bigWig" "$ECHO"
 
-            set -e && finalizeStep "$bigWig $tmpdir $outdir"
+            set -e && finalizeStep $bigWig $tmpdir $outdir
             IFS=',' read bigWig <<< "$paths"
         done
     else
@@ -639,7 +631,7 @@ if [[ $doBigWig == "1" ]];then
         log "Making bigWig\n" $step
         run "bedGraphToBigWig $bedGraph $genomeFai $bigWig" "$ECHO"
 
-        set -e && finalizeStep "$bigWig $tmpdir $outdir"
+        set -e && finalizeStep $bigWig $tmpdir $outdir
         IFS=',' read bigWig <<< "$paths"
     fi
 
@@ -651,7 +643,7 @@ fi
 
 ## Producing contig files
 ##
-contigFile=$output/${sample}_contigs.bed
+contigFile=$outdir/${sample}_contigs.bed
 if [ ! -e $contigFile ];then
     step="CONTIGS"
     startTime=$(date +%s)
@@ -668,21 +660,18 @@ if [ ! -e $contigFile ];then
 
     if [[ $stranded == 1 ]];then
 
-        revBam=$output/${filteredBam%.bam}_1rev.bam
-        if [ -d $tmpdir ]; then
-            revBam=$tmpdir/${filteredBam%.bam}_1rev.bam
-        fi
+        revBam=${filteredBam%.bam}_1rev.bam
         if [ ! -e $revBam ];then
             ## Producing temporary bam with mate1 reversed
             log "Making temporary bam file with mate1 strand reversed..." $step
-            run "$samtools view -h -@ $hthreads $TMPDIR/$filteredBam | awk -v MateBit=64 'BEGIN {OFS=\"\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}' | $samtools view -@ $hthreads -Sb - > $revBam" "$ECHO"
+            run "$samtools view -h -@ $threads $filteredBam | awk -v MateBit=64 'BEGIN {OFS=\"\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}' | $samtools view -@ $threads -Sb - > $revBam" "$ECHO"
             log "done\n"
         fi
 
         uniqBam=${revBam%.bam}_uniq.bam
         if [ ! -e $uniqBam ];then
             log "Making a bam file of unique mappings..." $step
-            run "$BAMFLAG -in $revBam -out $uniqBam -m 3" "$ECHO"
+            run "$bamflag -in $revBam -out $uniqBam -m 3" "$ECHO"
             log "done\n"
         fi
 
@@ -699,17 +688,14 @@ if [ ! -e $contigFile ];then
         done
 
         log "Generationg the contigs file..." $step
-        run "python $makecontig --chrFile $genomeFai --fileP ${uniqBam%.bam}.plusRaw.bedgraph --fileM ${uniqBam%.bam}.minusRaw.bedgraph | awk '{s=\"\"; for(i=1; i<=NF; i++){s=(s)(\$i)(\"\t\")} print s}' > $TMPDIR/$contigFile" "$ECHO"
+        run "python $makecontig --chrFile $genomeFai --fileP ${uniqBam%.bam}.plusRaw.bedgraph --fileM ${uniqBam%.bam}.minusRaw.bedgraph | awk '{s=\"\"; for(i=1; i<=NF; i++){s=(s)(\$i)(\"\t\")} print s}' > $contigFile" "$ECHO"
         log "done\n"
     else
         
-        uniqBam=$outdir/${filteredBam%.bam}_uniq.bam
-        if [ -d $tmpdir ]; then
-            uniqBam=$tmpdir/${filteredBam%.bam}_uniq.bam
-        fi
+        uniqBam=${filteredBam%.bam}_uniq.bam
         if [ ! -e $uniqBam ];then
             log "Making a bam file of unique mappings..." $step
-            run "$BAMFLAG -in $TMPDIR/$filteredBam -out $uniqBam -m 3" "$ECHO"
+            run "$bamflag -in $filteredBam -out $uniqBam -m 3" "$ECHO"
             log "done\n"
         fi
         
@@ -718,7 +704,7 @@ if [ ! -e $contigFile ];then
         log "done\n"
     fi
 
-    set -e && finalizeStep "$contigFile $tmpdir $quanDir"
+    set -e && finalizeStep $contigFile $tmpdir $quantDir
     IFS=',' read contigFile <<< "$paths"
 
     endTime=$(date +%s)
@@ -734,18 +720,37 @@ step="FLUX"
 quantDir="$BASEDIR/quantification/$sample"
 export FLUX_MEM=${fluxMem-"3G"}
 
-if [ ! -d i$quantDir ]; then
+if [ ! -d $quantDir ]; then
     log "Creating sample folder in $quantDir..." $step
     run "mkdir -p $quantDir" "$ECHO"
     log "done\n"
 fi
 
 paramFile="$quantDir/$sample.par"
-proFile="$quanDir/$sample.pro"
+proFile="$quantDir/$sample.pro"
+
+# prepare parameter file
+#
+# READ_STRAND MATE2_SENSE
+# ANNOTATION_MAPPING PAIRED_STRANDED
+# COUNT_ELEMENTS [SPLICE_JUNCTIONS, INTRONS]
+
+if [ ! -e $paramFile ]; then
+    annotationMapping="AUTO"
+    countElements="[]"
+    if [[ $readStrand != "NONE" ]]; then
+        echo "READ_STRAND $readStrand" >> $paramFile
+        annotationMapping="STRANDED"
+        [[ $paired == "true" ]] && annotationMapping="PAIRED_${annotationMapping}"
+    fi
+    
+    echo "ANNOTATION_MAPPING $annotationMapping" >> $paramFile
+    echo "COUNT_ELEMENTS $countElements" >> $paramFile
+fi
 
 ## Run transcript quantification
 #
-fluxGtf="$quanDir/$sample.gtf"
+fluxGtf="$quantDir/$sample.gtf"
 if [ ! -e $fluxGtf ];then
     startTime=$(date +%s)
     printHeader "Executing Flux quantification step"
@@ -758,7 +763,7 @@ if [ ! -e $fluxGtf ];then
     fi
 
     if [ ! -e $TMPDIR/${annName%.gtf}_sorted.gtf ];then
-        sortLog="$quanDir/${sample}_sort_annotation.log"
+        sortLog="$quantDir/${sample}_sort_annotation.log"
         log "Checking if the annotation is sorted" $step
         set -e && run "flux-capacitor -t sortGTF -c -i $annotation -o ${annotation%.gtf}_sorted.gtf > $sortLog 2>&1" "$ECHO"
         log "done\n"
@@ -771,10 +776,9 @@ if [ ! -e $fluxGtf ];then
     fi
 
     if [[ ! -e $proFile ]];then
-        profileLog="$quanDir/${sample}_flux_profile.log"
+        profileLog="$quantDir/${sample}_flux_profile.log"
         log "Getting sistematic biases along transcripts\n" $step
         run "flux-capacitor --profile -p $paramFile -i $filteredBam -a $anno --profile-file $proFile > $profileLog 2>&1" "$ECHO"
-        log "done\n"
     fi
 
     if [ -e $fluxGtf ];then
@@ -782,10 +786,10 @@ if [ ! -e $fluxGtf ];then
     fi
 
     log "Running Flux Capacitor\n" $step
-    quantLog=$quanDir/${sample}_flux_quantification.log
+    quantLog=$quantDir/${sample}_flux_quantification.log
     run "flux-capacitor -p $paramFile -i $filteredBam -a $anno -o $fluxGtf > $quantLog 2>&1" "$ECHO"
 
-    set -e && finalizeStep "$fluxGtf $tmpdir $quanDir"
+    set -e && finalizeStep $fluxGtf $tmpdir $quantDir
     IFS=',' read fluxGtf <<< "$paths"
 
     endTime=$(date +%s)
@@ -858,7 +862,7 @@ if [ ! -e $exonFile ];then
     log "Running Exon quantification\n" $step
     run "$trToEx -a $annotation -i $fluxGtf -o `dirname $exonFile`" "$ECHO"
 
-    set -e && finalizeStep "$exonFile $tmpdir $quanDir"
+    set -e && finalizeStep $exonFile $tmpdir $quantDir
     IFS=',' read exonFile <<< "$paths"
     
     endTime=$(date +%s)
@@ -868,7 +872,7 @@ else
     printHeader "Exon quantification file present...skipping Exon quantification step"
 fi
 
-geneFile=$quantDir/$sample/${sample}_gene_with_rpkm.gff
+geneFile=$quantDir/${sample}_gene_with_rpkm.gff
 if [ ! -e $geneFile ];then
     step="GENE"
     startTime=$(date +%s)
@@ -884,7 +888,7 @@ if [ ! -e $geneFile ];then
     log "Running Gene quantification\n" $step
     run "$trToGn -a $annotation -i $fluxGtf -o `dirname $geneFile`" "$ECHO"
 
-    set -e && finalizeStep "$geneFile $tmpdir $quanDir"
+    set -e && finalizeStep $geneFile $tmpdir $quantDir
     IFS=',' read geneFile <<< "$paths"
     
     endTime=$(date +%s)
@@ -901,4 +905,5 @@ pipelineEnd=$(date +%s)
 
 log "\n"
 printHeader "Blueprint pipeline for $sample completed in $(echo "($pipelineEnd-$pipelineStart)/60" | bc -l | xargs printf "%.2f\n") min "
+
 exit 0
