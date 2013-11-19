@@ -27,7 +27,7 @@ tar xf RSeQC-2.3.7.tar.gz
 rm RSeQC-2.3.7.tar.gz
 cd RSeQC-2.3.7
 echo "Install RSeQC 2.3.7..."
-python setup.py --quiet install --record=install.log
+python setup.py install &> install.log
 cd ..
 echo "Deactivate the virtualenv"
 deactivate

@@ -244,6 +244,10 @@ done
 
 BASEDIR=`dirname $outdir`
 BINDIR="$BASEDIR/bin"
+
+# activate python virtualenv
+run ". $BASEDIR/env/bin/activate" $ECHO
+
 export PATH=$BASEDIR/gemtools-1.6.2-i3/bin:$BASEDIR/flux-capacitor-1.2.4/bin:$BINDIR:$PATH
 
 ## Setting variables and input files
@@ -290,7 +294,7 @@ gt_quality="gt.quality"
 gt_filter="gt.filter"
 gt_stats="gt.stats"
 pigz="pigz"
-BAMFLAG="bamflag"
+bamflag="bamflag"
 makecontig="contigsNew.py"
 
 ## Print pipeline configuration
@@ -453,9 +457,8 @@ fi
 
 ## Producing stats for bam file
 ##
-statsDir=$BASEDIR/$sample/stats
-stats=false
-if [ $stats ] && [ ! -d $statsDir ];then
+statsDir=$outdir/stats
+if [ $bamstats ]; then
     step="BAM-STATS"
     startTime=$(date +%s)
     printHeader "Executing bam stats step on the filtered bam file"
@@ -466,22 +469,32 @@ if [ $stats ] && [ ! -d $statsDir ];then
         log "done\n"
     fi
 
-    ## Copy needed files to TMPDIR
-    copyToTmp "filtered-bam"
+    if [ -d $tmpdir ]; then
+        ## Copy needed files to TMPDIR
+        copyToTmp "$filteredBam"
+        IFS=',' read filteredBam <<< "$paths"
+    fi
 
     log "Producing mapping stats for the bam file\n" $step
 
     ## Create another bam with only uniquely mapping reads
-    uniqBam=$TMPDIR/${filteredBam%.bam}_uniq.bam
+    uniqBam=$outdir/${filteredBam%.bam}_uniq.bam
+    if [ -d $tmpdir ];then
+        uniqBam=$tmpdir/${filteredBam%.bam}_uniq.bam
+    fi
     if [ ! -e $uniqBam ];then
         log "Making a bam file of unique mappings..." $step
-        run "$BAMFLAG -in $filteredBam -out $uniqBam -m 3" "$ECHO"
+        run "$bamflag -in $filteredBam -out $uniqBam -m 3" "$ECHO"
         log "done\n"
     fi
 
     ## Create a bed12 from gtf
-    genePred=$TMPDIR/${annName%.gtf}.GenePred
-    bed12=$TMPDIR/${annName%.gtf}.bed12
+    genePred=$outdir/${annName%.gtf}.GenePred
+    bed12=$outdir/${annName%.gtf}.bed12
+    if [ -d $tmpdir ]; then
+        genePred=$tmpdir/${annName%.gtf}.GenePred
+        bed12=$tmpdir/${annName%.gtf}.bed12
+    fi
     if [ ! -e $genePred ];then
         run "/users/rg/abreschi/bioprogs/Jim_Kent_source_tree/gtfToGenePred $annotation -allErrors $genePred 2> $genePred.err" "$ECHO"
         run "cat $genePred | ~abreschi/bioprogs/Jim_Kent_source_tree/genePredToBed12 > $bed12" "$ECHO"
@@ -497,7 +510,6 @@ if [ $stats ] && [ ! -d $statsDir ];then
 
     ## Run the statistics
     #
-    . /software/rg/el6.3/python2.7/bin/activate
 
     ## bam_stat
     bamStat=$statsDir/$sample.bam_stat
@@ -547,8 +559,6 @@ if [ $stats ] && [ ! -d $statsDir ];then
         run "junction_annotation.py -i $filteredBam -o $statsDir/$sample -r $bed12 &> $statsDir/$sample.junction_annotation.log" "$ECHO"
         log "done\n"
     fi
-
-    run "deactivate" "$ECHO"
 
     endTime=$(date +%s)
     printHeader "BAM stats step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
@@ -878,6 +888,9 @@ if [ ! -e $geneFile ];then
 else
     printHeader "Gene quantification file present...skipping Gene quantification step"
 fi
+
+# deactivate python virtualenv
+run "deactivate" $ECHO
 
 pipelineEnd=$(date +%s)
 
