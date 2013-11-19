@@ -42,12 +42,19 @@ if [ ! -d bin/$flux ]; then
 fi
 
 # set up virtual env
-if [ ! -d env ]; then
+env=${2-"."}
+if [ ! -f $env/bin/python ]; then
     log "Set up the Python virtualenv"
-    virtualenv -q --no-site-packages -p $python env
+    virtualenv -q --no-site-packages -p $python $env
 fi
-log "Activate the virtualenv"
-. env/bin/activate
+
+# check if the virtual env is already active or activate it
+if [[ ! $VIRTUAL_ENV ]];then
+    log "Activate the virtualenv"
+    . $env/bin/activate
+fi
+
+# install python packages
 numpy=`python -c 'import numpy; print numpy.__version__' 2> /dev/null | cut -f1,2 -d.`
 if [[ "`echo $numpy >= 1.7 | bc -l`" != 1 ]];then
     log "Install required Python packages"
@@ -61,12 +68,6 @@ if [ ! -d RSeQC-2.3.7 ]; then
     tar xf RSeQC-2.3.7.tar.gz
     rm RSeQC-2.3.7.tar.gz
     cd RSeQC-2.3.7
-fi
-
-# check if the virtual env is already active or activate it
-if [[ ! $VIRTUAL_ENV ]];then
-    log "Activate the virtualenv"
-    . env/bin/activate
 fi
 
 # instal RSeQC
