@@ -1,7 +1,6 @@
 TODO list
 ---------
 
-- remove/change tmp folder usage or add an option for it
 - update stats and add cli option
 - steps modularity
 - remove or change cluster configuration
