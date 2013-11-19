@@ -41,6 +41,7 @@ function usage {
     printf "  -t|--threads\t\tNumber of threads. Default \"1\".\n"
     printf "  -h|--help\t\tShow this message and exit.\n"
     printf "  --flux-mem\t\tSpecify the amount of ram the Flux Capacitor can use. Default: \"3G\".\n"
+    printf "  --bam-stats\t\t\tRun the RSeQC stats on the bam file. Default \"false\".\n"
     printf "  --tmp-dir\t\tSpecify local temporary folder to copy files when running on distributed file systems. Default: \"-\".\n"
     printf "  --dry-run\t\t\tTest the pipeline. Writes the command to the standard output.\n"
     exit 0
@@ -119,7 +120,7 @@ function finalizeStep {
 #
 
 # Execute getopt
-ARGS=`getopt -o "i:g:a:m:n:s:t:l:q:r:h" -l "input:,genome:,annotation:,mismatches:,hits:,read-strand:,threads:,loglevel:,quality:,max-read-length:,tmp-dir:,flux-mem:,dry-run,help" \
+ARGS=`getopt -o "i:g:a:m:n:s:t:l:q:r:h" -l "input:,genome:,annotation:,mismatches:,hits:,read-strand:,threads:,loglevel:,quality:,max-read-length:,tmp-dir:,flux-mem:,bam-stats,dry-run,help" \
       -n "$0" -- "$@"`
 
 #Bad arguments
@@ -225,6 +226,10 @@ do
         tmpdir=$(getAbsPath $2)
       fi
       shift 2;;
+ 
+    --bam-stats)
+      bamstats="true"
+      shift ;;
     
     --dry-run)
       ECHO="echo "
