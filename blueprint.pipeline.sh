@@ -492,8 +492,8 @@ if [ $bamstats ]; then
     genePred=${annotation%.gtf}.GenePred
     bed12=${annotation%.gtf}.bed12
     if [ ! -e $genePred ];then
-        run "/users/rg/abreschi/bioprogs/Jim_Kent_source_tree/gtfToGenePred $annotation -allErrors $genePred 2> $genePred.err" "$ECHO"
-        run "cat $genePred | ~abreschi/bioprogs/Jim_Kent_source_tree/genePredToBed12 > $bed12" "$ECHO"
+        set +e && run "/users/rg/abreschi/bioprogs/Jim_Kent_source_tree/gtfToGenePred $annotation -allErrors $genePred 2> $genePred.err" "$ECHO"
+        set +e && run "cat $genePred | ~abreschi/bioprogs/Jim_Kent_source_tree/genePredToBed12 > $bed12" "$ECHO"
     fi
 
     ## Check that the files were created successfully
@@ -670,7 +670,7 @@ if [ ! -e $contigFile ];then
         uniqBam=${revBam%.bam}_uniq.bam
         if [ ! -e $uniqBam ];then
             log "Making a bam file of unique mappings..." $step
-            run "$bamflag -in $revBam -out $uniqBam -m 3" "$ECHO"
+            set +e && run "$bamflag -in $revBam -out $uniqBam -m 3" "$ECHO"
             log "done\n"
         fi
 
@@ -694,7 +694,7 @@ if [ ! -e $contigFile ];then
         uniqBam=${filteredBam%.bam}_uniq.bam
         if [ ! -e $uniqBam ];then
             log "Making a bam file of unique mappings..." $step
-            run "$bamflag -in $filteredBam -out $uniqBam -m 3" "$ECHO"
+            set +e && run "$bamflag -in $filteredBam -out $uniqBam -m 3" "$ECHO"
             log "done\n"
         fi
         
