@@ -4,26 +4,31 @@ set -e
 logfile="bp.buildout.log"
 python=${1-"python"}
 
+echo "### Blueprint RNAseq pipeline buildout  ###"
 # set up binaries
-echo "Downloading binaries..."
+echo "Download binaries..."
 bintar=bp_pipeline_bin.tgz
 wget -q http://genome.crg.es/~epalumbo/$bintar
 tar xf $bintar
 rm $bintar
 
 # set up virtual env
-echo "Setting up Python virtualenv..."
+echo "Set up the Python virtualenv..."
 virtualenv -q --no-site-packages -p $python env
+echo "Activate the virtualenv..."
 . env/bin/activate
+echo "Install required Python packages..."
 pip -q install -r pip-requirements.txt
-deactivate
 
 # install RSeQC
-echo "Installing RSeQC..."
-wget i-q http://downloads.sourceforge.net/project/rseqc/RSeQC-2.3.7.tar.gz
+echo "Download RSeQC 2.3.7..."
+wget -q http://downloads.sourceforge.net/project/rseqc/RSeQC-2.3.7.tar.gz
 tar xf RSeQC-2.3.7.tar.gz
 rm RSeQC-2.3.7.tar.gz
 cd RSeQC-2.3.7
-python setup.py --quiet install
+echo "Install RSeQC 2.3.7..."
+python setup.py --quiet install --record=install.log
 cd ..
-echo "done"
+echo "Deactivate the virtualenv"
+deactivate
+echo "### done ###"
