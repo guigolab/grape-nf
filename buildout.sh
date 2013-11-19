@@ -13,7 +13,7 @@ python=${1-"python"}
 echo "### Blueprint RNAseq pipeline buildout  ###"
 # set up binaries
 if [ ! -d bin ]; then
-    log "Download binaries..."
+    log "Download and unpack binaries"
     bintar="bp_pipeline_bin.tgz"
     wget -q http://genome.crg.es/~epalumbo/$bintar
     tar xf $bintar
@@ -43,20 +43,20 @@ fi
 
 # set up virtual env
 if [ ! -d env ]; then
-    log "Set up the Python virtualenv..."
+    log "Set up the Python virtualenv"
     virtualenv -q --no-site-packages -p $python env
 fi
-log "Activate the virtualenv..."
+log "Activate the virtualenv"
 . env/bin/activate
 numpy=`python -c 'import numpy; print numpy.__version__' 2> /dev/null | cut -f1,2. -d.`
 if [[ "`echo "$numpy >= 1.7" | bc -l`" != 1 ]];then     
-    log "Install required Python packages..."
+    log "Install required Python packages"
     pip -q install -r pip-requirements.txt
 fi
 
 # download and unpack RSeQC
 if [ ! -d RSeQC-2.3.7 ]; then
-    log "Download RSeQC 2.3.7..."
+    log "Download and unpack RSeQC 2.3.7"
     wget -q http://downloads.sourceforge.net/project/rseqc/RSeQC-2.3.7.tar.gz
     tar xf RSeQC-2.3.7.tar.gz
     rm RSeQC-2.3.7.tar.gz
@@ -65,13 +65,13 @@ fi
 
 # check if the virtual env is already active or activate it
 if [[ ! $VIRTUAL_ENV ]];then
-    log "Activate the virtualenv..."
+    log "Activate the virtualenv"
     . env/bin/activate
 fi
 
 # instal RSeQC
 if [ ! `python -c 'import bx; print bx.__version__'` ]; then
-    log "Install RSeQC 2.3.7..."
+    log "Install RSeQC 2.3.7"
     python setup.py install &> install.log
     cd ..
     rm -rf RSeQC-2.3.7
