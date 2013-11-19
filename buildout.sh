@@ -47,6 +47,7 @@ env=${2-"."}
 if [ ! -f $env/bin/python ]; then
     log "Set up the Python virtualenv"
     virtualenv -q --no-site-packages -p $python $env
+    sed -i 's/PATH=\"$VIRTUAL_ENV\/bin:\$PATH\"/PATH=\"$VIRTUAL_ENV\/bin:$VIRTUAL_ENV\/bin\/$gemdir\/bin:$VIRTUAL_ENV\/bin\/$flux\/bin:\$PATH\"/g' $env/bin/activate
 fi
 
 # check if the virtual env is already active or activate it
