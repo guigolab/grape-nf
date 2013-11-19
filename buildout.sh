@@ -22,7 +22,7 @@ fi
 
 # Install GEMtools
 gemtools="GEMTools-static-i3-1.6.2"
-gemdir=`echo ${gemtools,,} | cut -d- -f1,4,3`
+gemdir=`echo ${gemtools,,} | awk -F"-" '{print $1FS$4FS$3}'`
 if [ ! -d bin/$gemdir ]; then
   log "Install $gemtools"
   cd bin
