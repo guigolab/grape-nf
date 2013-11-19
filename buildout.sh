@@ -22,7 +22,8 @@ fi
 
 # Install GEMtools
 gemtools="GEMTools-static-i3-1.6.2"
-if [ ! -d bin/gemtools-1.6.2-i3 ]; then
+gemdir=`echo ${gemtools,,} | cut -d- -f1,4,3`
+if [ ! -d bin/$gemdir ]; then
   log "Install $gemtools"
   cd bin
   wget -q http://barnaserver.com/gemtools/releases/$gemtools.tar.gz
