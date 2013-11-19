@@ -31,7 +31,7 @@ if [ ! -d bin/$flux ]; then
   tar xf $flux.tgz && rm $flux.tgz
   cd ..
 fi
-exit 0
+
 # set up virtual env
 echo "Set up the Python virtualenv..."
 virtualenv -q --no-site-packages -p $python env
