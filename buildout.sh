@@ -5,7 +5,7 @@ logfile="bp.buildout.log"
 python=${1-"python"}
 
 # set up binaries
-echo"Downloading binaries..."
+echo "Downloading binaries..."
 bintar=bp_pipeline_bin.tgz
 wget -q http://genome.crg.es/~epalumbo/$bintar
 tar xf $bintar
