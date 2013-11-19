@@ -72,7 +72,7 @@ if [ ! -d RSeQC-2.3.7 ]; then
 fi
 
 # instal RSeQC
-if [ ! `python -c 'import bx; print bx.__version__'` ]; then
+if [ ! `python -c 'import bx; print bx.__version__' 2> /dev/null` ]; then
     log "Install RSeQC 2.3.7"
     python setup.py install &> install.log
     cd ..
