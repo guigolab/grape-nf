@@ -104,7 +104,7 @@ function finalizeStep {
     local file=$1
     local tmpdir=$2
     local outdir=$3
-    paths=${paths}${outdir}/`basename $file`
+    paths=${outdir}/`basename $file`
     log "Computing md5sum for $file..." $step
     run "md5sum $file > $file.md5" "$ECHO"
     log "done\n"
@@ -253,7 +253,7 @@ BINDIR="$BASEDIR/bin"
 # activate python virtualenv
 run ". $BASEDIR/env/bin/activate" $ECHO
 
-export PATH=$BASEDIR/gemtools-1.6.2-i3/bin:$BASEDIR/flux-capacitor-1.2.4/bin:$BINDIR:$PATH
+export PATH=$BINDIR:$BINDIR/gemtools-1.6.2-i3/bin:$BINDIR/flux-capacitor-1.2.4/bin:$PATH
 
 ## Setting variables and input files
 ##
@@ -451,7 +451,6 @@ if [ $filteredBam.bai -ot $filteredBam ];then
     run "$samtools index $filteredBam" "$ECHO"
     
     set -e && finalizeStep $filteredBam.bai $tmpdir $outdir        
-    IFS=',' read filteredBai <<< "$paths"
 
     endTime=$(date +%s)
     printHeader "Indexing step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
