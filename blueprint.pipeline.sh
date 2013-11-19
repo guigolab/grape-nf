@@ -82,15 +82,19 @@ function run {
 }
 
 function copyToTmp {   
+    paths=""
     IFS=',' read -ra files <<< "$1"
     for i in ${files[@]};do
         local name=`basename $i`
-        if [ ! -e $tmpdir/$name ];then
+        local tmpfile="$tmpdir/$name"
+        [[ $paths ]] && paths="$paths,"
+        paths=${paths}${tmpfile}
+        if [ ! -e $tmpfile ];then
             log "Copying $i to $TMPDIR..." $step
             run "cp $i $tmpdir" "$ECHO"
             log "done\n"
         else
-            log "Skipping $i...tmp copy already exists\n" $step
+            log "Skipping $i...temporary copy already exists\n" $step
         fi
     done
 }
@@ -99,11 +103,12 @@ function finalizeStep {
     local file=$1
     local tmpdir=$2
     local outdir=$3
+    paths=${paths}${outdir}/`basename $file`
     printf "\n$file $tmpdir $outdir\n"
     log "Computing md5sum for $file..." $step
     run "md5sum $file > $file.md5" "$ECHO"
     if [ -d $tmpdir ];then
-        local tmpfile=$tmpdir/`basename $file`
+        local tmpfile=$tmpdir/`basename $file`        
         log "Copying  temporary files..." $step
         run "cp $tmpfile $tmpfile.md5 $outdir" "$ECHO"
         log "done\n"
@@ -325,8 +330,7 @@ if [[ `basename $input` =~ fastq ]];then
         if [ -d $tmpdir ]; then
             ## Copy needed files to TMPDIR
             copyToTmp "$gemIndex,$annotation,$tindex,$tkeys"
-            index=$tmpdir/`basename $gemIndex`
-            annotation=$tmpdir/$annName
+            IFS=',' read index annotation tindex tkeys <<< "$paths"
             gem="$tmpdir/$sample.map.gz"
         fi
     
@@ -334,14 +338,13 @@ if [[ `basename $input` =~ fastq ]];then
         run "gemtools --loglevel $loglevel rna-pipeline -f $input -q 33 -i $gemIndex -a $annotation -t $threads --no-bam" "$ECHO"
     
         set -e && finalizeStep "$gem $tmpdir $outdir"
-        gem="$outdir/$sample.map.gz"
+        IFS=',' read gem <<< "$paths"
         
         endTime=$(date +%s)
         printHeader "Mapping step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
     else
         printHeader "Map file already present...skipping mapping step"
     fi
-
   
     ## Filtering the map file
     ##
@@ -397,7 +400,7 @@ if [[ `basename $input` =~ fastq ]];then
         if [ -d $tmpdir ]; then
             ## Copy needed files to TMPDIR
             copyToTmp "$gemIndex"
-            index=$tmpdir/`basename $gemIndex`
+            IFS=',' read index <<< "$paths"
             filteredBam="$tmpdir/`basename $filteredBam`"
         fi
        
@@ -411,7 +414,7 @@ if [[ `basename $input` =~ fastq ]];then
         log "done\n" $step
         
         set -e && finalizeStep "$filteredBam $tmpdir $outdir"        
-        filteredBam=${filteredGem%.map.gz}.bam
+        IFS=',' read filteredBam <<< "$paths"
 
         endTime=$(date +%s)
         printHeader "Conversion step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
@@ -433,14 +436,14 @@ if [ $filteredBam.bai -ot $filteredBam ];then
     if [ -d $tmpdir ]; then
         ## Copy needed files to TMPDIR
         copyToTmp "$filteredbam"
-        filteredBam=$tmpdir/`basename $filteredBam`
+        IFS=',' read filteredBam <<< "$paths"
     fi
 
     log "Indexing the filtered bam file\n" $step
     run "$samtools index $filteredBam" "$ECHO"
     
-    set -e && finalizeStep "$filteredBam $tmpdir $outdir"        
-    filteredBam=${filteredGem%.map.gz}.bam
+    set -e && finalizeStep "$filteredBai $tmpdir $outdir"        
+    IFS=',' read filteredBai <<< "$paths"
 
     endTime=$(date +%s)
     printHeader "Indexing step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
@@ -568,7 +571,10 @@ if [[ $doBigWig == "1" ]];then
     printHeader "Executing BigWig step"
 
     ## Copy needed files to TMPDIR
-    copyToTmp "filtered-bam"
+    if [ -d $tmpdir ]; then
+        copyToTmp "$filteredBam"
+        IFS=',' read filteredBam <<< "$paths"
+    fi
 
     log "Producing bigWig files\n" $step
 
@@ -578,7 +584,7 @@ if [[ $doBigWig == "1" ]];then
         revBam="$outdir/${filteredBam%.bam}_1rev.bam"
         if [ -d $tmpdir ];then
             copyToTmp $revBam
-            revBam="$tmpdir/${filteredBam%.bam}_1rev.bam"
+            IFS=',' read revBam <<< "$paths"
         fi
         log "Making temporary bam file with mate1 strand reversed..." $step
         run "$samtools view -h -@ $hthreads $filteredBam | awk -v MateBit=64 'BEGIN {OFS=\"\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}' | $samtools view -@ $hthreads -Sb - > $revBam" "$ECHO"
@@ -603,6 +609,7 @@ if [[ $doBigWig == "1" ]];then
             run "bedGraphToBigWig $bedGraph $genomeFai $bigWig" "$ECHO"
 
             set -e && finalizeStep "$bigWig $tmpdir $outdir"
+            IFS=',' read bigWig <<< "$paths"
         done
     else
         bedGraph=$outdir/$sample.bedgraph
@@ -618,6 +625,7 @@ if [[ $doBigWig == "1" ]];then
         run "bedGraphToBigWig $bedGraph $genomeFai $bigWig" "$ECHO"
 
         set -e && finalizeStep "$bigWig $tmpdir $outdir"
+        IFS=',' read bigWig <<< "$paths"
     fi
 
     endTime=$(date +%s)
@@ -628,22 +636,27 @@ fi
 
 ## Producing contig files
 ##
-contigFile=${sample}_contigs.bed
+contigFile=$output/${sample}_contigs.bed
 if [ ! -e $contigFile ];then
-    . /software/rg/el6.3/python2.7/bin/activate
-
     step="CONTIGS"
     startTime=$(date +%s)
     printHeader "Executing contigs step"
 
-    ## Copy needed files to TMPDIR
-    copyToTmp "filtered-bam"
+    if [ -d $tmpdir ]; then
+        ## Copy needed files to TMPDIR
+        copyToTmp "$filteredBam"
+        IFS=',' read filteredBam <<< "$paths"
+        contigFile=$tmpdir/${sample}_contigs.bed
+    fi
 
     log "Producing contigs file\n" $step
 
     if [[ $stranded == 1 ]];then
 
-        revBam=$TMPDIR/${filteredBam%.bam}_rev1.bam
+        revBam=$output/${filteredBam%.bam}_1rev.bam
+        if [ -d $tmpdir ]; then
+            revBam=$tmpdir/${filteredBam%.bam}_1rev.bam
+        fi
         if [ ! -e $revBam ];then
             ## Producing temporary bam with mate1 reversed
             log "Making temporary bam file with mate1 strand reversed..." $step
@@ -675,7 +688,10 @@ if [ ! -e $contigFile ];then
         log "done\n"
     else
         
-        uniqBam=$TMPDIR/${filteredBam%.bam}_uniq.bam
+        uniqBam=$outdir/${filteredBam%.bam}_uniq.bam
+        if [ -d $tmpdir ]; then
+            uniqBam=$tmpdir/${filteredBam%.bam}_uniq.bam
+        fi
         if [ ! -e $uniqBam ];then
             log "Making a bam file of unique mappings..." $step
             run "$BAMFLAG -in $TMPDIR/$filteredBam -out $uniqBam -m 3" "$ECHO"
@@ -687,22 +703,8 @@ if [ ! -e $contigFile ];then
         log "done\n"
     fi
 
-    if [ -f $TMPDIR/$contigFile ];then
-        log "Computing md5sum for contigs file..." $step
-        run "md5sum $TMPDIR/$contigFile > $TMPDIR/$contigFile.md5" "$ECHO"
-        run "cp $TMPDIR/$contigFile.md5 ." "$ECHO"
-        log "done\n"
-        log "Copying contigs file to mapping dir..." $step
-        run "cp $TMPDIR/$contigFile ." "$ECHO"
-        log "done\n"
-    else
-        if [[ ! $ECHO ]];then
-            log "Error producing contigs file" "ERROR" >&2
-            exit -1
-        fi
-    fi
-
-    run "deactivate" "$ECHO"
+    set -e && finalizeStep "$contigFile $tmpdir $quanDir"
+    IFS=',' read contigFile <<< "$paths"
 
     endTime=$(date +%s)
     printHeader "Contigs step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
@@ -736,9 +738,7 @@ if [ ! -e $fluxGtf ];then
     if [ -d $tmpdir ];then
         ## Copy needed files to TMPDIR
         copyToTmp "$filteredBam,$filteredBai,$annotation"
-        filteredbam="$tmpdir/`basename $filteredBam`"
-        filteredbai="$tmpdir/`basename $filteredBai`"
-        annotation="$tmpdir/`basename $annotation`"
+        IFS=',' read filteredBam filteredBai annotation <<< "$paths"
         fluxGtf="$tmpdir/$sample.gtf"
     fi
 
@@ -771,9 +771,7 @@ if [ ! -e $fluxGtf ];then
     run "flux-capacitor -p $paramFile -i $filteredBam -a $anno -o $fluxGtf > $quantLog 2>&1" "$ECHO"
 
     set -e && finalizeStep "$fluxGtf $tmpdir $quanDir"
-    filteredbam="$outdir/`basename $filteredBam`"
-    filteredbai="$outdir/`basename $filteredBai`"
-    fluxGtf="$quantDir/$sample.gtf"
+    IFS=',' read fluxGtf <<< "$paths"
 
     endTime=$(date +%s)
     printHeader "Quantificaton step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
@@ -834,30 +832,20 @@ if [ ! -e $exonFile ];then
     startTime=$(date +%s)
     printHeader "Executing Exon quantification step"
 
-    ## Copy needed files to TMPDIR
-    copyToTmp "annotation,flux-gtf"
+    
+    if [ -d $tmpdir ]; then
+        ## Copy needed files to TMPDIR
+        copyToTmp "$annotation,$fluxGtf"
+        IFS=',' read annotation fluxGtf <<< "$paths"
+        exonFile=$tmpdir/${sample}_distinct_exon_with_rpkm.gff
+    fi
 
     log "Running Exon quantification\n" $step
-    exd=$PWD
-    run "cd $TMPDIR" "$ECHO"
-    run "bash $trToEx $TMPDIR/$annName $TMPDIR/$sample.gtf" "$ECHO"
-    run "cd $exd" "$ECHO"
+    run "$trToEx -a $annotation -i $fluxGtf -o `dirname $exonFile`" "$ECHO"
 
-    if [ -f $TMPDIR/${sample}_distinct_exon_with_rpkm.gff ]; then
-        exonsFile="${sample}_distinct_exon_with_rpkm.gff"
-        log "Computing md5sum for gff file..." $step
-        run "md5sum $TMPDIR/$exonsFile > $TMPDIR/$exonsFile.md5" "$ECHO"
-        cp $TMPDIR/$exonsFile.md5 $quantDir/$sample
-        log "done\n"
-        log "Copying gff file to quantification dir..." $step
-        run "cp $TMPDIR/$exonsFile $quantDir/$sample" "$ECHO"
-        log "done\n"
-    else
-        if [[ ! $ECHO ]];then
-            log "Error running Exon quantification" "ERROR" >&2
-            exit -1
-        fi
-    fi
+    set -e && finalizeStep "$exonFile $tmpdir $quanDir"
+    IFS=',' read exonFile <<< "$paths"
+    
     endTime=$(date +%s)
     printHeader "Exon quantificaton step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
 
@@ -865,35 +853,25 @@ else
     printHeader "Exon quantification file present...skipping Exon quantification step"
 fi
 
-if [ ! -e $quantDir/$sample/${sample}_gene_with_rpkm.gff ];then
+geneFile=$quantDir/$sample/${sample}_gene_with_rpkm.gff
+if [ ! -e $geneFile ];then
     step="GENE"
     startTime=$(date +%s)
     printHeader "Executing Gene quantification step"
 
-    ## Copy needed files to TMPDIR
-    copyToTmp "annotation,flux-gtf"
+    if [-d $tmpdir ]; then
+        ## Copy needed files to TMPDIR
+        copyToTmp "$annotation,$fluxGtf"
+        IFS=',' read annotation fluxGtf <<< "$paths"
+        geneFile=$tmpdir/$sample/${sample}_gene_with_rpkm.gff
+    fi
 
     log "Running Gene quantification\n" $step
-    exd=$PWD
-    run "cd $TMPDIR" "$ECHO"
-    run "bash $trToGn $TMPDIR/$annName $TMPDIR/$sample.gtf" "$ECHO"
-    run "cd $exd" "$ECHO"
+    run "$trToGn -a $annotation -i $fluxGtf -o `dirname $geneFile`" "$ECHO"
 
-    if [ -f $TMPDIR/${sample}_gene_with_rpkm.gff ]; then
-        genesFile="${sample}_gene_with_rpkm.gff"
-        log "Computing md5sum for gff file..." $step
-        run "md5sum $TMPDIR/$genesFile > $TMPDIR/$genesFile.md5" "$ECHO"
-        run "cp $TMPDIR/$genesFile.md5 $quantDir/$sample" "$ECHO"
-        log "done\n"
-        log "Copying gff file to quantification dir..." $step
-        run "cp $TMPDIR/$genesFile $quantDir/$sample" "$ECHO"
-        log "done\n"
-    else
-        if [[ ! $ECHO ]];then
-            log "Error running Gene quantification" "ERROR" >&2
-            exit -1
-        fi
-    fi
+    set -e && finalizeStep "$geneFile $tmpdir $quanDir"
+    IFS=',' read geneFile <<< "$paths"
+    
     endTime=$(date +%s)
     printHeader "Gene quantificaton step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
 
