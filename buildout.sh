@@ -14,7 +14,7 @@ echo "### Blueprint RNAseq pipeline buildout  ###"
 # set up binaries
 if [ ! -d bin ]; then
     log "Download and unpack binaries"
-    bintar="bp_pipeline_bin.tgz"
+    bintar="bp_pipeline_bin_v1.0.tgz"
     wget -q http://genome.crg.es/~epalumbo/$bintar
     tar xf $bintar
     rm $bintar
