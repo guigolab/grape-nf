@@ -251,7 +251,7 @@ BASEDIR=`dirname $outdir`
 BINDIR="$BASEDIR/bin"
 
 # activate python virtualenv
-run ". $BASEDIR/env/bin/activate" $ECHO
+run ". $BASEDIR/env/bin/activate" "$ECHO"
 
 export PATH=$BINDIR:$BINDIR/gemtools-1.6.2-i3/bin:$BINDIR/flux-capacitor-1.2.4/bin:$PATH
 
