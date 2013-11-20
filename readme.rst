@@ -129,8 +129,12 @@ The files in brackets could be absent in case you run the pipeline specifying a 
 
 If the input data is stranded two bigwig files will be present and will look like::
 
+    [sampleA.plusRaw.bedgraph]
     sampleA.plusRaw.bigwig
+    sampleA.plusRaw.bigwig.md5
+    [sampleA.minusRaw.bedgraph]
     sampleA.minusRaw.bigwig
+    sampleA.minusRaw.bigwig.md5
 
 
 
