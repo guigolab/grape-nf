@@ -841,35 +841,39 @@ else
     printHeader "Transcript file present...skipping transcript step"
 fi
 
-junctionFile=$quantDir/${sample}_junction.gtf
-if [ ! -e $junctionFile ];then
-    startTime=$(date +%s)
-    printHeader "Getting junctions from quantifications"
-    log "Generating junctions file..."
-    run "awk '\$3==\"junction\"' $fluxGtf > $junctionFile" "$ECHO"
-    log "done\n"
-    log "Computing md5sum for junctions file..." $step
-    run "md5sum $junctionFile > $junctionFile.md5" "$ECHO"
-    log "done\n"
-    endTime=$(date +%s)
-    printHeader "Junctions written in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
-else
-    printHeader "Junctions file present...skipping transcript step"
+if [[ $countElements =~ "SPLICE_JUNCTIONS" ]]; then
+    junctionFile=$quantDir/${sample}_junction.gtf
+    if [ ! -e $junctionFile ];then
+        startTime=$(date +%s)
+        printHeader "Getting junctions from quantifications"
+        log "Generating junctions file..."
+        run "awk '\$3==\"junction\"' $fluxGtf > $junctionFile" "$ECHO"
+        log "done\n"
+        log "Computing md5sum for junctions file..." $step
+        run "md5sum $junctionFile > $junctionFile.md5" "$ECHO"
+        log "done\n"
+        endTime=$(date +%s)
+        printHeader "Junctions written in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
+    else
+        printHeader "Junctions file present...skipping transcript step"
+    fi
 fi
 
-intronFile=$quantDir/${sample}_intron.gtf
-if [ ! -e $intronFile ];then
-    printHeader "Getting all-intronic regions from quantifications"
-    log "Generating introns file..."
-    run "awk '\$3==\"intron\"' $fluxGtf > $intronFile" "$ECHO"
-    log "done\n"
-    log "Computing md5sum for introns file..." $step
-    run "md5sum $intronFile > $intronFile.md5" "$ECHO"
-    log "done\n"
-    endTime=$(date +%s)
-    printHeader "Introns written in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
-else
-    printHeader "Introns file present...skipping transcript step"
+if [[ $countElements =~ "INTRONS" ]]; then
+    intronFile=$quantDir/${sample}_intron.gtf
+    if [ ! -e $intronFile ];then
+        printHeader "Getting all-intronic regions from quantifications"
+        log "Generating introns file..."
+        run "awk '\$3==\"intron\"' $fluxGtf > $intronFile" "$ECHO"
+        log "done\n"
+        log "Computing md5sum for introns file..." $step
+        run "md5sum $intronFile > $intronFile.md5" "$ECHO"
+        log "done\n"
+        endTime=$(date +%s)
+        printHeader "Introns written in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
+    else
+        printHeader "Introns file present...skipping transcript step"
+    fi
 fi
 
 exonFile=$quantDir/${sample}_distinct_exon_with_rpkm.gff
