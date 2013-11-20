@@ -737,7 +737,7 @@ if [ ! -d $quantDir ]; then
 fi
 
 paramFile="$quantDir/$sample.par"
-proFile="$quantDir/$sample.pro"
+proFile="$quantDir/$sample.profile"
 
 # prepare parameter file
 #
