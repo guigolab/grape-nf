@@ -456,7 +456,7 @@ if [ $filteredBam.bai -ot $filteredBam ];then
 
     if [ -d $tmpdir ]; then
         ## Copy needed files to TMPDIR
-        copyToTmp "$filteredbam"
+        copyToTmp "$filteredBam"
         IFS=',' read filteredBam <<< "$paths"
     fi
 
