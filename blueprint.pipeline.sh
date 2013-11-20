@@ -764,7 +764,11 @@ if [ ! -e $paramFile ]; then
     if [[ $readStrand != "NONE" ]]; then
         run "echo \"READ_STRAND $readStrand\" >> $paramFile" "$ECHO"
         annotationMapping="STRANDED"
-        [[ $paired == "true" ]] && annotationMapping="PAIRED_${annotationMapping}"
+        if [[ $paired == "true" ]];then 
+            annotationMapping="PAIRED_${annotationMapping}"
+        else
+            annotationMapping="SINGLE_${annotationMapping}"
+        fi
     fi
     
     run "echo \"ANNOTATION_MAPPING $annotationMapping\" >> $paramFile" "$ECHO"    
