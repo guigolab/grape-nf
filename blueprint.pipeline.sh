@@ -72,7 +72,9 @@ function log {
 
 function getAbsPath {
     local path=$1
-    echo "`readlink -en $path`"
+    local dir=`dirname $path`
+    local name=`basename $path`
+    echo "`readlink -en $dir`/$name"
 }
 
 function run {
