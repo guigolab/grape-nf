@@ -1,6 +1,7 @@
 TODO list
 ---------
 
+- add copyright notice
 - check all binaries and bundle them
-- steps modularity
 - remove or change cluster configuration
+- steps modularity
