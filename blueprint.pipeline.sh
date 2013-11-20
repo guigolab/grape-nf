@@ -140,6 +140,7 @@ hits=10
 readStrand="NONE"
 qualityOffset="33"
 maxReadLength="150"
+fluxMem="3G"
 
 # general
 loglevel="info"
@@ -227,6 +228,13 @@ do
       fi
       shift 2;;
  
+    --flux-mem)
+      if [ -n $2 ];
+      then
+        fluxMem=$2
+      fi
+      shift 2;;
+
     --bam-stats)
       bamstats="true"
       shift ;;
@@ -316,6 +324,7 @@ printf "  %-34s %s\n" "Quality offset:" "$qualityOffset"
 printf "  %-34s %s\n" "Max read length:" "$maxReadLength"
 printf "  %-34s %s\n" "Strandedness:" "$readStrand"
 printf "  %-34s %s\n" "Number of threads:" "$threads"
+printf "  %-34s %s\n" "Flux Capacitor memory:" "$fluxMem"
 printf "  %-34s %s\n" "Temporary folder:" "$tmpdir"
 printf "  %-34s %s\n" "Loglevel:" "$loglevel"
 printf "\n\n"
@@ -717,7 +726,7 @@ fi
 step="FLUX"
 
 quantDir="$BASEDIR/quantification/$sample"
-export FLUX_MEM=${fluxMem-"3G"}
+export FLUX_MEM=$fluxMem
 
 if [ ! -d $quantDir ]; then
     log "Creating sample folder in $quantDir..." $step
