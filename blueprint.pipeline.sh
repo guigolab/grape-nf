@@ -602,11 +602,7 @@ if [[ $doBigWig == "1" ]];then
     if [[ $readStrand != "NONE" ]];then
 
         ## Producing temporary bam with mate1 reversed
-        revBam="$outdir/${filteredBam%.bam}_1rev.bam"
-        if [ -d $tmpdir ];then
-            copyToTmp $revBam
-            IFS=',' read revBam <<< "$paths"
-        fi
+        revBam="${filteredBam%.bam}_1rev.bam"
         log "Making temporary bam file with mate1 strand reversed..." $step
         run "$samtools view -h -@ $hthreads $filteredBam | awk -v MateBit=64 'BEGIN {OFS=\"\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}' | $samtools view -@ $hthreads -Sb - > $revBam" "$ECHO"
         log "done\n"
