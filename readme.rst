@@ -9,8 +9,9 @@ Before installing Blueprint RNAseq pipeline make sure you have the following sof
 - git
 - make
 - gcc
-- python 2.7
 - bedtools
+- python 2.7
+- R
 
 You will also need a working internet connection to download and install the pipeline.
 
