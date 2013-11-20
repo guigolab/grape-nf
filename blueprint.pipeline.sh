@@ -767,7 +767,7 @@ proFile="$quantDir/$sample.profile"
 # COUNT_ELEMENTS [SPLICE_JUNCTIONS, INTRONS]
 
 if [ ! -e $paramFile ]; then
-    run "echo \"#Flux Capacitor parameter file for $sample\" >> $paramFile" "$ECHO"
+    run "echo \"# Flux Capacitor parameter file for $sample\" >> $paramFile" "$ECHO"
     annotationMapping="AUTO"
     if [[ $readStrand != "NONE" ]]; then
         run "echo \"READ_STRAND $readStrand\" >> $paramFile" "$ECHO"
