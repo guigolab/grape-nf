@@ -42,12 +42,27 @@ if [ ! -d bin/$flux ]; then
   cd ..
 fi
 
+# Install BEDtools
+bedtools="BEDTools.v2.17.0"
+beddir=`echo ${bedtools,,} | sed 's/\.v/-/g'`
+if [ ! -d bin/$beddir ]; then
+  log "Install $bedtools"
+  cd ~/soft
+  wget -q http://bedtools.googlecode.com/files/$bedtools.tar.gz
+  tar xf $bedtools.tar.gz && rm $bedtools.tar.gz
+  cd $beddir
+  make &> install.log 
+  cd ../..
+fi
+
 # set up virtual env
 env=${2-"."}
 if [ ! -f $env/bin/python ]; then
     log "Set up the Python virtualenv"
     virtualenv -q --no-site-packages -p $python $env
-    sed -i 's/PATH=\"$VIRTUAL_ENV\/bin:\$PATH\"/PATH=\"$VIRTUAL_ENV\/bin:$VIRTUAL_ENV\/bin\/'$gemdir'\/bin:$VIRTUAL_ENV\/bin\/'$flux'\/bin:\$PATH\"/g' $env/bin/activate
+    oldPath="PATH=\"\$VIRTUAL_ENV\/bin:\$PATH\""
+    newPath="PATH=\"\$VIRTUAL_ENV\/bin:\$VIRTUAL_ENV\/bin\/$gemdir\/bin:\$VIRTUAL_ENV\/bin\/$flux\/bin:\$VIRTUAL_ENV\/bin\/$beddir\/bin:\$PATH\""
+    sed -i 's/'$oldPath'/'$newPath'/g' $env/bin/activate
 fi
 
 # check if the virtual env is already active or activate it
