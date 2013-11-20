@@ -344,17 +344,19 @@ if [[ `basename $input` =~ fastq ]];then
     if [ ! -e $gem ];then
         step="MAP"
         startTime=$(date +%s)
-        printHeader "Executing mapping step"
+        printHeader "Executing mapping step"                
+        out="$outdir"
             
         if [ -d $tmpdir ]; then
             ## Copy needed files to TMPDIR
             copyToTmp "$gemIndex,$annotation,$tindex,$tkeys"
             IFS=',' read index annotation tindex tkeys <<< "$paths"
             gem="$tmpdir/$sample.map.gz"
+            out="$tmpdir"
         fi
     
         log "Running gemtools rna pipeline on ${sample}" $step
-        run "gemtools --loglevel $loglevel rna-pipeline -f $input -q 33 -i $gemIndex -a $annotation -t $threads --no-stats --no-bam" "$ECHO"
+        run "gemtools --loglevel $loglevel rna-pipeline -f $input -q 33 -i $gemIndex -a $annotation -o $out -t $threads --no-stats --no-bam" "$ECHO"
    
         set -e && finalizeStep $gem $tmpdir $outdir
         IFS=',' read gem <<< "$paths"
