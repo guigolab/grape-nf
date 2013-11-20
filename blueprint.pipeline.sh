@@ -464,6 +464,7 @@ if [ $filteredBai -ot $filteredBam ];then
     run "$samtools index $filteredBam" "$ECHO"
     
     set -e && finalizeStep $filteredBai $tmpdir $outdir        
+    IFS=',' read filteredBai <<< "$paths"
 
     endTime=$(date +%s)
     printHeader "Indexing step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
