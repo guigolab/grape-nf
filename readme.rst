@@ -30,6 +30,10 @@ Once the cloning step completes you can do the buildout::
     cd PIPELINE_FOLDER
     ./buildout.sh
 
+If your system does not come with python 2.7 and you ar able to provide the pathe of a python 2.7 binary you can run the buildout in the following way::
+
+    ./buildout.sh /path/to/python2.7
+
 Running the pipeline
 --------------------
 
