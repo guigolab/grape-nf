@@ -888,7 +888,7 @@ if [ ! -e $geneFile ];then
     startTime=$(date +%s)
     printHeader "Executing Gene quantification step"
 
-    if [-d $tmpdir ]; then
+    if [ -d $tmpdir ]; then
         ## Copy needed files to TMPDIR
         copyToTmp "$annotation,$fluxGtf"
         IFS=',' read annotation fluxGtf <<< "$paths"
