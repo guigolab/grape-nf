@@ -718,7 +718,7 @@ if [ ! -e $contigFile ];then
         log "done\n"
     fi
 
-    set -e && finalizeStep $contigFile $tmpdir $quantDir
+    set -e && finalizeStep $contigFile $tmpdir $outdir
     IFS=',' read contigFile <<< "$paths"
 
     endTime=$(date +%s)
