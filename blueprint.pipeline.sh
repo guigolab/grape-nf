@@ -308,6 +308,8 @@ gt_stats="gt.stats"
 pigz="pigz"
 bamflag="bamflag"
 makecontig="contigsNew.py"
+gtfToGenePred="gtfToGenePred"
+genePredToBed12="genePredToBed12.awk"
 
 ## Print pipeline configuration
 
@@ -501,8 +503,8 @@ if [ $bamstats ]; then
     genePred=${annotation%.gtf}.GenePred
     bed12=${annotation%.gtf}.bed12
     if [ ! -e $genePred ];then
-        set +e && run "/users/rg/abreschi/bioprogs/Jim_Kent_source_tree/gtfToGenePred $annotation -allErrors $genePred 2> $genePred.err" "$ECHO"
-        set +e && run "cat $genePred | ~abreschi/bioprogs/Jim_Kent_source_tree/genePredToBed12 > $bed12" "$ECHO"
+        set +e && run "$gtfToGenePred $annotation -allErrors $genePred 2> $genePred.err" "$ECHO"
+        set +e && run "cat $genePred | $genePredToBed12 > $bed12" "$ECHO"
     fi
 
     ## Check that the files were created successfully
