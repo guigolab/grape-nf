@@ -230,7 +230,7 @@ do
     -c|--count-elements)
       if [ -n $2 ];
       then
-        countElements="[$2]"
+        countElements="$2"
       fi
       shift 2;;
 
@@ -340,7 +340,6 @@ printf "  %-34s %s\n" "Max read length:" "$maxReadLength"
 printf "  %-34s %s\n" "Strandedness:" "$readStrand"
 printf "  %-34s %s\n" "Number of threads:" "$threads"
 printf "  %-34s %s\n" "Flux Capacitor memory:" "$fluxMem"
-printf "  %-34s %s\n" "Elements to be countes:" "$countElements"
 printf "  %-34s %s\n" "Temporary folder:" "$tmpdir"
 printf "  %-34s %s\n" "Loglevel:" "$loglevel"
 printf "\n\n"
@@ -781,7 +780,7 @@ if [ ! -e $paramFile ]; then
     fi
     
     run "echo \"ANNOTATION_MAPPING $annotationMapping\" >> $paramFile" "$ECHO"    
-    run "echo \"COUNT_ELEMENTS $countElements\" >> $paramFile" "$ECHO"
+    run "echo \"COUNT_ELEMENTS [$countElements]\" >> $paramFile" "$ECHO"
 fi
 
 ## Show Flux parameter file
