@@ -894,7 +894,7 @@ if [ ! -e $geneFile ];then
         ## Copy needed files to TMPDIR
         copyToTmp "$annotation,$fluxGtf"
         IFS=',' read annotation fluxGtf <<< "$paths"
-        geneFile=$tmpdir/$sample/${sample}_gene_with_rpkm.gff
+        geneFile=$tmpdir/${sample}_gene_with_rpkm.gff
     fi
 
     log "Running Gene quantification\n" $step
