@@ -898,7 +898,7 @@ else
 fi
 
 # deactivate python virtualenv
-run "deactivate" $ECHO
+run "deactivate" "$ECHO"
 
 pipelineEnd=$(date +%s)
 
