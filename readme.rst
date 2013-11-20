@@ -115,17 +115,17 @@ The results are organized in the following structure. Using the previous example
                 sampleA_gene_with_rpkm.gff.md5
                 sampleA.gtf
                 sampleA.gtf.md5
-                sampleA_intron.gtf
-                sampleA_intron.gtf.md5
-                sampleA_junction.gtf
-                sampleA_junction.gtf.md5
+                [sampleA_intron.gtf]
+                [sampleA_intron.gtf.md5]
+                [sampleA_junction.gtf]
+                [sampleA_junction.gtf.md5]
                 sampleA.par
                 sampleA.profile
                 sampleA_sort_annotation.log
                 sampleA_transcript.gtf
                 sampleA_transcript.gtf.md5
 
-The files in brackets could be absent in case you run the pipeline specifying a temporary folder.
+The files in brackets could be absent in case you run the pipeline specifying a temporary folder. The ``junction`` and ``intron`` files are created only if the --count-elements parameter contains them. Please refer to the command help for further details.
 
 If the input data is stranded two bigwig files will be present and will look like::
 
@@ -136,11 +136,3 @@ If the input data is stranded two bigwig files will be present and will look lik
     [sampleA.minusRaw.bedgraph]
     sampleA.minusRaw.bigwig
     sampleA.minusRaw.bigwig.md5
-
-
-
-
-
-
-
-
