@@ -448,8 +448,8 @@ fi
 
 ## Indexing the filtered bam file
 ##
-
-if [ $filteredBam.bai -ot $filteredBam ];then
+filteredBai="$filteredBam.bai"
+if [ $filteredBai -ot $filteredBam ];then
     step="INDEX"
     startTime=$(date +%s)
     printHeader "Executing indexing step on the filtered bam file"
@@ -463,7 +463,7 @@ if [ $filteredBam.bai -ot $filteredBam ];then
     log "Indexing the filtered bam file\n" $step
     run "$samtools index $filteredBam" "$ECHO"
     
-    set -e && finalizeStep $filteredBam.bai $tmpdir $outdir        
+    set -e && finalizeStep $filteredBai $tmpdir $outdir        
 
     endTime=$(date +%s)
     printHeader "Indexing step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
