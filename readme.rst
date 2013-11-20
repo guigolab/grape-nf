@@ -72,7 +72,7 @@ Once the previous steps are done you will need to prepare the input files. A cer
 To run the pipeline for a sample you then do::
 
     cd sampleA
-    ../blueprint.pipeline.sh -i sampleA_1.fastq.gz -g GENOME -a ANNOTATION ...other options...
+    ../blueprint.pipeline.sh -i sampleA_1.fastq.gz -g GENOME -a ANNOTATION --paired [other options]
 
 Run ``../blueprint.pipeline.sh --help`` from the same folder to get the usage message.
 
