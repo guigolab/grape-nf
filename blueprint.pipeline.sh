@@ -738,13 +738,13 @@ if [ ! -e $paramFile ]; then
     annotationMapping="AUTO"
     countElements="[]"
     if [[ $readStrand != "NONE" ]]; then
-        echo "READ_STRAND $readStrand" >> $paramFile
+        run "echo \"READ_STRAND $readStrand\" >> $paramFile" "$ECHO"
         annotationMapping="STRANDED"
         [[ $paired == "true" ]] && annotationMapping="PAIRED_${annotationMapping}"
     fi
     
-    echo "ANNOTATION_MAPPING $annotationMapping" >> $paramFile
-    echo "COUNT_ELEMENTS $countElements" >> $paramFile
+    run "echo \"ANNOTATION_MAPPING $annotationMapping\" >> $paramFile" "$ECHO"    
+    run "echo \"COUNT_ELEMENTS $countElements\" >> $paramFile" "$ECHO"
 fi
 
 ## Run transcript quantification
