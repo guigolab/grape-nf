@@ -39,12 +39,13 @@ function usage {
     printf "  -s|--read-strand\tdirectionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default \"NONE\".\n"
     printf "  -l|--loglevel\t\tLog level (error, warn, info, debug). Default \"info\".\n"
     printf "  -t|--threads\t\tNumber of threads. Default \"1\".\n"
-    printf "  -p|--paired-end\t\tSpecify whether the data is paired-end. Defalut: \"false\"\n"
+    printf "  -p|--paired-end\tSpecify whether the data is paired-end. Defalut: \"false\"\n"
+    printf "  -c|--count-elements\tA comma separated list of elements to be counted by the Flux Capacitor.\n\t\t\tPossible values: INTRONS,SPLICE_JUNCTIONS. Defalut: \"none\"\n"
     printf "  -h|--help\t\tShow this message and exit.\n"
     printf "  --flux-mem\t\tSpecify the amount of ram the Flux Capacitor can use. Default: \"3G\".\n"
-    printf "  --bam-stats\t\t\tRun the RSeQC stats on the bam file. Default \"false\".\n"
+    printf "  --bam-stats\t\tRun the RSeQC stats on the bam file. Default \"false\".\n"
     printf "  --tmp-dir\t\tSpecify local temporary folder to copy files when running on distributed file systems. Default: \"-\".\n"
-    printf "  --dry-run\t\t\tTest the pipeline. Writes the command to the standard output.\n"
+    printf "  --dry-run\t\tTest the pipeline. Writes the command to the standard output.\n"
     exit 0
 }
 
@@ -121,7 +122,7 @@ function finalizeStep {
 #
 
 # Execute getopt
-ARGS=`getopt -o "i:g:a:m:n:s:t:l:q:r:hp" -l "input:,genome:,annotation:,mismatches:,hits:,read-strand:,threads:,loglevel:,quality:,max-read-length:,tmp-dir:,flux-mem:,bam-stats,dry-run,help,paired-end" \
+ARGS=`getopt -o "i:g:a:m:n:s:t:l:q:r:c:hp" -l "input:,genome:,annotation:,mismatches:,hits:,read-strand:,threads:,loglevel:,quality:,max-read-length:,tmp-dir:,flux-mem:,count-elements:,bam-stats,dry-run,help,paired-end" \
       -n "$0" -- "$@"`
 
 #Bad arguments
@@ -226,6 +227,13 @@ do
       paired="true"
       shift ;;
  
+    -c|--count-elements)
+      if [ -n $2 ];
+      then
+        countElements="[$2]"
+      fi
+      shift 2;;
+
     --tmp-dir)
       if [ -n $2 ];
       then
@@ -332,6 +340,7 @@ printf "  %-34s %s\n" "Max read length:" "$maxReadLength"
 printf "  %-34s %s\n" "Strandedness:" "$readStrand"
 printf "  %-34s %s\n" "Number of threads:" "$threads"
 printf "  %-34s %s\n" "Flux Capacitor memory:" "$fluxMem"
+printf "  %-34s %s\n" "Elements to be countes:" "$countElements"
 printf "  %-34s %s\n" "Temporary folder:" "$tmpdir"
 printf "  %-34s %s\n" "Loglevel:" "$loglevel"
 printf "\n\n"
@@ -759,8 +768,8 @@ proFile="$quantDir/$sample.profile"
 # COUNT_ELEMENTS [SPLICE_JUNCTIONS, INTRONS]
 
 if [ ! -e $paramFile ]; then
+    run "echo \"Flux Capacitor parameter file for $sample\" >> $paramFile" "$ECHO"
     annotationMapping="AUTO"
-    countElements="[]"
     if [[ $readStrand != "NONE" ]]; then
         run "echo \"READ_STRAND $readStrand\" >> $paramFile" "$ECHO"
         annotationMapping="STRANDED"
@@ -774,6 +783,12 @@ if [ ! -e $paramFile ]; then
     run "echo \"ANNOTATION_MAPPING $annotationMapping\" >> $paramFile" "$ECHO"    
     run "echo \"COUNT_ELEMENTS $countElements\" >> $paramFile" "$ECHO"
 fi
+
+## Show Flux parameter file
+#
+run "echo \"\"" "$ECHO"
+run "cat $paramFile" "$ECHO"
+run "echo \"\"" "$ECHO"
 
 ## Run transcript quantification
 #
