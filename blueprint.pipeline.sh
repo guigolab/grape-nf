@@ -39,6 +39,7 @@ function usage {
     printf "  -s|--read-strand\tdirectionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default \"NONE\".\n"
     printf "  -l|--loglevel\t\tLog level (error, warn, info, debug). Default \"info\".\n"
     printf "  -t|--threads\t\tNumber of threads. Default \"1\".\n"
+    printf "  -p|--paired-end\t\tSpecify whether the data is paired-end. Defalut: \"false\"\n"
     printf "  -h|--help\t\tShow this message and exit.\n"
     printf "  --flux-mem\t\tSpecify the amount of ram the Flux Capacitor can use. Default: \"3G\".\n"
     printf "  --bam-stats\t\t\tRun the RSeQC stats on the bam file. Default \"false\".\n"
@@ -120,7 +121,7 @@ function finalizeStep {
 #
 
 # Execute getopt
-ARGS=`getopt -o "i:g:a:m:n:s:t:l:q:r:h" -l "input:,genome:,annotation:,mismatches:,hits:,read-strand:,threads:,loglevel:,quality:,max-read-length:,tmp-dir:,flux-mem:,bam-stats,dry-run,help" \
+ARGS=`getopt -o "i:g:a:m:n:s:t:l:q:r:hp" -l "input:,genome:,annotation:,mismatches:,hits:,read-strand:,threads:,loglevel:,quality:,max-read-length:,tmp-dir:,flux-mem:,bam-stats,dry-run,help,paired-end" \
       -n "$0" -- "$@"`
 
 #Bad arguments
@@ -220,6 +221,10 @@ do
         threads=$2
       fi
       shift 2;;
+ 
+    -p|--paired-end)
+      paired="true"
+      shift ;;
  
     --tmp-dir)
       if [ -n $2 ];
@@ -345,18 +350,20 @@ if [[ `basename $input` =~ fastq ]];then
         step="MAP"
         startTime=$(date +%s)
         printHeader "Executing mapping step"                
-        out="$outdir"
             
         if [ -d $tmpdir ]; then
             ## Copy needed files to TMPDIR
             copyToTmp "$gemIndex,$annotation,$tindex,$tkeys"
             IFS=',' read index annotation tindex tkeys <<< "$paths"
             gem="$tmpdir/$sample.map.gz"
-            out="$tmpdir"
         fi
     
         log "Running gemtools rna pipeline on ${sample}" $step
-        run "gemtools --loglevel $loglevel rna-pipeline -f $input -q 33 -i $gemIndex -a $annotation -o $out -t $threads --no-stats --no-bam" "$ECHO"
+        command="gemtools --loglevel $loglevel rna-pipeline -f $input -q $qualityOffset -i $gemIndex -a $annotation -o `dirname $gem` -t $threads --no-stats --no-bam"
+        if [[ $paired == "false" ]]; then
+            command="$command --single-end"
+        fi
+        run "$command" "$ECHO"
    
         set -e && finalizeStep $gem $tmpdir $outdir
         IFS=',' read gem <<< "$paths"
@@ -426,7 +433,13 @@ if [[ `basename $input` =~ fastq ]];then
         fi
        
         log "Converting  $sample to bam..." $step
-        command="$pigz -p $hthreads -dc $filteredGem | $gem2sam -T $hthreads -I $gemIndex --expect-paired-end-reads -q offset-33 -l"
+        command="$pigz -p $hthreads -dc $filteredGem | $gem2sam -T $hthreads -I $gemIndex -q offset-$qualityOffset -l"
+        if [[ $paired == "true" ]]; then
+            command="$command --expect-paired-end-reads"
+        else
+            command="$command --expect-single-end-reads"
+        fi
+
         if [[ $readGroup ]];
         then
             command="$command --read-group $readGroup"
