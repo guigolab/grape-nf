@@ -297,8 +297,8 @@ if [[ $annotation == "" ]];then
 fi
 
 basename=$(basename $input)
-samples=${basename%.fastq*}
-if [[ $paired == "false" ]];then
+sample=${basename%.fastq*}
+if [[ $paired == "true" ]];then
     sample=${basename%[_-\.]1*}
 fi
 
@@ -696,7 +696,7 @@ if [ ! -e $contigFile ];then
 
     log "Producing contigs file\n" $step
 
-    if [[ $stranded == 1 ]];then
+    if [[ $readStrand != "NONE" ]];then
 
         revBam=${filteredBam%.bam}_1rev.bam
         if [ ! -e $revBam ];then
@@ -738,7 +738,7 @@ if [ ! -e $contigFile ];then
         fi
         
         log "Generationg the contigs file..." $step
-        run "bamToBed -i $uniqBam | sort -k1,1 -nk2,2 | mergeBed > $TMPDIR/$contigFile" "$ECHO"
+        run "bamToBed -i $uniqBam | sort -k1,1 -nk2,2 | mergeBed > $contigFile" "$ECHO"
         log "done\n"
     fi
 
