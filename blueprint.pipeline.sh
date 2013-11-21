@@ -452,7 +452,7 @@ if [[ `basename $input` =~ fastq ]];then
         if [[ $paired == "true" ]]; then
             command="$command --expect-paired-end-reads"
         else
-            command="$command --expect-single-end-reads"
+            command="$command --expect-single-end-reads | awk 'BEGIN{OFS=FS=\"\t\"}\$0!~/^@/{split(\"1_2_8_32_64_128\",a,\"_\");for(i in a){if(and(\$2,a[i])>0){\$2=xor(\$2,a[i])}}}{print}'"
         fi
 
         if [[ $readGroup ]];
