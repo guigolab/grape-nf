@@ -585,18 +585,20 @@ if [ $bamstats ]; then
         log "done\n"
     fi
 
-    # Insert size distribution
-    if [ `ls $statsDir/$sample.inner_distance* 2> /dev/null |wc -l` != 4 ];then
-        log "Getting the insert size distribution..." $step
-        run "inner_distance.py -i $filteredBam -o $statsDir/$sample -r $bed12" "$ECHO"
-        log "done\n"
-    fi
-
     # Splice junctions
     if [ `ls $statsDir/$sample.[sj]* 2> /dev/null |wc -l` != 5 ];then
         log "Performing junction annotation..." $step
         run "junction_annotation.py -i $filteredBam -o $statsDir/$sample -r $bed12 &> $statsDir/$sample.junction_annotation.log" "$ECHO"
         log "done\n"
+    fi
+
+    if [[ $paired == "true" ]]; then
+        # Insert size distribution
+        if [ `ls $statsDir/$sample.inner_distance* 2> /dev/null |wc -l` != 4 ];then
+            log "Getting the insert size distribution..." $step
+            run "inner_distance.py -i $filteredBam -o $statsDir/$sample -r $bed12" "$ECHO"
+            log "done\n"
+        fi
     fi
 
     endTime=$(date +%s)
