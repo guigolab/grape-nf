@@ -297,7 +297,10 @@ if [[ $annotation == "" ]];then
 fi
 
 basename=$(basename $input)
-sample=${basename%[_-\.]1*}
+samples=${basename%.fastq*}
+if [[ $paired == "false" ]];then
+    sample=${basename%[_-\.]1*}
+fi
 
 genomeFai="$genome.fai"
 gemIndex="${genome%.fa}.gem"
