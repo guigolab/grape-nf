@@ -4,7 +4,7 @@ Blueprint RNAseq pipeline
 Installation
 ------------
 
-Before installing Blueprint RNAseq pipeline make sure you have the following software installed in the machine:
+Before installing the Blueprint RNAseq pipeline make sure you have the following software installed in your machine:
 
 - git
 - make
@@ -24,12 +24,12 @@ This will create a folder in your working directory called ``bp.pipeline``. You 
 
     git clone https://github.com/emi80/bp.pipeline.git PIPELINE_FOLDER
 
-Once the cloning step completes you can do the buildout::
+Once the cloning step completes you can perform the buildout::
 
     cd PIPELINE_FOLDER
     ./buildout.sh
 
-If your system does not come with python 2.7 and you ar able to provide the pathe of a python 2.7 binary you can run the buildout in the following way::
+If your system does not come with python 2.7 installed but you can provide the path to a python 2.7 installation the buildout command can be run like::
 
     ./buildout.sh /path/to/python2.7
 
@@ -43,13 +43,13 @@ The software requirements for running the pipeline are:
 - bedtools
 - R
 
-Aa setup step is required to produce the following reference files needed for the run:
+An initial setup step is required to produce the following reference files:
 
 #. GEM index of the genome
 #. GEM index of the transcriptome
 #. fasta index of the genome
 
-For which you need to run the following commands::
+To carry out this step you need to activate the python virtualenv from the PIPELINE_FOLDER with ``. bin/activate`` and then run the following commands::
 
     # create the genome index
     gemtools index -t THREADS -i GENOME
@@ -85,7 +85,7 @@ Run ``../blueprint.pipeline.sh --help`` from the same folder to get the usage me
 Results
 -------
 
-The results are organized in the following structure. Using the previous example and running the pipeline with the default options you will have something like::
+Using the previous example and running the pipeline with the default options you will find the follwoing files within you sample folder (e.g. sampleA)::
 
     PIPELINE_FOLDER/
         <base_files>
@@ -131,9 +131,9 @@ The results are organized in the following structure. Using the previous example
                 sampleA_transcript.gtf
                 sampleA_transcript.gtf.md5
 
-The files in brackets could be absent in case you run the pipeline specifying a temporary folder. The ``junction`` and ``intron`` files are created only if the --count-elements parameter contains them. Please refer to the command help for further details.
+The files between brackets could be absent in case a temporary folder has been used in the pipeline run. The ``junction`` and ``intron`` files are created only if the --count-elements parameter contains them. Please refer to the command help for further details.
 
-If the input data is stranded two bigwig files will be present and will look like::
+If the input data is stranded two bigwig files will be present (one for each strand) and will look like::
 
     [sampleA_m4_n10_1rev.bam]
     [sampleA.plusRaw.bedgraph]
