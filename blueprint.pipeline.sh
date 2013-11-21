@@ -1,25 +1,23 @@
 #!/bin/bash
 #
-#Forcing bash shell
+#  Copyright (c) 2013, Centre for Genomic Regulation (CRG)
+#  Emilio Palumbo, Alessandra Breschi and Sarah Djebali.
 #
-#$ -S /bin/bash
+#  This file is part of the Blueprint RNAseq pipeline.
 #
-#$ -V
+#  The Blueprint RNAseq pipeline is a free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
 #
-#$ -cwd
-# -M emiliopalumbo@gmail.com
-# -m b
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
 #
-#$ -pe smp 8
-#$ -q rg-el6,long
-#$ -l virtual_free=64G,h_rt=240:00:00
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-#$ -o $JOB_NAME.out
-#$ -e $JOB_NAME.err
-#
-
-#set -eo pipefail
-
 function usage {
     echo ""
     echo "### Blueprint RNAseq pipeline ###"
