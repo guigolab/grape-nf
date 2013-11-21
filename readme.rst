@@ -1,6 +1,11 @@
 Blueprint RNAseq pipeline
 =========================
 
+The Blueprint RNAseq pipeline contains all the steps perfomed for the downstream analyses on RNAseq data within the Blueprint project.
+
+The Blueprint RNAseq pipeline is released under GPL. All the programs used in the pipeline are also licensed under GPL except for the GEM binaries 
+that are distributed under the `GEM Non commercial binary license <http://algorithms.cnag.cat/wiki/GEM:Non_commercial_binary_license>`_.
+
 Installation
 ------------
 
