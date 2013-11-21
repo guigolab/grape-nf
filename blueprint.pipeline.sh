@@ -42,9 +42,9 @@ function usage {
     printf "  -p|--paired-end\tSpecify whether the data is paired-end. Defalut: \"false\"\n"
     printf "  -c|--count-elements\tA comma separated list of elements to be counted by the Flux Capacitor.\n\t\t\tPossible values: INTRONS,SPLICE_JUNCTIONS. Defalut: \"none\"\n"
     printf "  -h|--help\t\tShow this message and exit.\n"
-    printf "  --flux-mem\t\tSpecify the amount of ram the Flux Capacitor can use. Default: \"3G\".\n"
     printf "  --bam-stats\t\tRun the RSeQC stats on the bam file. Default \"false\".\n"
-    printf "  --tmp-dir\t\tSpecify local temporary folder to copy files when running on distributed file systems. Default: \"-\".\n"
+    printf "  --flux-mem\t\tSpecify the amount of ram the Flux Capacitor can use. Default: \"3G\".\n"
+    printf "  --tmp-dir\t\tSpecify local temporary folder to copy files when running on shared file systems.\n\t\t\tDefault: \"\$TMPDIR\" if the environment variable is defined, \"-\" otherwise.\n"
     printf "  --dry-run\t\tTest the pipeline. Writes the command to the standard output.\n"
     exit 0
 }
