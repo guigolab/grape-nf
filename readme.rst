@@ -43,7 +43,7 @@ The software requirements for running the pipeline are:
 - bedtools
 - R
 
-Before the actual run a setup step is required to produce the following files:
+Aa setup step is required to produce the following reference files needed for the run:
 
 #. GEM index of the genome
 #. GEM index of the transcriptome
