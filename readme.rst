@@ -9,9 +9,7 @@ Before installing Blueprint RNAseq pipeline make sure you have the following sof
 - git
 - make
 - gcc
-- bedtools
 - python 2.7
-- R
 
 You will also need a working internet connection to download and install the pipeline.
 
@@ -38,13 +36,20 @@ If your system does not come with python 2.7 and you ar able to provide the path
 Running the pipeline
 --------------------
 
-In order to run the pipeline a setup step is required to produce the following files:
+The software requirements for running the pipeline are:
+
+- bash 4
+- awk
+- bedtools
+- R
+
+Before the actual run a setup step is required to produce the following files:
 
 #. GEM index of the genome
 #. GEM index of the transcriptome
 #. fasta index of the genome
 
-You need to run the following commands::
+For which you need to run the following commands::
 
     # create the genome index
     gemtools index -t THREADS -i GENOME
