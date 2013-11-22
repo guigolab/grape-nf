@@ -10,9 +10,8 @@
 #$ -cwd
 #
 # Rename stdout and stderr files
-#$ -o .out
-#$ -e .err
-#
+#$ -o $JOB_NAME.out
+#$ -e $JOB_NAME.err
 #
 #  Copyright (c) 2013, Centre for Genomic Regulation (CRG)
 #  Emilio Palumbo, Alessandra Breschi and Sarah Djebali.
