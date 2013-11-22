@@ -739,7 +739,7 @@ if [ ! -e $contigFile ];then
         done
 
         log "Generationg the contigs file..." $step
-        run "python $makecontig --chrFile $genomeFai --fileP ${uniqBam%.bam}.plusRaw.bedgraph --fileM ${uniqBam%.bam}.minusRaw.bedgraph | awk '{s=\"\"; for(i=1; i<=NF; i++){s=(s)(\$i)(\"\t\")} print s}' > $contigFile" "$ECHO"
+        run "$makecontig --chrFile $genomeFai --fileP ${uniqBam%.bam}.plusRaw.bedgraph --fileM ${uniqBam%.bam}.minusRaw.bedgraph | awk '{s=\"\"; for(i=1; i<=NF; i++){s=(s)(\$i)(\"\t\")} print s}' > $contigFile" "$ECHO"
         log "done\n"
     else
         
