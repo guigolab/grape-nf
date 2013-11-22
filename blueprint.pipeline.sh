@@ -1,5 +1,19 @@
 #!/bin/bash
 #
+# Force bash shell
+#$ -S /bin/bash
+#
+# Export environment variables
+#$ -V
+#
+# Use current working directory as job working directory
+#$ -cwd
+#
+# Rename stdout and stderr files
+#$ -o .out
+#$ -e .err
+#
+#
 #  Copyright (c) 2013, Centre for Genomic Regulation (CRG)
 #  Emilio Palumbo, Alessandra Breschi and Sarah Djebali.
 #
