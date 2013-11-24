@@ -31,6 +31,9 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+shopt -s extglob
+
 function usage {
     echo ""
     echo "### Blueprint RNAseq pipeline ###"
@@ -970,5 +973,7 @@ pipelineEnd=$(date +%s)
 
 log "\n"
 printHeader "Blueprint pipeline for $sample completed in $(echo "($pipelineEnd-$pipelineStart)/60" | bc -l | xargs printf "%.2f\n") min "
+
+shopt -u extglob
 
 exit 0
