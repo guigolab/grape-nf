@@ -138,6 +138,11 @@ function finalizeStep {
 ## Parsing arguments
 #
 
+# Check for no arguments
+if [[ ! $@ ]]; then
+    usage
+fi
+
 # Execute getopt
 ARGS=`getopt -o "i:g:a:m:n:s:t:l:q:r:c:g:hp" -l "input:,genome:,annotation:,mismatches:,hits:,read-strand:,threads:,loglevel:,quality:,max-read-length:,tmp-dir:,flux-mem:,count-elements:,read-group:,bam-stats,dry-run,help,paired-end" \
       -n "$0" -- "$@"`
