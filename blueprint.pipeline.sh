@@ -55,6 +55,7 @@ function usage {
     printf "  -t|--threads\t\tNumber of threads. Default \"1\".\n"
     printf "  -p|--paired-end\tSpecify whether the data is paired-end. Defalut: \"false\".\n"
     printf "  -c|--count-elements\tA comma separated list of elements to be counted by the Flux Capacitor.\n\t\t\tPossible values: INTRONS,SPLICE_JUNCTIONS. Defalut: \"none\".\n"
+    printf "  -g|--read-group\tA comma separated list of tags for the @RG field of the BAM file.\n\t\t\tCheck the SAM specification for details. Default: \"none\".\n"
     printf "  -h|--help\t\tShow this message and exit.\n"
     printf "  --bam-stats\t\tRun the RSeQC stats on the bam file. Default \"false\".\n"
     printf "  --flux-mem\t\tSpecify the amount of ram the Flux Capacitor can use. Default: \"3G\".\n"
@@ -138,7 +139,7 @@ function finalizeStep {
 #
 
 # Execute getopt
-ARGS=`getopt -o "i:g:a:m:n:s:t:l:q:r:c:hp" -l "input:,genome:,annotation:,mismatches:,hits:,read-strand:,threads:,loglevel:,quality:,max-read-length:,tmp-dir:,flux-mem:,count-elements:,bam-stats,dry-run,help,paired-end" \
+ARGS=`getopt -o "i:g:a:m:n:s:t:l:q:r:c:g:hp" -l "input:,genome:,annotation:,mismatches:,hits:,read-strand:,threads:,loglevel:,quality:,max-read-length:,tmp-dir:,flux-mem:,count-elements:,read-group:,bam-stats,dry-run,help,paired-end" \
       -n "$0" -- "$@"`
 
 #Bad arguments
@@ -249,6 +250,13 @@ do
       if [ -n $2 ];
       then
         countElements="$2"
+      fi
+      shift 2;;
+
+    -g|--read-group)
+      if [ -n $2 ];
+      then
+        readGroup="$2"
       fi
       shift 2;;
 
@@ -483,6 +491,9 @@ if [[ $doMapping == "true" ]];then
        
         log "Converting  $sample to bam..." $step
         command="$pigz -p $hthreads -dc $filteredGem | $gem2sam -T $hthreads -I $gemIndex -q offset-$qualityOffset -l"
+        if [[ $readGroup ]]; then
+            command="$command --read-group $readGroup"
+        fi
         if [[ $paired == "true" ]]; then
             command="$command --expect-paired-end-reads"
         else
