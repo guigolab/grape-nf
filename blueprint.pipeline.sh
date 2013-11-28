@@ -164,7 +164,8 @@ paired="false"
 # general
 loglevel="info"
 threads="1"
-tmpdir=${TMPDIR-"-"}
+#tmpdir=${TMPDIR-"-"}
+tmpdir="-"
 outdir=${SGE_O_WORKDIR-$PWD}
 
 while true;
@@ -266,7 +267,7 @@ do
       shift 2;;
 
     --bam-stats)
-      bamstats="true"
+      doBamstats="true"
       shift ;;
     
     --dry-run)
@@ -281,6 +282,25 @@ do
       shift
       break;;
   esac
+done
+
+read -ra steps <<< "$@"
+
+for step in ${steps[@]}; do
+    case $step in
+        mapping)
+            doMapping="true"
+            ;;
+        bigwig)
+            doBigWig="true"
+            ;;
+        contig)
+            doContig="true"
+            ;;
+        quant|flux)
+            doFlux="true"
+            ;;
+    esac
 done
 
 # Setting up environment
@@ -373,7 +393,7 @@ pipelineStart=$(date +%s)
 
 ## Mapping
 #
-if [[ `basename $input` =~ fastq ]];then 
+if [[ $doMapping == "true" ]];then 
     gem="$outdir/$sample.map.gz"
     if [ ! -e $gem ];then
         step="MAP"
@@ -485,7 +505,7 @@ if [[ `basename $input` =~ fastq ]];then
         printHeader "Bam file is present...skipping conversion step"
     fi
 else
-    printHeader "Input file is $input...skipping mapping steps"
+    printHeader "Skipped mapping steps"
 fi
 
 ## Indexing the filtered bam file
@@ -518,7 +538,7 @@ fi
 ## Producing stats for bam file
 ##
 statsDir=$outdir/stats
-if [ $bamstats ]; then
+if [[ $doBamstats == "true" ]]; then
     step="BAM-STATS"
     startTime=$(date +%s)
     printHeader "Executing bam stats step on the filtered bam file"
@@ -624,13 +644,7 @@ fi
 
 ## Producing bigWig files
 ##
-doBigWig=0
-if [[ $readStrand != "NONE" ]];then
-    eval "if [ ! -e $sample.plusRaw.bigwig ] || [ ! -e $sample.minusRaw.bigwig ];then doBigWig=1;fi"
-else 
-    eval "if [ ! -e $sample.bigwig ];then doBigWig=1;fi"
-fi
-if [[ $doBigWig == "1" ]];then
+if [[ $doBigWig == "true" ]];then
     step="BIGWIG"
     startTime=$(date +%s)
     printHeader "Executing BigWig step"
@@ -698,7 +712,7 @@ fi
 ## Producing contig files
 ##
 contigFile=$outdir/${sample}_contigs.bed
-if [ ! -e $contigFile ];then
+if [[ $doContig == "true" ]];then
     step="CONTIGS"
     startTime=$(date +%s)
     printHeader "Executing contigs step"
@@ -769,53 +783,54 @@ fi
 
 ## Run FLux
 ##
-step="FLUX"
-
-quantDir="$BASEDIR/quantification/$sample"
-export FLUX_MEM=$fluxMem
-
-if [ ! -d $quantDir ]; then
-    log "Creating sample folder in $quantDir..." $step
-    run "mkdir -p $quantDir" "$ECHO"
-    log "done\n"
-fi
-
-paramFile="$quantDir/$sample.par"
-proFile="$quantDir/$sample.profile"
-
-# prepare parameter file
-#
-# READ_STRAND MATE2_SENSE
-# ANNOTATION_MAPPING PAIRED_STRANDED
-# COUNT_ELEMENTS [SPLICE_JUNCTIONS, INTRONS]
-
-if [ ! -e $paramFile ]; then
-    run "echo \"# Flux Capacitor parameter file for $sample\" >> $paramFile" "$ECHO"
-    annotationMapping="AUTO"
-    if [[ $readStrand != "NONE" ]]; then
-        run "echo \"READ_STRAND $readStrand\" >> $paramFile" "$ECHO"
-        annotationMapping="STRANDED"
-        if [[ $paired == "true" ]];then 
-            annotationMapping="PAIRED_${annotationMapping}"
-        else
-            annotationMapping="SINGLE_${annotationMapping}"
-        fi
-    fi
-    
-    run "echo \"ANNOTATION_MAPPING $annotationMapping\" >> $paramFile" "$ECHO"    
-    run "echo \"COUNT_ELEMENTS [$countElements]\" >> $paramFile" "$ECHO"
-fi
-
-## Show Flux parameter file
-#
-run "echo \"\"" "$ECHO"
-run "cat $paramFile" "$ECHO"
-run "echo \"\"" "$ECHO"
 
 ## Run transcript quantification
 #
 fluxGtf="$quantDir/$sample.gtf"
-if [ ! -e $fluxGtf ];then
+if [[ $doFlux == "true" ]];then
+    step="FLUX"
+    
+    quantDir="$BASEDIR/quantification/$sample"
+    export FLUX_MEM=$fluxMem
+    
+    if [ ! -d $quantDir ]; then
+        log "Creating sample folder in $quantDir..." $step
+        run "mkdir -p $quantDir" "$ECHO"
+        log "done\n"
+    fi
+    
+    paramFile="$quantDir/$sample.par"
+    proFile="$quantDir/$sample.profile"
+    
+    # prepare parameter file
+    #
+    # READ_STRAND MATE2_SENSE
+    # ANNOTATION_MAPPING PAIRED_STRANDED
+    # COUNT_ELEMENTS [SPLICE_JUNCTIONS, INTRONS]
+    
+    if [ ! -e $paramFile ]; then
+        run "echo \"# Flux Capacitor parameter file for $sample\" >> $paramFile" "$ECHO"
+        annotationMapping="AUTO"
+        if [[ $readStrand != "NONE" ]]; then
+            run "echo \"READ_STRAND $readStrand\" >> $paramFile" "$ECHO"
+            annotationMapping="STRANDED"
+            if [[ $paired == "true" ]];then 
+                annotationMapping="PAIRED_${annotationMapping}"
+            else
+                annotationMapping="SINGLE_${annotationMapping}"
+            fi
+        fi
+        
+        run "echo \"ANNOTATION_MAPPING $annotationMapping\" >> $paramFile" "$ECHO"    
+        run "echo \"COUNT_ELEMENTS [$countElements]\" >> $paramFile" "$ECHO"
+    fi
+    
+    ## Show Flux parameter file
+    #
+    run "echo \"\"" "$ECHO"
+    run "cat $paramFile" "$ECHO"
+    run "echo \"\"" "$ECHO"
+
     startTime=$(date +%s)
     printHeader "Executing Flux quantification step"
 
@@ -826,7 +841,7 @@ if [ ! -e $fluxGtf ];then
         fluxGtf="$tmpdir/$sample.gtf"
     fi
 
-    if [ ! -e $TMPDIR/${annName%.gtf}_sorted.gtf ];then
+    if [ ! -e ${annotation%.gtf}_sorted.gtf ];then
         sortLog="$quantDir/${sample}_sort_annotation.log"
         log "Checking if the annotation is sorted" $step
         set -e && run "flux-capacitor -t sortGTF -c -i $annotation -o ${annotation%.gtf}_sorted.gtf > $sortLog 2>&1" "$ECHO"
@@ -845,7 +860,7 @@ if [ ! -e $fluxGtf ];then
         run "flux-capacitor --profile -p $paramFile -i $filteredBam -a $anno --profile-file $proFile > $profileLog 2>&1" "$ECHO"
     fi
 
-    if [ -e $fluxGtf ];then
+    if [ ! -e $fluxGtf ];then
         rm $fluxGtf
     fi
 
@@ -858,113 +873,114 @@ if [ ! -e $fluxGtf ];then
 
     endTime=$(date +%s)
     printHeader "Quantificaton step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
+
+    txFile=$quantDir/${sample}_transcript.gtf
+    if [ ! -e $txFile ];then
+        startTime=$(date +%s)
+        printHeader "Getting transcript from quantifications"
+        log "Generating transcripts file..."
+        run "awk '\$3==\"transcript\"' $fluxGtf > $txFile" "$ECHO"
+        log "done\n"
+        log "Computing md5sum for transcripts file..." $step
+        run "md5sum $txFile > $txFile.md5" "$ECHO"
+        log "done\n"
+        endTime=$(date +%s)
+        printHeader "Transcripts written in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
+    else
+        printHeader "Transcript file present...skipping transcript step"
+    fi
+    
+    if [[ $countElements =~ "SPLICE_JUNCTIONS" ]]; then
+        junctionFile=$quantDir/${sample}_junction.gtf
+        if [ ! -e $junctionFile ];then
+            startTime=$(date +%s)
+            printHeader "Getting junctions from quantifications"
+            log "Generating junctions file..."
+            run "awk '\$3==\"junction\"' $fluxGtf > $junctionFile" "$ECHO"
+            log "done\n"
+            log "Computing md5sum for junctions file..." $step
+            run "md5sum $junctionFile > $junctionFile.md5" "$ECHO"
+            log "done\n"
+            endTime=$(date +%s)
+            printHeader "Junctions written in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
+        else
+            printHeader "Junctions file present...skipping transcript step"
+        fi
+    fi
+    
+    if [[ $countElements =~ "INTRONS" ]]; then
+        intronFile=$quantDir/${sample}_intron.gtf
+        if [ ! -e $intronFile ];then
+            printHeader "Getting all-intronic regions from quantifications"
+            log "Generating introns file..."
+            run "awk '\$3==\"intron\"' $fluxGtf > $intronFile" "$ECHO"
+            log "done\n"
+            log "Computing md5sum for introns file..." $step
+            run "md5sum $intronFile > $intronFile.md5" "$ECHO"
+            log "done\n"
+            endTime=$(date +%s)
+            printHeader "Introns written in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
+        else
+            printHeader "Introns file present...skipping transcript step"
+        fi
+    fi
+    
+    exonFile=$quantDir/${sample}_distinct_exon_with_rpkm.gff
+    if [ ! -e $exonFile ];then
+        step="EXON"
+        startTime=$(date +%s)
+        printHeader "Executing Exon quantification step"
+    
+        
+        if [ -d $tmpdir ]; then
+            ## Copy needed files to TMPDIR
+            copyToTmp "$annotation,$fluxGtf"
+            IFS=',' read annotation fluxGtf <<< "$paths"
+            exonFile=$tmpdir/${sample}_distinct_exon_with_rpkm.gff
+        fi
+    
+        log "Running Exon quantification\n" $step
+        run "$trToEx -a $annotation -i $fluxGtf -o `dirname $exonFile`" "$ECHO"
+    
+        set -e && finalizeStep $exonFile $tmpdir $quantDir
+        IFS=',' read exonFile <<< "$paths"
+        
+        endTime=$(date +%s)
+        printHeader "Exon quantificaton step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
+    
+    else
+        printHeader "Exon quantification file present...skipping Exon quantification step"
+    fi
+    
+    geneFile=$quantDir/${sample}_gene_with_rpkm.gff
+    if [ ! -e $geneFile ];then
+        step="GENE"
+        startTime=$(date +%s)
+        printHeader "Executing Gene quantification step"
+    
+        if [ -d $tmpdir ]; then
+            ## Copy needed files to TMPDIR
+            copyToTmp "$annotation,$fluxGtf"
+            IFS=',' read annotation fluxGtf <<< "$paths"
+            geneFile=$tmpdir/${sample}_gene_with_rpkm.gff
+        fi
+    
+        log "Running Gene quantification\n" $step
+        run "$trToGn -a $annotation -i $fluxGtf -o `dirname $geneFile`" "$ECHO"
+    
+        set -e && finalizeStep $geneFile $tmpdir $quantDir
+        IFS=',' read geneFile <<< "$paths"
+        
+        endTime=$(date +%s)
+        printHeader "Gene quantificaton step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
+    
+    else
+        printHeader "Gene quantification file present...skipping Gene quantification step"
+    fi
 else
     printHeader "Flux quantification file present...skipping Flux quantification step"
 fi
 
-txFile=$quantDir/${sample}_transcript.gtf
-if [ ! -e $txFile ];then
-    startTime=$(date +%s)
-    printHeader "Getting transcript from quantifications"
-    log "Generating transcripts file..."
-    run "awk '\$3==\"transcript\"' $fluxGtf > $txFile" "$ECHO"
-    log "done\n"
-    log "Computing md5sum for transcripts file..." $step
-    run "md5sum $txFile > $txFile.md5" "$ECHO"
-    log "done\n"
-    endTime=$(date +%s)
-    printHeader "Transcripts written in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
-else
-    printHeader "Transcript file present...skipping transcript step"
-fi
-
-if [[ $countElements =~ "SPLICE_JUNCTIONS" ]]; then
-    junctionFile=$quantDir/${sample}_junction.gtf
-    if [ ! -e $junctionFile ];then
-        startTime=$(date +%s)
-        printHeader "Getting junctions from quantifications"
-        log "Generating junctions file..."
-        run "awk '\$3==\"junction\"' $fluxGtf > $junctionFile" "$ECHO"
-        log "done\n"
-        log "Computing md5sum for junctions file..." $step
-        run "md5sum $junctionFile > $junctionFile.md5" "$ECHO"
-        log "done\n"
-        endTime=$(date +%s)
-        printHeader "Junctions written in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
-    else
-        printHeader "Junctions file present...skipping transcript step"
-    fi
-fi
-
-if [[ $countElements =~ "INTRONS" ]]; then
-    intronFile=$quantDir/${sample}_intron.gtf
-    if [ ! -e $intronFile ];then
-        printHeader "Getting all-intronic regions from quantifications"
-        log "Generating introns file..."
-        run "awk '\$3==\"intron\"' $fluxGtf > $intronFile" "$ECHO"
-        log "done\n"
-        log "Computing md5sum for introns file..." $step
-        run "md5sum $intronFile > $intronFile.md5" "$ECHO"
-        log "done\n"
-        endTime=$(date +%s)
-        printHeader "Introns written in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
-    else
-        printHeader "Introns file present...skipping transcript step"
-    fi
-fi
-
-exonFile=$quantDir/${sample}_distinct_exon_with_rpkm.gff
-if [ ! -e $exonFile ];then
-    step="EXON"
-    startTime=$(date +%s)
-    printHeader "Executing Exon quantification step"
-
-    
-    if [ -d $tmpdir ]; then
-        ## Copy needed files to TMPDIR
-        copyToTmp "$annotation,$fluxGtf"
-        IFS=',' read annotation fluxGtf <<< "$paths"
-        exonFile=$tmpdir/${sample}_distinct_exon_with_rpkm.gff
-    fi
-
-    log "Running Exon quantification\n" $step
-    run "$trToEx -a $annotation -i $fluxGtf -o `dirname $exonFile`" "$ECHO"
-
-    set -e && finalizeStep $exonFile $tmpdir $quantDir
-    IFS=',' read exonFile <<< "$paths"
-    
-    endTime=$(date +%s)
-    printHeader "Exon quantificaton step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
-
-else
-    printHeader "Exon quantification file present...skipping Exon quantification step"
-fi
-
-geneFile=$quantDir/${sample}_gene_with_rpkm.gff
-if [ ! -e $geneFile ];then
-    step="GENE"
-    startTime=$(date +%s)
-    printHeader "Executing Gene quantification step"
-
-    if [ -d $tmpdir ]; then
-        ## Copy needed files to TMPDIR
-        copyToTmp "$annotation,$fluxGtf"
-        IFS=',' read annotation fluxGtf <<< "$paths"
-        geneFile=$tmpdir/${sample}_gene_with_rpkm.gff
-    fi
-
-    log "Running Gene quantification\n" $step
-    run "$trToGn -a $annotation -i $fluxGtf -o `dirname $geneFile`" "$ECHO"
-
-    set -e && finalizeStep $geneFile $tmpdir $quantDir
-    IFS=',' read geneFile <<< "$paths"
-    
-    endTime=$(date +%s)
-    printHeader "Gene quantificaton step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
-
-else
-    printHeader "Gene quantification file present...skipping Gene quantification step"
-fi
 
 # deactivate python virtualenv
 run "deactivate" "$ECHO"
