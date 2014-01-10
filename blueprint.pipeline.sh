@@ -297,7 +297,12 @@ do
   esac
 done
 
-read -ra steps <<< "$@"
+# getting pipeline steps to execute
+steps=(mapping bigwig contig flux)
+
+if [[ "$@" ]]; then
+    read -ra steps <<< "$@"
+fi
 
 for step in ${steps[@]}; do
     case $step in
