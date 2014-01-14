@@ -383,6 +383,21 @@ makecontig="contigsNew.py"
 gtfToGenePred="gtfToGenePred"
 genePredToBed12="genePredToBed12.awk"
 
+## Output files
+#
+# mapping
+gem="$outdir/$sample.map.gz"
+filteredGem=${gem%.map.gz}_m${mism}_n${hits}.map.gz    
+filteredGemStats=${filteredGem%.map.gz}.stats
+filteredBam=${filteredGem%.map.gz}.bam
+filteredBai="$filteredBam.bai"
+# bigwig
+
+# contigs
+contigFile=$outdir/${sample}_contigs.bed
+# quantification
+fluxGtf="$quantDir/$sample.gtf"
+
 ## Print pipeline configuration
 
 header="Pipeline configuration for $sample"
@@ -416,7 +431,6 @@ pipelineStart=$(date +%s)
 ## Mapping
 #
 if [[ $doMapping == "true" ]];then 
-    gem="$outdir/$sample.map.gz"
     if [ ! -e $gem ];then
         step="MAP"
         startTime=$(date +%s)
@@ -447,7 +461,6 @@ if [[ $doMapping == "true" ]];then
  
     ## Filtering the map file
     ##
-    filteredGem=${gem%.map.gz}_m${mism}_n${hits}.map.gz    
     
     if [ ! -e $filteredGem ];then
         step="FILTER"
@@ -468,7 +481,6 @@ if [[ $doMapping == "true" ]];then
  
     ## Getting stats for the filtered map file
     ##
-    filteredGemStats=${filteredGem%.map.gz}.stats
     
     if [ $filteredGemStats -ot $filteredGem ]; then
         step="GEM-STATS"
@@ -489,7 +501,6 @@ if [[ $doMapping == "true" ]];then
 
     ## Convert to bam 
     ##
-    filteredBam=${filteredGem%.map.gz}.bam
     
     if [ ! -e $filteredBam ]; then
         step="CONVERT"
@@ -532,7 +543,6 @@ if [[ $doMapping == "true" ]];then
     
     ## Indexing the filtered bam file
     ##
-    filteredBai="$filteredBam.bai"
     if [ $filteredBai -ot $filteredBam ];then
         step="INDEX"
         startTime=$(date +%s)
@@ -738,7 +748,6 @@ fi
 
 ## Producing contig files
 ##
-contigFile=$outdir/${sample}_contigs.bed
 if [[ $doContig == "true" ]];then
     step="CONTIGS"
     startTime=$(date +%s)
@@ -813,7 +822,6 @@ fi
 
 ## Run transcript quantification
 #
-fluxGtf="$quantDir/$sample.gtf"
 if [[ $doFlux == "true" ]];then
     step="FLUX"
     
