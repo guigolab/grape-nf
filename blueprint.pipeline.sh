@@ -325,6 +325,7 @@ done
 
 BASEDIR=`dirname $outdir`
 BINDIR="$BASEDIR/bin"
+quantDir="$BASEDIR/quantification/`basename $outdir`"
 
 # activate python virtualenv
 run ". $BASEDIR/bin/activate" "$ECHO"
@@ -402,6 +403,9 @@ printf "  %-34s %s\n" "Flux Capacitor memory:" "$fluxMem"
 printf "  %-34s %s\n" "Temporary folder:" "$tmpdir"
 printf "  %-34s %s\n" "Loglevel:" "$loglevel"
 printf "\n\n"
+printf "  %-34s %s\n" "Mapping folder:" "$outdir"
+printf "  %-34s %s\n" "Quantification folder:" "$quantDir"
+printf "\n\n"
 
 ## START
 #
@@ -426,7 +430,7 @@ if [[ $doMapping == "true" ]];then
         fi
     
         log "Running gemtools rna pipeline on ${sample}" $step
-        command="gemtools --loglevel $loglevel rna-pipeline -f $input -q $qualityOffset -i $gemIndex -a $annotation -o `dirname $gem` -t $threads --no-stats --no-bam"
+        command="gemtools --loglevel $loglevel rna-pipeline -f $input -q $qualityOffset -i $gemIndex -a $annotation -o `dirname $gem` -t $threads --max-read-length $maxReadLength --no-stats --no-bam"
         if [[ $paired == "false" ]]; then
             command="$command --single-end"
         fi
@@ -525,36 +529,38 @@ if [[ $doMapping == "true" ]];then
     else
         printHeader "Bam file is present...skipping conversion step"
     fi
+    
+    ## Indexing the filtered bam file
+    ##
+    filteredBai="$filteredBam.bai"
+    if [ $filteredBai -ot $filteredBam ];then
+        step="INDEX"
+        startTime=$(date +%s)
+        printHeader "Executing indexing step on the filtered bam file"
+    
+        if [ -d $tmpdir ]; then
+            ## Copy needed files to TMPDIR
+            copyToTmp "$filteredBam"
+            IFS=',' read filteredBam <<< "$paths"
+            filteredBai="$tmpdir/`basename $filteredBai`"
+        fi
+    
+        log "Indexing the filtered bam file\n" $step
+        run "$samtools index $filteredBam" "$ECHO"
+        
+        set -e && finalizeStep $filteredBai $tmpdir $outdir        
+        IFS=',' read filteredBai <<< "$paths"
+    
+        endTime=$(date +%s)
+        printHeader "Indexing step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
+    else
+        printHeader "Bam index file is present...skipping indexing step"
+    fi
+
 else
     printHeader "Skipped mapping steps"
 fi
 
-## Indexing the filtered bam file
-##
-filteredBai="$filteredBam.bai"
-if [ $filteredBai -ot $filteredBam ];then
-    step="INDEX"
-    startTime=$(date +%s)
-    printHeader "Executing indexing step on the filtered bam file"
-
-    if [ -d $tmpdir ]; then
-        ## Copy needed files to TMPDIR
-        copyToTmp "$filteredBam"
-        IFS=',' read filteredBam <<< "$paths"
-        filteredBai="$tmpdir/`basename $filteredBai`"
-    fi
-
-    log "Indexing the filtered bam file\n" $step
-    run "$samtools index $filteredBam" "$ECHO"
-    
-    set -e && finalizeStep $filteredBai $tmpdir $outdir        
-    IFS=',' read filteredBai <<< "$paths"
-
-    endTime=$(date +%s)
-    printHeader "Indexing step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
-else
-    printHeader "Bam index file is present...skipping indexing step"
-fi
 
 ## Producing stats for bam file
 ##
@@ -727,7 +733,7 @@ if [[ $doBigWig == "true" ]];then
     endTime=$(date +%s)
     printHeader "BigWig step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
 else
-    printHeader "BigWig files present...skipping bigwig step"
+    printHeader "Skipping bigwig step"
 fi
 
 ## Producing contig files
@@ -799,7 +805,7 @@ if [[ $doContig == "true" ]];then
     endTime=$(date +%s)
     printHeader "Contigs step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
 else
-    printHeader "Contigs file present...skipping contigs step"
+    printHeader "Skipping contigs step"
 fi
 
 ## Run FLux
@@ -811,7 +817,6 @@ fluxGtf="$quantDir/$sample.gtf"
 if [[ $doFlux == "true" ]];then
     step="FLUX"
     
-    quantDir="$BASEDIR/quantification/$sample"
     export FLUX_MEM=$fluxMem
     
     if [ ! -d $quantDir ]; then
@@ -881,7 +886,8 @@ if [[ $doFlux == "true" ]];then
         run "flux-capacitor --profile -p $paramFile -i $filteredBam -a $anno --profile-file $proFile > $profileLog 2>&1" "$ECHO"
     fi
 
-    if [ ! -e $fluxGtf ];then
+    if [ -e $fluxGtf ];then
+        log "Removing old quantification file" $step
         rm $fluxGtf
     fi
 
@@ -999,7 +1005,7 @@ if [[ $doFlux == "true" ]];then
         printHeader "Gene quantification file present...skipping Gene quantification step"
     fi
 else
-    printHeader "Flux quantification file present...skipping Flux quantification step"
+    printHeader "Skipping Flux quantification step"
 fi
 
 
