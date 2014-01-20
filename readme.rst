@@ -23,11 +23,11 @@ Pipeline buildout
 
 The first step to install the pipeline is cloning the repository::
 
-    git clone https://bitbucket.org/emi80/bp.pipeline.git
+    git clone https://<username>@bitbucket.org/emi80/bp.pipeline.git
 
 This will create a folder in your working directory called ``bp.pipeline``. You should use it as your base folder for running the pipeline. If you want to clone to a different folder you can do::
 
-    git clone https://bitbucket.org/emi80/bp.pipeline.git PIPELINE_FOLDER
+    git clone https://<useranme>@bitbucket.org/emi80/bp.pipeline.git PIPELINE_FOLDER
 
 Once the cloning step completes you can perform the buildout::
 
