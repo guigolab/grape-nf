@@ -45,6 +45,7 @@ The software requirements for running the pipeline are:
 
 - bash 4
 - awk
+- samtools
 - bedtools
 - R
 
