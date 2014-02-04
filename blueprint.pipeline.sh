@@ -807,11 +807,11 @@ fi
 
 ## Run transcript quantification
 #
+quantDir="$BASEDIR/quantification/$sample"
 fluxGtf="$quantDir/$sample.gtf"
 if [[ $doFlux == "true" ]];then
     step="FLUX"
     
-    quantDir="$BASEDIR/quantification/$sample"
     export FLUX_MEM=$fluxMem
     
     if [ ! -d $quantDir ]; then
