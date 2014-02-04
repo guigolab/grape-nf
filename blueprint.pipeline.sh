@@ -881,7 +881,7 @@ if [[ $doFlux == "true" ]];then
         run "flux-capacitor --profile -p $paramFile -i $filteredBam -a $anno --profile-file $proFile > $profileLog 2>&1" "$ECHO"
     fi
 
-    if [ ! -e $fluxGtf ];then
+    if [ -e $fluxGtf ];then
         rm $fluxGtf
     fi
 
