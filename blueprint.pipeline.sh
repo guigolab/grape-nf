@@ -789,7 +789,7 @@ if [[ $doContig == "true" ]];then
         fi
         
         log "Generationg the contigs file..." $step
-        run "bamToBed -i $uniqBam | sort -k1,1 -nk2,2 | mergeBed > $contigFile" "$ECHO"
+        run "bamToBed -i $uniqBam | sort -k1,1 -k2,2n | mergeBed > $contigFile" "$ECHO"
         log "done\n"
     fi
 
