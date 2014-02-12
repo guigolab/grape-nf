@@ -694,10 +694,10 @@ if [[ $doBigWig == "true" ]];then
             fi
 
             bedGraph=$outdir/$sample.$suffix.bedgraph
-            bigWig=$outdir/$sample.$suffix.bigwig
+            bigWig=$outdir/$sample.$suffix.bw
             if [ -d $tmpdir ]; then                
                 bedGraph=$tmpdir/$sample.$suffix.bedgraph
-                bigWig=$tmpdir/$sample.$suffix.bigwig
+                bigWig=$tmpdir/$sample.$suffix.bw
             fi
             log "Making bedGraph $strand strand\n" "$step"
             run "genomeCoverageBed -strand $strand -split -bg -ibam $revBam > $bedGraph" "$ECHO"
@@ -709,10 +709,10 @@ if [[ $doBigWig == "true" ]];then
         done
     else
         bedGraph=$outdir/$sample.bedgraph
-        bigWig=$outdir/$sample.bigwig
+        bigWig=$outdir/$sample.bw
         if [ -d $tmpdir ]; then                
             bedGraph=$tmpdir/$sample.bedgraph
-            bigWig=$tmpdir/$sample.bigwig
+            bigWig=$tmpdir/$sample.bw
         fi
 
         log "Making bedGraph\n" "BEDGRAPH"
