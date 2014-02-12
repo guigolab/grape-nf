@@ -946,7 +946,7 @@ if [[ $doFlux == "true" ]];then
         fi
     fi
     
-    exonFile=$quantDir/${sample}_distinct_exon_with_rpkm.gff
+    exonFile=$quantDir/${sample}_exon_distinct_with_rpkm.gff
     if [ ! -e $exonFile ];then
         step="EXON"
         startTime=$(date +%s)
