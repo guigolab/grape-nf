@@ -32,7 +32,11 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# enable extglob for inverse regexp behaviur
 shopt -s extglob
+
+# set permissions to 775 for new files and folders
+umask 002
 
 function usage {
     echo ""
@@ -1011,6 +1015,10 @@ pipelineEnd=$(date +%s)
 log "\n"
 printHeader "Blueprint pipeline for $sample completed in $(echo "($pipelineEnd-$pipelineStart)/60" | bc -l | xargs printf "%.2f\n") min "
 
+# disable extglob
 shopt -u extglob
+
+# reset to default permissions for new files and folders
+umask 022
 
 exit 0
