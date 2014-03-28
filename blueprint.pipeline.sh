@@ -32,7 +32,11 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# enable extglob for inverse regexp behaviur
 shopt -s extglob
+
+# set permissions to 775 for new files and folders
+umask 002
 
 function usage {
     echo ""
@@ -55,8 +59,8 @@ function usage {
     printf "  -t|--threads\t\tNumber of threads. Default \"1\".\n"
     printf "  -p|--paired-end\tSpecify whether the data is paired-end. Defalut: \"false\".\n"
     printf "  -c|--count-elements\tA comma separated list of elements to be counted by the Flux Capacitor.\n\t\t\tPossible values: INTRONS,SPLICE_JUNCTIONS. Defalut: \"none\".\n"
-    printf "  -g|--read-group\tA comma separated list of tags for the @RG field of the BAM file.\n\t\t\tCheck the SAM specification for details. Default: \"none\".\n"
     printf "  -h|--help\t\tShow this message and exit.\n"
+    printf "  --read-group\tA comma separated list of tags for the @RG field of the BAM file.\n\t\t\tCheck the SAM specification for details. Default: \"none\".\n"
     printf "  --bam-stats\t\tRun the RSeQC stats on the bam file. Default \"false\".\n"
     printf "  --flux-mem\t\tSpecify the amount of ram the Flux Capacitor can use. Default: \"3G\".\n"
     printf "  --tmp-dir\t\tSpecify local temporary folder to copy files when running on shared file systems.\n\t\t\tDefault: \"\$TMPDIR\" if the environment variable is defined, \"-\" otherwise.\n"
@@ -710,10 +714,10 @@ if [[ $doBigWig == "true" ]];then
             fi
 
             bedGraph=$outdir/$sample.$suffix.bedgraph
-            bigWig=$outdir/$sample.$suffix.bigwig
+            bigWig=$outdir/$sample.$suffix.bw
             if [ -d $tmpdir ]; then                
                 bedGraph=$tmpdir/$sample.$suffix.bedgraph
-                bigWig=$tmpdir/$sample.$suffix.bigwig
+                bigWig=$tmpdir/$sample.$suffix.bw
             fi
             log "Making bedGraph $strand strand\n" "$step"
             run "genomeCoverageBed -strand $strand -split -bg -ibam $revBam > $bedGraph" "$ECHO"
@@ -725,10 +729,10 @@ if [[ $doBigWig == "true" ]];then
         done
     else
         bedGraph=$outdir/$sample.bedgraph
-        bigWig=$outdir/$sample.bigwig
+        bigWig=$outdir/$sample.bw
         if [ -d $tmpdir ]; then                
             bedGraph=$tmpdir/$sample.bedgraph
-            bigWig=$tmpdir/$sample.bigwig
+            bigWig=$tmpdir/$sample.bw
         fi
 
         log "Making bedGraph\n" "BEDGRAPH"
@@ -804,7 +808,7 @@ if [[ $doContig == "true" ]];then
         fi
         
         log "Generationg the contigs file..." $step
-        run "bamToBed -i $uniqBam | sort -k1,1 -nk2,2 | mergeBed > $contigFile" "$ECHO"
+        run "bamToBed -i $uniqBam | sort -k1,1 -k2,2n | mergeBed > $contigFile" "$ECHO"
         log "done\n"
     fi
 
@@ -960,7 +964,7 @@ if [[ $doFlux == "true" ]];then
         fi
     fi
     
-    exonFile=$quantDir/${sample}_distinct_exon_with_rpkm.gff
+    exonFile=$quantDir/${sample}_exon_distinct_with_rpkm.gff
     if [ ! -e $exonFile ];then
         step="EXON"
         startTime=$(date +%s)
@@ -1025,6 +1029,10 @@ pipelineEnd=$(date +%s)
 log "\n"
 printHeader "Blueprint pipeline for $sample completed in $(echo "($pipelineEnd-$pipelineStart)/60" | bc -l | xargs printf "%.2f\n") min "
 
+# disable extglob
 shopt -u extglob
+
+# reset to default permissions for new files and folders
+umask 022
 
 exit 0
