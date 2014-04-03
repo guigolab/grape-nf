@@ -35,7 +35,7 @@
 # enable extglob for inverse regexp behaviur
 shopt -s extglob
 
-# set permissions to 775 for new files and folders
+# set permissions to 775 for new files and folders created by this script
 umask 002
 
 function usage {
@@ -1017,8 +1017,5 @@ printHeader "Blueprint pipeline for $sample completed in $(echo "($pipelineEnd-$
 
 # disable extglob
 shopt -u extglob
-
-# reset to default permissions for new files and folders
-umask 022
 
 exit 0
