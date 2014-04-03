@@ -961,7 +961,7 @@ if [[ $doFlux == "true" ]];then
             ## Copy needed files to TMPDIR
             copyToTmp "$annotation,$fluxGtf"
             IFS=',' read annotation fluxGtf <<< "$paths"
-            exonFile=$tmpdir/${sample}_distinct_exon_with_rpkm.gff
+            exonFile=$tmpdir/${sample}_exon_distinct_with_rpkm.gff
         fi
     
         log "Running Exon quantification\n" $step
