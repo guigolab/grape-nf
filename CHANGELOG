@@ -22,6 +22,7 @@ Version 1.1
 - Update name for exon quantifications file when using temp dir
 - Umask applies to the shell spawn by the script
 - Add help message for STEPS
+- Fix gt.stats for single end data
 
 Version 1.0:
 ------------
