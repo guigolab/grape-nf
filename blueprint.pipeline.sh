@@ -478,7 +478,11 @@ if [[ $doMapping == "true" ]];then
         printHeader "Executing GEM stats step"
     
         log "Producing stats for $filteredGem..." $step
-        run "$gt_stats -i $filteredGem -t $threads -a -p 2> $filteredGemStats" "$ECHO"
+        command="$gt_stats -i $filteredGem -t $threads -a"
+        if [[ $paired == "true" ]]; then
+            command=$command" -p"
+        fi
+        run "$command 2> $filteredGemStats" "$ECHO"
         log "done\n" $step
 
         set -e && finalizeStep $filteredGemStats "-" $outdir
