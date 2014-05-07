@@ -1,0 +1,30 @@
+Bp.pipeline Changelog
+=====================
+
+Version 1.1
+-----------
+
+- Add steps selection
+- Add read group option
+- Add check for no arguments
+- Add version file
+- Fix default steps array
+- Move quantDir initalization before it's accessed
+- Fix removal of flux gtf file
+- Fix sort command for unstranded data in contigs step
+- Update exon quantification file name
+- Change bigwig files extension
+- Change umask for group write permissions
+- Update to scripts v1.2
+- Fix pipeline bins version
+- Fixed pysam package version in python requirements
+- Fixed typo in read-group option help
+- Update name for exon quantifications file when using temp dir
+- Umask applies to the shell spawn by the script
+- Add help message for STEPS
+- Fix gt.stats for single end data
+
+Version 1.0:
+------------
+
+- Latest version used for the analysis

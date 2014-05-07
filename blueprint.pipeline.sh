@@ -35,7 +35,7 @@
 # enable extglob for inverse regexp behaviur
 shopt -s extglob
 
-# set permissions to 775 for new files and folders
+# set permissions to 775 for new files and folders created by this script
 umask 002
 
 function usage {
@@ -43,7 +43,9 @@ function usage {
     echo "### Blueprint RNAseq pipeline ###"
     echo "Run the RNAseq pipeline on one sample."
     echo ""
-    echo "Usage: $0 -i FASTQ_FILE -g GENOME_FILE -a ANNOTATION_FILE [OPTION]..."
+    echo "Usage: $0 -i FASTQ_FILE -g GENOME_FILE -a ANNOTATION_FILE [OPTION]... [-- STEPS]"
+    echo ""
+    printf "  If specified, STEPS must be a space separate list of items from [mapping, bigwig, contig, flux]. Default: all\n"
     echo ""
     printf "  -i|--input\t\tinput file.\n"
     printf "  -g|--genome\t\treference genome file.\n"
@@ -492,7 +494,11 @@ if [[ $doMapping == "true" ]];then
         printHeader "Executing GEM stats step"
     
         log "Producing stats for $filteredGem..." $step
-        run "$gt_stats -i $filteredGem -t $threads -a -p 2> $filteredGemStats" "$ECHO"
+        command="$gt_stats -i $filteredGem -t $threads -a"
+        if [[ $paired == "true" ]]; then
+            command=$command" -p"
+        fi
+        run "$command 2> $filteredGemStats" "$ECHO"
         log "done\n" $step
 
         set -e && finalizeStep $filteredGemStats "-" $outdir
@@ -975,7 +981,7 @@ if [[ $doFlux == "true" ]];then
             ## Copy needed files to TMPDIR
             copyToTmp "$annotation,$fluxGtf"
             IFS=',' read annotation fluxGtf <<< "$paths"
-            exonFile=$tmpdir/${sample}_distinct_exon_with_rpkm.gff
+            exonFile=$tmpdir/${sample}_exon_distinct_with_rpkm.gff
         fi
     
         log "Running Exon quantification\n" $step
@@ -1031,8 +1037,5 @@ printHeader "Blueprint pipeline for $sample completed in $(echo "($pipelineEnd-$
 
 # disable extglob
 shopt -u extglob
-
-# reset to default permissions for new files and folders
-umask 022
 
 exit 0
