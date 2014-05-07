@@ -474,7 +474,10 @@ if [[ $doMapping == "true" ]];then
         printHeader "Executing filtering step"
         
         log "Filtering map file..." $step
-        run "$gt_quality -i $gem -t $threads | $gt_filter --max-levenshtein-error $mism -t $threads | $gt_filter --max-matches $hits -t $threads | $pigz -p $threads -c > $filteredGem" "$ECHO"
+        #run "$gt_quality -i $gem -t $threads | $gt_filter --max-levenshtein-error $mism -t $threads | $gt_filter --max-matches $hits -t $threads | $pigz -p $threads -c > $filteredGem" "$ECHO"
+        run "$gt_quality -i $gem -t $threads > $filteredGem.quality.map" "$ECHO"
+        run "$gt_filter -i $filteredGem.quality.map --max-levenshtein-error $mism -t $threads > $filteredGem.levenshtein.map && rm $filteredGem.quality.map" "$ECHO"
+        run "$gt_filter -i $filteredGem.levenshtein.map --max-matches $hits -t $threads | $pigz -p $threads -c > $filteredGem && rm $filteredGem.levenshtein.map" "$ECHO"        
         log "done\n" $step
 
         set -e && finalizeStep $filteredGem "-" $outdir
