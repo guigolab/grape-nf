@@ -163,37 +163,84 @@ process bigwig {
     }
 
     if (mateBit > 0) {
-        command += "samtools view -h -@ ${params.cpus} ${bam1} | awk -v MateBit=${mateBit} '${awkCommand}' | samtools view -@ ${params.cpus} -Sb - > tmp.bam\nmv -f tmp.bam mapping.bam\n"
+        command += "samtools view -h -@ ${params.cpus} ${bam1}"
+        command += " | awk -v MateBit=${mateBit} '${awkCommand}'"
+        command += " | samtools view -@ ${params.cpus} -Sb -"
+        command += " > tmp.bam\n"
+        command += "mv -f tmp.bam mapping.bam\n"
     }
     
     strand.each( { 
         command += "genomeCoverageBed " 
         command += (it.key != '' ? "-strand ${it.key} " : '') 
-        command += "-split -bg -ibam ${bam1} > ${reads_name}${it.value}.bedgraph\nbedGraphToBigWig ${reads_name}${it.value}.bedgraph ${genomeFai} ${reads_name}${it.value}.bw\n" 
+        command += "-split -bg -ibam ${bam1} > ${reads_name}${it.value}.bedgraph\n"
+        command += "bedGraphToBigWig ${reads_name}${it.value}.bedgraph ${genomeFai} ${reads_name}${it.value}.bw\n" 
     } )
 
     return command
         
 }
 
-//process contig {
-//    input:
-//    file bam2
-//}
-//
-//process quantifications {
-//    input:
-//    file bam3
-//    file annotation_file
-//
-//    output:
-//    file 'flux.gtf'
-//
-//    """
-//    module load flux/1.6.1
-//    flux-capacitor -i ${bam3} -a ${annotation_file} -o flux.gtf -m AUTO --read-strand ${params.read_strand}
-//    """
-//}
+process contig {
+    input:
+    set reads_name, file(bam2) from bam2
+    file genomeFai
+
+    script:
+    command = ''
+    strand = ['': '']
+    mateBit = 0
+    awkCommand = 'BEGIN {OFS=\"\\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}'
+    if (params.read_strand != 'NONE') {
+        strand = ['+': '.plusRaw','-': '.minusRaw']
+        mateBit = (params.read_strand =~ /MATE2/ ? 64 : 128)
+    }
+
+    if (mateBit > 0) {
+        command += "samtools view -h -@ ${params.cpus} ${bam2}"
+        command += " | awk -v MateBit=${mateBit} '${awkCommand}'"
+        command += " | samtools view -@ ${params.cpus} -Sb -"
+        command += " > tmp.bam\n"
+        command += "mv -f tmp.bam mapping.bam\n"
+    }
+    
+    strand.each( { 
+        command += "genomeCoverageBed " 
+        command += (it.key != '' ? "-strand ${it.key} " : '') 
+        command += "-split -bg -ibam ${bam2} > ${reads_name}${it.value}.bedgraph\n"
+    } )
+    
+    if (strand.size() == 2) {
+        command += "contigsNew.py --chrFile ${genomeFai}"
+        strand.each( {
+            command += " --file${it.value.substring(1,2).toUpperCase()} ${reads_name}${it.value}.bedgraph"
+        } )
+        command += " | awk '{s=\"\"; for(i=1; i<=NF; i++){s=(s)(\$i)(\"\t\")} print s}'" 
+        command += " > ${reads_name}_contigs.bed"
+    } else {        
+        command += "bamToBed -i ${bam2} | sort -k1,1 -k2,2n"
+        command += " | mergeBed"
+        command += " > ${reads_name}_contig.bed"
+    }
+    
+    return command
+
+}
+
+
+process quantifications {
+    input:
+    set reads_name, file(bam3) from bam3
+    file annotation_file
+
+    output:
+    file 'flux.gtf'
+
+    """
+    module load flux/1.6.1
+    flux-capacitor -i ${bam3} -a ${annotation_file} -o flux.gtf -m AUTO --read-strand ${params.read_strand}
+    """
+}
 
 //# activate python virtualenv
 //run ". $BASEDIR/bin/activate" "$ECHO"
