@@ -266,10 +266,10 @@ process quantifications {
     """
 }
 
-//result = Channel.from(bigwig, contig, flux)
-//result.subscribe {
-//    println it
-//}
+result = Channel.from(bigwig, contig, flux)
+result.subscribe {
+    println it
+}
 
 //# activate python virtualenv
 //run ". $BASEDIR/bin/activate" "$ECHO"
