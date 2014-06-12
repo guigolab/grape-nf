@@ -135,14 +135,15 @@ process t_index {
     """
     module load gemtools/1.7.1-i3
     gemtools t-index -i ${genome_index} -a ${annotation_file} -m ${params.max_read_length} -t ${params.cpus} -o tx_index
-    """
+    """    
 }
+
+
+input_files = input_files.spread(genome_index2).spread(tx_index)
 
 process mapping {
     input:
-    file genome_index from genome_index2
-    set file(tx_index), file(tx_keys) from tx_index
-    set reads_name, file(read1), file(read2) from input_files
+    set reads_name, file(read1), file(read2), file(genome_index), file(tx_index), file(tx_keys) from input_files
 
     output:
     set reads_name, "mapping.bam" into bam
