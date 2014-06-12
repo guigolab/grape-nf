@@ -88,8 +88,24 @@ log.info "Quantification folder     : ${quantDir}"
 
 genome_file = file(params.genome)
 annotation_file = file(params.annotation)
-input_files = [ file(params.input), file(params.input.replace('_1','_2')) ]
+
+input_files = Channel
+    .fromPath(params.input) 
+    .groupBy {
+        path -> path.name.split("\\.", 2)[0][0..-3]
+    }
+    .flatMap ()
+    .map {
+       [it.key, it.value.sort()[0], it.value.sort()[1]]
+    }
+
 result_path = file(params.outdir)
+
+//result = Channel.create()
+
+//result.subscribe {
+//    println it
+//}
 
 process index {
     input:
@@ -113,7 +129,7 @@ process t_index {
     file annotation_file
 
     output:
-    set 'tx_index.junctions.gem', 'tx_index.junctions.keys' into tx_index 
+    set 'tx_index.junctions.gem', 'tx_index.junctions.keys' into tx_index
     
     script:
     """
@@ -126,19 +142,16 @@ process mapping {
     input:
     file genome_index from genome_index2
     set file(tx_index), file(tx_keys) from tx_index
-    set read1, read2 from input_files
-    val reads_name from input_files[0].baseName.replace('_1','')
+    set reads_name, file(read1), file(read2) from input_files
 
     output:
     set reads_name, "mapping.bam" into bam
 
     script:
-
     """
     module load gemtools/1.7.1-i3
     gemtools rna-pipeline -i ${genome_index} -r ${tx_index} -k ${tx_keys} -f ${read1} -t ${params.cpus} -q ${params.quality_offset} -n mapping
     """
-
 }
 
 (bam1, bam2, bam3) = bam.into(3)
@@ -146,13 +159,15 @@ process mapping {
 genomeFai = file(params.genome+'.fai')
 
 process bigwig {
-    echo true
-
     input:
     set reads_name, file(bam1) from bam1
     file genomeFai
 
+    output:
+    set val(view), file('*.bw') into bigwig
+
     script:
+    view = 'bigwig'
     command = ''
     strand = ['': '']
     mateBit = 0
@@ -186,7 +201,11 @@ process contig {
     set reads_name, file(bam2) from bam2
     file genomeFai
 
+    output:
+    set val(view), file('*_contigs.bed') into contig
+
     script:
+    view = 'contig'
     command = ''
     strand = ['': '']
     mateBit = 0
@@ -203,6 +222,9 @@ process contig {
         command += " > tmp.bam\n"
         command += "mv -f tmp.bam mapping.bam\n"
     }
+
+    command += "bamflag -in ${bam2} -out tmp.bam -m 3\n"
+    command += "mv -f tmp.bam mapping.bam\n"
     
     strand.each( { 
         command += "genomeCoverageBed " 
@@ -220,13 +242,12 @@ process contig {
     } else {        
         command += "bamToBed -i ${bam2} | sort -k1,1 -k2,2n"
         command += " | mergeBed"
-        command += " > ${reads_name}_contig.bed"
+        command += " > ${reads_name}_contigs.bed"
     }
     
     return command
 
 }
-
 
 process quantifications {
     input:
@@ -234,13 +255,20 @@ process quantifications {
     file annotation_file
 
     output:
-    file 'flux.gtf'
+    set val(view), file('flux.gtf') into flux
 
+    script:
+    view = 'transcript'
     """
     module load flux/1.6.1
     flux-capacitor -i ${bam3} -a ${annotation_file} -o flux.gtf -m AUTO --read-strand ${params.read_strand}
     """
 }
+
+//result = Channel.from(bigwig, contig, flux)
+//result.subscribe {
+//    println it
+//}
 
 //# activate python virtualenv
 //run ". $BASEDIR/bin/activate" "$ECHO"
