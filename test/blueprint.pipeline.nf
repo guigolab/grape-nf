@@ -22,9 +22,9 @@
 
 env = System.getenv()
 
-params.input = ''                               //The input file
-params.genome = ''                              //The reference genome file
-params.annotation = ''                          //The reference gene annotation file
+params.input = 'test/*.fastq.gz'                               //The input file
+params.genome = 'tutorial/data/genome_1Mbp.fa'                              //The reference genome file
+params.annotation = 'tutorial/data/annotation.gtf'                          //The reference gene annotation file
 params.mismatches = 4                           //Max number of mismatches. Default 4	
 params.hits = 10                                //Max number of hits. Default 10
 params.quality_offset = 33                      //The quality offset of the fastq files. Default: 33
@@ -155,13 +155,13 @@ process mapping {
     """
 }
 
-(bam1, bam2, bam3) = bam.into(3)
+(bam1, bam2, bam3, bam4) = bam.into(4)
 
 genomeFai = file(params.genome+'.fai')
 
 process bigwig {
     input:
-    set reads_name, in_view, file(bam1) from bam1
+    set reads_name, in_view, file(bam) from bam1
     file genomeFai
 
     output:
@@ -179,7 +179,7 @@ process bigwig {
     }
 
     if (mateBit > 0) {
-        command += "samtools view -h -@ ${params.cpus} ${bam1}"
+        command += "samtools view -h -@ ${params.cpus} ${bam}"
         command += " | awk -v MateBit=${mateBit} '${awkCommand}'"
         command += " | samtools view -@ ${params.cpus} -Sb -"
         command += " > tmp.bam\n"
@@ -189,7 +189,7 @@ process bigwig {
     strand.each( { 
         command += "genomeCoverageBed " 
         command += (it.key != '' ? "-strand ${it.key} " : '') 
-        command += "-split -bg -ibam ${bam1} > ${reads_name}${it.value}.bedgraph\n"
+        command += "-split -bg -ibam ${bam} > ${reads_name}${it.value}.bedgraph\n"
         command += "bedGraphToBigWig ${reads_name}${it.value}.bedgraph ${genomeFai} ${reads_name}${it.value}.bw\n" 
     } )
 
@@ -199,7 +199,7 @@ process bigwig {
 
 process contig {
     input:
-    set reads_name, in_view, file(bam2) from bam2
+    set reads_name, in_view, file(bam) from bam2
     file genomeFai
 
     output:
@@ -217,20 +217,20 @@ process contig {
     }
 
     if (mateBit > 0) {
-        command += "samtools view -h -@ ${params.cpus} ${bam2}"
+        command += "samtools view -h -@ ${params.cpus} ${bam}"
         command += " | awk -v MateBit=${mateBit} '${awkCommand}'"
         command += " | samtools view -@ ${params.cpus} -Sb -"
         command += " > tmp.bam\n"
         command += "mv -f tmp.bam mapping.bam\n"
     }
 
-    command += "bamflag -in ${bam2} -out tmp.bam -m 3\n"
+    command += "bamflag -in ${bam} -out tmp.bam -m 3\n"
     command += "mv -f tmp.bam mapping.bam\n"
     
     strand.each( { 
         command += "genomeCoverageBed " 
         command += (it.key != '' ? "-strand ${it.key} " : '') 
-        command += "-split -bg -ibam ${bam2} > ${reads_name}${it.value}.bedgraph\n"
+        command += "-split -bg -ibam ${bam} > ${reads_name}${it.value}.bedgraph\n"
     } )
     
     if (strand.size() == 2) {
@@ -241,7 +241,7 @@ process contig {
         command += " | awk '{s=\"\"; for(i=1; i<=NF; i++){s=(s)(\$i)(\"\t\")} print s}'" 
         command += " > ${reads_name}_contigs.bed"
     } else {        
-        command += "bamToBed -i ${bam2} | sort -k1,1 -k2,2n"
+        command += "bamToBed -i ${bam} | sort -k1,1 -k2,2n"
         command += " | mergeBed"
         command += " > ${reads_name}_contigs.bed"
     }
@@ -252,7 +252,7 @@ process contig {
 
 process quantification {
     input:
-    set reads_name, in_view, file(bam3) from bam3
+    set reads_name, in_view, file(bam) from bam3
     file annotation_file
 
     output:
@@ -261,13 +261,27 @@ process quantification {
     script:
     view = 'transcript'
     """
-    flux-capacitor -i ${bam3} -a ${annotation_file} -o flux.gtf -m AUTO --read-strand ${params.read_strand}
+    flux-capacitor -i ${bam} -a ${annotation_file} -o flux.gtf -m AUTO --read-strand ${params.read_strand}
     """
 }
 
-[bigwig, contig, flux].each {
-    it.subscribe { println it }
+process store {
+
+    maxForks 1
+
+    input:
+    set reads_name, view, file(file) from bam4.mix(bigwig, contig, flux)
+
+    script:
+    """
+    # st6
+    idxtools add path=${file} id=${reads_name} view=${view} type=${file.name.split("\\.", 2)[1]}
+    """
 }
+
+//[bigwig, contig, flux].each {
+//    it.subscribe { println it }
+//}
 
 //# activate python virtualenv
 //run ". $BASEDIR/bin/activate" "$ECHO"
