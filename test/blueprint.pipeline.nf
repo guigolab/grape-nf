@@ -128,7 +128,7 @@ process t_index {
     file annotation_file
 
     output:
-    set 'tx_index.junctions.gem', 'tx_index.junctions.keys' into tx_index
+    set file('tx_index.junctions.gem'), file('tx_index.junctions.keys') into tx_index
     
     script:
     """
@@ -137,11 +137,13 @@ process t_index {
 }
 
 
-input_files = input_files.spread(genome_index2).spread(tx_index)
+//input_files = input_files.spread(genome_index2).spread(tx_index)
 
 process mapping {
     input:
-    set reads_name, file(read1), file(read2), file(genome_index), file(tx_index), file(tx_keys) from input_files
+    set reads_name, file(read1), file(read2) from input_files
+    file genome_index from genome_index2.first()
+    set file(tx_index), file(tx_keys) from tx_index.first()
 
     output:
     set reads_name, view, "mapping.bam" into bam
