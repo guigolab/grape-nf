@@ -116,7 +116,6 @@ process index {
       
     script:
     """
-    module load gemtools/1.7.1-i3
     gemtools index -i ${genome_file} -t ${params.cpus} -o genome_index.gem 
     """
 }
@@ -133,7 +132,6 @@ process t_index {
     
     script:
     """
-    module load gemtools/1.7.1-i3
     gemtools t-index -i ${genome_index} -a ${annotation_file} -m ${params.max_read_length} -t ${params.cpus} -o tx_index
     """    
 }
@@ -146,11 +144,11 @@ process mapping {
     set reads_name, file(read1), file(read2), file(genome_index), file(tx_index), file(tx_keys) from input_files
 
     output:
-    set reads_name, "mapping.bam" into bam
+    set reads_name, view, "mapping.bam" into bam
 
     script:
+    view = 'alignment'
     """
-    module load gemtools/1.7.1-i3
     gemtools rna-pipeline -i ${genome_index} -r ${tx_index} -k ${tx_keys} -f ${read1} -t ${params.cpus} -q ${params.quality_offset} -n mapping
     """
 }
@@ -161,11 +159,11 @@ genomeFai = file(params.genome+'.fai')
 
 process bigwig {
     input:
-    set reads_name, file(bam1) from bam1
+    set reads_name, in_view, file(bam1) from bam1
     file genomeFai
 
     output:
-    set val(view), file('*.bw') into bigwig
+    set reads_name, view, file('*.bw') into bigwig
 
     script:
     view = 'bigwig'
@@ -199,11 +197,11 @@ process bigwig {
 
 process contig {
     input:
-    set reads_name, file(bam2) from bam2
+    set reads_name, in_view, file(bam2) from bam2
     file genomeFai
 
     output:
-    set val(view), file('*_contigs.bed') into contig
+    set reads_name, view, file('*_contigs.bed') into contig
 
     script:
     view = 'contig'
@@ -250,25 +248,23 @@ process contig {
 
 }
 
-process quantifications {
+process quantification {
     input:
-    set reads_name, file(bam3) from bam3
+    set reads_name, in_view, file(bam3) from bam3
     file annotation_file
 
     output:
-    set val(view), file('flux.gtf') into flux
+    set reads_name, view, file('flux.gtf') into flux
 
     script:
     view = 'transcript'
     """
-    module load flux/1.6.1
     flux-capacitor -i ${bam3} -a ${annotation_file} -o flux.gtf -m AUTO --read-strand ${params.read_strand}
     """
 }
 
-result = Channel.from(bigwig, contig, flux)
-result.subscribe {
-    println it
+[bigwig, contig, flux].each {
+    it.subscribe { println it }
 }
 
 //# activate python virtualenv
