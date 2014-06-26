@@ -85,6 +85,7 @@ log.info "Steps to be performed     : ${params.steps.replace(',',' ')}"
 log.info "Base folder               : ${baseDir}"
 log.info "Bin folder                : ${binDir}"
 log.info "Quantification folder     : ${quantDir}"
+log.info ""
 
 genome_file = file(params.genome)
 annotation_file = file(params.annotation)
