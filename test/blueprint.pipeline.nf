@@ -100,13 +100,6 @@ input_files = Channel
        [it.key, it.value.sort()[0], it.value.sort()[1]]
     }
 
-result_path = file(params.outdir)
-
-//result = Channel.create()
-
-//result.subscribe {
-//    println it
-//}
 
 process index {
     input:
@@ -122,6 +115,7 @@ process index {
 }
 
 (genome_index1, genome_index2) = genome_index.into(2)
+
 
 process t_index {
     input:
