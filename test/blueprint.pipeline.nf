@@ -137,8 +137,6 @@ process t_index {
 }
 
 
-//input_files = input_files.spread(genome_index2).spread(tx_index)
-
 process mapping {
     input:
     set reads_name, file(read1), file(read2) from input_files
@@ -270,16 +268,15 @@ process store {
     maxForks 1
 
     input:
-    set reads_name, view, file(file) from bam4.mix(bigwig, contig, flux)
+    set reads_name, view, file(store_file) from bam4.mix(bigwig, contig, flux)
 
     script:
     """
-    # st6
-    idxtools add path=${file} id=${reads_name} view=${view} type=${file.name.split("\\.", 2)[1]}
+    idxtools add path=`readlink -f ${store_file}` id=${reads_name} view=${view} type=${store_file.name.split("\\.", 2)[1]}
     """
 }
 
-//[bigwig, contig, flux].each {
+//[bam4, bigwig, contig, flux].each {
 //    it.subscribe { println it }
 //}
 
