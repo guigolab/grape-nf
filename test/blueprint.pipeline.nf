@@ -22,24 +22,24 @@
 
 env = System.getenv()
 
-params.input = 'test/*.fastq.gz'                               //The input file
-params.genome = 'tutorial/data/genome_1Mbp.fa'                              //The reference genome file
-params.annotation = 'tutorial/data/annotation.gtf'                          //The reference gene annotation file
-params.mismatches = 4                           //Max number of mismatches. Default 4	
-params.hits = 10                                //Max number of hits. Default 10
-params.quality_offset = 33                      //The quality offset of the fastq files. Default: 33
-params.max_read_length = 150                    //The maximum read length (used to compute the transcriptomes). Default: 150
-params.read_strand = 'NONE'                     //The directionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default NONE
-params.loglevel = 'WARN'                        //Log level (error, warn, info, debug). Default info
-params.cpus = 1                                 //Number of threads. Default 1
-params.paired_end = true                       //Specify whether the data is paired-end. Default: false 
-params.count_elements = []                      //A comma separated list of elements to be counted by the Flux Capacitor. Possible values: INTRONS,SPLICE_JUNCTIONS. Defalut: none	
-params.read_group = ''                          //A comma separated list of tags for the @RG field of the BAM file. Check the SAM specification for details. Default: none
-params.bam_stats = false                        //Run the RSeQC stats on the bam file. Default false
-params.flux_mem	= '3G'                          //The amount of ram the Flux Capacitor can use. Default: 3G
-params.tmp_dir = (env.TMPDIR != null ? true : false)                             //The local temporary folder to copy files when running on shared file systems. Default: TMPDIR
-params.outdir = "$PWD"                          //The general output folder
-params.steps = 'mapping,bigwig,contig,flux'     //The steps to be executed
+params.input = 'test/*.fastq.gz'                        //The input file
+params.genome = 'tutorial/data/genome_1Mbp.fa'          //The reference genome file
+params.annotation = 'tutorial/data/annotation.gtf'      //The reference gene annotation file
+params.mismatches = 4                                   //Max number of mismatches. Default 4	
+params.hits = 10                                        //Max number of hits. Default 10
+params.quality_offset = 33                              //The quality offset of the fastq files. Default: 33
+params.max_read_length = 150                            //The maximum read length (used to compute the transcriptomes). Default: 150
+params.read_strand = 'NONE'                             //The directionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default NONE
+params.loglevel = 'WARN'                                //Log level (error, warn, info, debug). Default info
+params.cpus = 1                                         //Number of threads. Default 1
+params.paired_end = true                                //Specify whether the data is paired-end. Default: false 
+params.count_elements = []                              //A comma separated list of elements to be counted by the Flux Capacitor. Possible values: INTRONS,SPLICE_JUNCTIONS. Defalut: none	
+params.read_group = ''                                  //A comma separated list of tags for the @RG field of the BAM file. Check the SAM specification for details. Default: none
+params.bam_stats = false                                //Run the RSeQC stats on the bam file. Default false
+params.flux_mem	= '3G'                                  //The amount of ram the Flux Capacitor can use. Default: 3G
+params.tmp_dir = (env.TMPDIR != null ? true : false)    //The local temporary folder to copy files when running on shared file systems. Default: TMPDIR
+params.outdir = "$PWD"                                  //The general output folder
+params.steps = 'mapping,bigwig,contig,flux'             //The steps to be executed
 
 // get list of steps from comma-separated strings
 pipelineSteps = params.steps.split(',').collect { it.trim() }
