@@ -22,24 +22,42 @@
 
 env = System.getenv()
 
-params.input = 'test/*.fastq.gz'                        //The input file
-params.genome = 'tutorial/data/genome_1Mbp.fa'          //The reference genome file
-params.annotation = 'tutorial/data/annotation.gtf'      //The reference gene annotation file
-params.mismatches = 4                                   //Max number of mismatches. Default 4	
-params.hits = 10                                        //Max number of hits. Default 10
-params.quality_offset = 33                              //The quality offset of the fastq files. Default: 33
-params.max_read_length = 150                            //The maximum read length (used to compute the transcriptomes). Default: 150
-params.read_strand = 'NONE'                             //The directionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default NONE
-params.loglevel = 'WARN'                                //Log level (error, warn, info, debug). Default info
-params.cpus = 1                                         //Number of threads. Default 1
-params.paired_end = true                                //Specify whether the data is paired-end. Default: false 
-params.count_elements = []                              //A comma separated list of elements to be counted by the Flux Capacitor. Possible values: INTRONS,SPLICE_JUNCTIONS. Defalut: none	
-params.read_group = ''                                  //A comma separated list of tags for the @RG field of the BAM file. Check the SAM specification for details. Default: none
-params.bam_stats = false                                //Run the RSeQC stats on the bam file. Default false
-params.flux_mem	= '3G'                                  //The amount of ram the Flux Capacitor can use. Default: 3G
-params.tmp_dir = (env.TMPDIR != null ? true : false)    //The local temporary folder to copy files when running on shared file systems. Default: TMPDIR
-params.outdir = "$PWD"                                  //The general output folder
-params.steps = 'mapping,bigwig,contig,flux'             //The steps to be executed
+//The input file
+params.input = 'test/*.fastq.gz'
+//The reference genome file
+params.genome = 'tutorial/data/genome_1Mbp.fa'
+//The reference gene annotation file
+params.annotation = 'tutorial/data/annotation.gtf'
+//Max number of mismatches. Default 4
+params.mismatches = 4
+//Max number of hits. Default 10
+params.hits = 10
+//The quality offset of the fastq files. Default: 33
+params.quality_offset = 33
+//The maximum read length (used to compute the transcriptomes). Default: 150
+params.max_read_length = 150
+//The directionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default NONE
+params.read_strand = 'NONE'
+//Log level (error, warn, info, debug). Default info
+params.loglevel = 'WARN'
+//Number of threads. Default 1
+params.cpus = 1
+//Specify whether the data is paired-end. Default: false
+params.paired_end = true
+ //A comma separated list of elements to be counted by the Flux Capacitor. Possible values: INTRONS,SPLICE_JUNCTIONS. Defalut: none
+params.count_elements = []
+//A comma separated list of tags for the @RG field of the BAM file. Check the SAM specification for details. Default: none
+params.read_group = ''
+//Run the RSeQC stats on the bam file. Default false
+params.bam_stats = false
+//The amount of ram the Flux Capacitor can use. Default: 3G
+params.flux_mem	= '3G'
+//The local temporary folder to copy files when running on shared file systems. Default: TMPDIR
+params.tmp_dir = (env.TMPDIR != null ? true : false)
+//The general output folder
+params.outdir = "$PWD"
+//The steps to be executed
+params.steps = 'mapping,bigwig,contig,flux'
 
 // get list of steps from comma-separated strings
 pipelineSteps = params.steps.split(',').collect { it.trim() }
@@ -91,7 +109,7 @@ genome_file = file(params.genome)
 annotation_file = file(params.annotation)
 
 input_files = Channel
-    .fromPath(params.input) 
+    .fromPath(params.input)
     .groupBy {
         path -> path.name.split("\\.", 2)[0][0..-3]
     }
@@ -104,13 +122,13 @@ input_files = Channel
 process index {
     input:
     file genome_file
-    
+
     output:
     file "genome_index.gem" into genome_index
-      
+
     script:
     """
-    gemtools index -i ${genome_file} -t ${params.cpus} -o genome_index.gem 
+    gemtools index -i ${genome_file} -t ${params.cpus} -o genome_index.gem
     """
 }
 
@@ -124,11 +142,11 @@ process t_index {
 
     output:
     set file('tx_index.junctions.gem'), file('tx_index.junctions.keys') into tx_index
-    
+
     script:
     """
     gemtools t-index -i ${genome_index} -a ${annotation_file} -m ${params.max_read_length} -t ${params.cpus} -o tx_index
-    """    
+    """
 }
 
 
@@ -143,13 +161,13 @@ process mapping {
 
     script:
     view = 'alignment'
-   
+
     command = "gemtools rna-pipeline -i ${genome_index} -r ${tx_index} -k ${tx_keys} -f ${read1}"
     if (!params.paired_end) {
         command += " --single-end"
-    }   
+    }
     command += " -t ${params.cpus} -q ${params.quality_offset} -n mapping"
-    
+
     return command
 }
 
@@ -184,16 +202,16 @@ process bigwig {
         command += " > tmp.bam\n"
         command += "mv -f tmp.bam mapping.bam\n"
     }
-    
-    strand.each( { 
-        command += "genomeCoverageBed " 
-        command += (it.key != '' ? "-strand ${it.key} " : '') 
+
+    strand.each( {
+        command += "genomeCoverageBed "
+        command += (it.key != '' ? "-strand ${it.key} " : '')
         command += "-split -bg -ibam ${bam} > ${reads_name}${it.value}.bedgraph\n"
-        command += "bedGraphToBigWig ${reads_name}${it.value}.bedgraph ${genomeFai} ${reads_name}${it.value}.bw\n" 
+        command += "bedGraphToBigWig ${reads_name}${it.value}.bedgraph ${genomeFai} ${reads_name}${it.value}.bw\n"
     } )
 
     return command
-        
+
 }
 
 process contig {
@@ -225,26 +243,26 @@ process contig {
 
     command += "bamflag -in ${bam} -out tmp.bam -m 3\n"
     command += "mv -f tmp.bam mapping.bam\n"
-    
-    strand.each( { 
-        command += "genomeCoverageBed " 
-        command += (it.key != '' ? "-strand ${it.key} " : '') 
+
+    strand.each( {
+        command += "genomeCoverageBed "
+        command += (it.key != '' ? "-strand ${it.key} " : '')
         command += "-split -bg -ibam ${bam} > ${reads_name}${it.value}.bedgraph\n"
     } )
-    
+
     if (strand.size() == 2) {
         command += "contigsNew.py --chrFile ${genomeFai}"
         strand.each( {
             command += " --file${it.value.substring(1,2).toUpperCase()} ${reads_name}${it.value}.bedgraph"
         } )
-        command += " | awk '{s=\"\"; for(i=1; i<=NF; i++){s=(s)(\$i)(\"\t\")} print s}'" 
+        command += " | awk '{s=\"\"; for(i=1; i<=NF; i++){s=(s)(\$i)(\"\t\")} print s}'"
         command += " > ${reads_name}_contigs.bed"
-    } else {        
+    } else {
         command += "bamToBed -i ${bam} | sort -k1,1 -k2,2n"
         command += " | mergeBed"
         command += " > ${reads_name}_contigs.bed"
     }
-    
+
     return command
 
 }
@@ -273,7 +291,7 @@ process store {
 
     script:
     """
-    idxtools add path=`readlink -f ${store_file}` id=${reads_name} view=${view} type=${store_file.name.split("\\.", 2)[1]}
+    idxtools add path=`readlink -f ${store_file}` id=${reads_name} view=${view} type=${store_file.name.split("\\.", 2)[1]} size=`cat ${store_file} | wc -c` md5sum=`md5sum ${store_file} | cut -d" " -f1`
     """
 }
 
@@ -324,7 +342,7 @@ process store {
 //#
 //# mapping
 //gem="$outdir/$sample.map.gz"
-//filteredGem=${gem%.map.gz}_m${mism}_n${hits}.map.gz    
+//filteredGem=${gem%.map.gz}_m${mism}_n${hits}.map.gz
 //filteredGemStats=${filteredGem%.map.gz}.stats
 //filteredBam=${filteredGem%.map.gz}.bam
 //filteredBai="$filteredBam.bai"
@@ -367,48 +385,48 @@ process store {
 //
 //## Mapping
 //#
-//if [[ $doMapping == "true" ]];then 
+//if [[ $doMapping == "true" ]];then
 //    if [ ! -e $gem ];then
 //        step="MAP"
 //        startTime=$(date +%s)
-//        printHeader "Executing mapping step"                
-//            
+//        printHeader "Executing mapping step"
+//
 //        if [ -d $tmpdir ]; then
 //            ## Copy needed files to TMPDIR
 //            copyToTmp "$gemIndex,$annotation,$tindex,$tkeys"
 //            IFS=',' read index annotation tindex tkeys <<< "$paths"
 //            gem="$tmpdir/$sample.map.gz"
 //        fi
-//    
+//
 //        log "Running gemtools rna pipeline on ${sample}" $step
 //        command="gemtools --loglevel $loglevel rna-pipeline -f $input -q $qualityOffset -i $gemIndex -a $annotation -o `dirname $gem` -t $threads --max-read-length $maxReadLength --no-stats --no-bam"
 //        if [[ $paired == "false" ]]; then
 //            command="$command --single-end"
 //        fi
 //        run "$command" "$ECHO"
-//   
+//
 //        set -e && finalizeStep $gem $tmpdir $outdir
 //        IFS=',' read gem <<< "$paths"
-//        
+//
 //        endTime=$(date +%s)
 //        printHeader "Mapping step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
 //    else
 //        printHeader "Map file already present...skipping mapping step"
 //    fi
-// 
+//
 //    ## Filtering the map file
 //    ##
-//    
+//
 //    if [ ! -e $filteredGem ];then
 //        step="FILTER"
 //        startTime=$(date +%s)
 //        printHeader "Executing filtering step"
-//        
+//
 //        log "Filtering map file..." $step
 //        #run "$gt_quality -i $gem -t $threads | $gt_filter --max-levenshtein-error $mism -t $threads | $gt_filter --max-matches $hits -t $threads | $pigz -p $threads -c > $filteredGem" "$ECHO"
 //        run "$gt_quality -i $gem -t $threads > $filteredGem.quality.map" "$ECHO"
 //        run "$gt_filter -i $filteredGem.quality.map --max-levenshtein-error $mism -t $threads > $filteredGem.levenshtein.map && rm $filteredGem.quality.map" "$ECHO"
-//        run "$gt_filter -i $filteredGem.levenshtein.map --max-matches $hits -t $threads | $pigz -p $threads -c > $filteredGem && rm $filteredGem.levenshtein.map" "$ECHO"        
+//        run "$gt_filter -i $filteredGem.levenshtein.map --max-matches $hits -t $threads | $pigz -p $threads -c > $filteredGem && rm $filteredGem.levenshtein.map" "$ECHO"
 //        log "done\n" $step
 //
 //        set -e && finalizeStep $filteredGem "-" $outdir
@@ -418,15 +436,15 @@ process store {
 //    else
 //        printHeader "Filtered map file is present...skipping fltering step"
 //    fi
-// 
+//
 //    ## Getting stats for the filtered map file
 //    ##
-//    
+//
 //    if [ $filteredGemStats -ot $filteredGem ]; then
 //        step="GEM-STATS"
 //        startTime=$(date +%s)
 //        printHeader "Executing GEM stats step"
-//    
+//
 //        log "Producing stats for $filteredGem..." $step
 //        command="$gt_stats -i $filteredGem -t $threads -a"
 //        if [[ $paired == "true" ]]; then
@@ -443,9 +461,9 @@ process store {
 //        printHeader "GEM stats file is present...skipping GEM stats step"
 //    fi
 //
-//    ## Convert to bam 
+//    ## Convert to bam
 //    ##
-//    
+//
 //    if [ ! -e $filteredBam ]; then
 //        step="CONVERT"
 //        startTime=$(date +%s)
@@ -457,7 +475,7 @@ process store {
 //            IFS=',' read index <<< "$paths"
 //            filteredBam="$tmpdir/`basename $filteredBam`"
 //        fi
-//       
+//
 //        log "Converting  $sample to bam..." $step
 //        command="$pigz -p $hthreads -dc $filteredGem | $gem2sam -T $hthreads -I $gemIndex -q offset-$qualityOffset -l"
 //        if [[ $readGroup ]]; then
@@ -475,8 +493,8 @@ process store {
 //        fi
 //        run "$command | $samtools view -@ $threads -Sb - | $samtools sort -@ $threads -m 4G - ${filteredBam%.bam}" "$ECHO"
 //        log "done\n" $step
-//        
-//        set -e && finalizeStep $filteredBam $tmpdir $outdir       
+//
+//        set -e && finalizeStep $filteredBam $tmpdir $outdir
 //        IFS=',' read filteredBam <<< "$paths"
 //
 //        endTime=$(date +%s)
@@ -484,27 +502,27 @@ process store {
 //    else
 //        printHeader "Bam file is present...skipping conversion step"
 //    fi
-//    
+//
 //    ## Indexing the filtered bam file
 //    ##
 //    if [ $filteredBai -ot $filteredBam ];then
 //        step="INDEX"
 //        startTime=$(date +%s)
 //        printHeader "Executing indexing step on the filtered bam file"
-//    
+//
 //        if [ -d $tmpdir ]; then
 //            ## Copy needed files to TMPDIR
 //            copyToTmp "$filteredBam"
 //            IFS=',' read filteredBam <<< "$paths"
 //            filteredBai="$tmpdir/`basename $filteredBai`"
 //        fi
-//    
+//
 //        log "Indexing the filtered bam file\n" $step
 //        run "$samtools index $filteredBam" "$ECHO"
-//        
-//        set -e && finalizeStep $filteredBai $tmpdir $outdir        
+//
+//        set -e && finalizeStep $filteredBai $tmpdir $outdir
 //        IFS=',' read filteredBai <<< "$paths"
-//    
+//
 //        endTime=$(date +%s)
 //        printHeader "Indexing step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
 //    else
@@ -655,7 +673,7 @@ process store {
 //
 //            bedGraph=$outdir/$sample.$suffix.bedgraph
 //            bigWig=$outdir/$sample.$suffix.bw
-//            if [ -d $tmpdir ]; then                
+//            if [ -d $tmpdir ]; then
 //                bedGraph=$tmpdir/$sample.$suffix.bedgraph
 //                bigWig=$tmpdir/$sample.$suffix.bw
 //            fi
@@ -670,7 +688,7 @@ process store {
 //    else
 //        bedGraph=$outdir/$sample.bedgraph
 //        bigWig=$outdir/$sample.bw
-//        if [ -d $tmpdir ]; then                
+//        if [ -d $tmpdir ]; then
 //            bedGraph=$tmpdir/$sample.bedgraph
 //            bigWig=$tmpdir/$sample.bw
 //        fi
@@ -739,14 +757,14 @@ process store {
 //        run "$makecontig --chrFile $genomeFai --fileP ${uniqBam%.bam}.plusRaw.bedgraph --fileM ${uniqBam%.bam}.minusRaw.bedgraph | awk '{s=\"\"; for(i=1; i<=NF; i++){s=(s)(\$i)(\"\t\")} print s}' > $contigFile" "$ECHO"
 //        log "done\n"
 //    else
-//        
+//
 //        uniqBam=${filteredBam%.bam}_uniq.bam
 //        if [ ! -e $uniqBam ];then
 //            log "Making a bam file of unique mappings..." $step
 //            set +e && run "$bamflag -in $filteredBam -out $uniqBam -m 3" "$ECHO"
 //            log "done\n"
 //        fi
-//        
+//
 //        log "Generationg the contigs file..." $step
 //        run "bamToBed -i $uniqBam | sort -k1,1 -k2,2n | mergeBed > $contigFile" "$ECHO"
 //        log "done\n"
@@ -768,41 +786,41 @@ process store {
 //#
 //if [[ $doFlux == "true" ]];then
 //    step="FLUX"
-//    
+//
 //    export FLUX_MEM=$fluxMem
-//    
+//
 //    if [ ! -d $quantDir ]; then
 //        log "Creating sample folder in $quantDir..." $step
 //        run "mkdir -p $quantDir" "$ECHO"
 //        log "done\n"
 //    fi
-//    
+//
 //    paramFile="$quantDir/$sample.par"
 //    proFile="$quantDir/$sample.profile"
-//    
+//
 //    # prepare parameter file
 //    #
 //    # READ_STRAND MATE2_SENSE
 //    # ANNOTATION_MAPPING PAIRED_STRANDED
 //    # COUNT_ELEMENTS [SPLICE_JUNCTIONS, INTRONS]
-//    
+//
 //    if [ ! -e $paramFile ]; then
 //        run "echo \"# Flux Capacitor parameter file for $sample\" >> $paramFile" "$ECHO"
 //        annotationMapping="AUTO"
 //        if [[ $readStrand != "NONE" ]]; then
 //            run "echo \"READ_STRAND $readStrand\" >> $paramFile" "$ECHO"
 //            annotationMapping="STRANDED"
-//            if [[ $paired == "true" ]];then 
+//            if [[ $paired == "true" ]];then
 //                annotationMapping="PAIRED_${annotationMapping}"
 //            else
 //                annotationMapping="SINGLE_${annotationMapping}"
 //            fi
 //        fi
-//        
-//        run "echo \"ANNOTATION_MAPPING $annotationMapping\" >> $paramFile" "$ECHO"    
+//
+//        run "echo \"ANNOTATION_MAPPING $annotationMapping\" >> $paramFile" "$ECHO"
 //        run "echo \"COUNT_ELEMENTS [$countElements]\" >> $paramFile" "$ECHO"
 //    fi
-//    
+//
 //    ## Show Flux parameter file
 //    #
 //    run "echo \"\"" "$ECHO"
@@ -868,7 +886,7 @@ process store {
 //    else
 //        printHeader "Transcript file present...skipping transcript step"
 //    fi
-//    
+//
 //    if [[ $countElements =~ "SPLICE_JUNCTIONS" ]]; then
 //        junctionFile=$quantDir/${sample}_junction.gtf
 //        if [ ! -e $junctionFile ];then
@@ -886,7 +904,7 @@ process store {
 //            printHeader "Junctions file present...skipping transcript step"
 //        fi
 //    fi
-//    
+//
 //    if [[ $countElements =~ "INTRONS" ]]; then
 //        intronFile=$quantDir/${sample}_intron.gtf
 //        if [ ! -e $intronFile ];then
@@ -903,56 +921,56 @@ process store {
 //            printHeader "Introns file present...skipping transcript step"
 //        fi
 //    fi
-//    
+//
 //    exonFile=$quantDir/${sample}_exon_distinct_with_rpkm.gff
 //    if [ ! -e $exonFile ];then
 //        step="EXON"
 //        startTime=$(date +%s)
 //        printHeader "Executing Exon quantification step"
-//    
-//        
+//
+//
 //        if [ -d $tmpdir ]; then
 //            ## Copy needed files to TMPDIR
 //            copyToTmp "$annotation,$fluxGtf"
 //            IFS=',' read annotation fluxGtf <<< "$paths"
 //            exonFile=$tmpdir/${sample}_exon_distinct_with_rpkm.gff
 //        fi
-//    
+//
 //        log "Running Exon quantification\n" $step
 //        run "$trToEx -a $annotation -i $fluxGtf -o `dirname $exonFile`" "$ECHO"
-//    
+//
 //        set -e && finalizeStep $exonFile $tmpdir $quantDir
 //        IFS=',' read exonFile <<< "$paths"
-//        
+//
 //        endTime=$(date +%s)
 //        printHeader "Exon quantificaton step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
-//    
+//
 //    else
 //        printHeader "Exon quantification file present...skipping Exon quantification step"
 //    fi
-//    
+//
 //    geneFile=$quantDir/${sample}_gene_with_rpkm.gff
 //    if [ ! -e $geneFile ];then
 //        step="GENE"
 //        startTime=$(date +%s)
 //        printHeader "Executing Gene quantification step"
-//    
+//
 //        if [ -d $tmpdir ]; then
 //            ## Copy needed files to TMPDIR
 //            copyToTmp "$annotation,$fluxGtf"
 //            IFS=',' read annotation fluxGtf <<< "$paths"
 //            geneFile=$tmpdir/${sample}_gene_with_rpkm.gff
 //        fi
-//    
+//
 //        log "Running Gene quantification\n" $step
 //        run "$trToGn -a $annotation -i $fluxGtf -o `dirname $geneFile`" "$ECHO"
-//    
+//
 //        set -e && finalizeStep $geneFile $tmpdir $quantDir
 //        IFS=',' read geneFile <<< "$paths"
-//        
+//
 //        endTime=$(date +%s)
 //        printHeader "Gene quantificaton step completed in $(echo "($endTime-$startTime)/60" | bc -l | xargs printf "%.2f\n") min"
-//    
+//
 //    else
 //        printHeader "Gene quantification file present...skipping Gene quantification step"
 //    fi
