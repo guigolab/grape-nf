@@ -132,7 +132,7 @@ process index {
     """
 }
 
-(genome_index1, genome_index2) = genome_index.into(2)
+(genome_index1, genome_index2, genome_index3) = genome_index.into(3)
 
 
 process t_index {
@@ -157,12 +157,13 @@ process mapping {
     set file(tx_index), file(tx_keys) from tx_index.first()
 
     output:
-    set reads_name, view, "mapping.bam" into bam
+    set reads_name, view, "mapping.map.gz" into map
 
     script:
-    view = 'alignment'
+    view = 'gemUnfiltered'
 
     command = "gemtools rna-pipeline -i ${genome_index} -r ${tx_index} -k ${tx_keys} -f ${read1}"
+    command += " --no-stats --no-bam"
     if (!params.paired_end) {
         command += " --single-end"
     }
@@ -171,6 +172,54 @@ process mapping {
     return command
 }
 
+process filter {
+    input:
+    set reads_name, view, gem_unfiltered from map
+
+    output:
+    set reads_name, view, "mapping_filtered.map.gz" into map
+
+    script:
+    view = "gemFiltered"
+
+    command = "gt.quality -i ${gem_unfiltered} -t ${params.cpus}"
+    command += " | gt.filter --max-levenshtein-error ${params.mismatches} -t ${params.cpus}"
+    command += " | gt.filter --max-matches ${params.hits} -t ${params.cpus}"
+    command += " | pigz -p ${params.cpus} -c"
+    command += " > mapping_filtered.map.gz"
+
+    return command
+}
+
+process gemToBam {
+    input:
+    set reads_name, view, gem_filtered from map
+    file genome_index from genome_index3.first()
+
+    output:
+    set reads_name, view, "mapping.bam" into bam
+
+    script:
+    view = "alignments"
+
+    command = "pigz -p ${params.cpus} -dc ${gem_filtered}"
+    command += " | gem-2-sam -T ${params.cpu/2} -I ${genome_index} -q offset-${params.quality_offset} -l"
+    if (params.read_group) {
+       command += " --read-group ${params.read_group}"
+    }
+    if (params.paired_end) {
+       command += " --expect-paired-end-reads"
+    }
+    else {
+       command += " --expect-single-end-reads"
+       command += " | awk 'BEGIN{OFS=FS=\"\t\"}\$0!~/^@/{split(\"1_2_8_32_64_128\",a,\"_\");for(i in a){if(and(\$2,a[i])>0){\$2=xor(\$2,a[i])}}}{print}'"
+    }
+
+    commnad += " | samtools view -@ ${params.cpus} -Sb -"
+    command += " | samtools sort -@ ${params.cpus} -m 4G - mapping"
+
+    return command
+}
 
 (bam1, bam2, bam3, bam4) = bam.into(4)
 
