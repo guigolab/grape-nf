@@ -25,8 +25,6 @@ pipelineSteps = params.steps.split(',').collect { it.trim() }
 
 // Setting up environment
 baseDir = file(config.baseDir)
-binDir = baseDir.resolve('bin')
-quantDir = baseDir.resolve('quantification')
 
 // Check required parameters
 if (!params.input) {
@@ -65,7 +63,7 @@ log.info "Read group                : ${params.read_group}"
 log.info "Produce BAM stats         : ${params.bam_stats}"
 log.info ""
 log.info "Flux Capacitor parameters"
-log.info "------------------"
+log.info "-------------------------"
 log.info "Elements to be quantified : ${params.count_elements}"
 log.info "Memory                    : ${params.flux_mem}"
 log.info "Create profile file       : ${params.flux_profile}"
@@ -74,8 +72,6 @@ log.info "Pipeline folders"
 log.info "----------------"
 log.info "Base folder               : ${baseDir}"
 log.info "Output folder             : ${file(params.outdir)}"
-log.info "Bin folder                : ${binDir}"
-log.info "Quantification folder     : ${quantDir}"
 log.info ""
 
 genome_file = file(params.genome)
