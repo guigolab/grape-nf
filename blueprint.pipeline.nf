@@ -20,45 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-env = System.getenv()
-
-//The input file
-params.input = 'test/*.fastq.gz'
-//The reference genome file
-params.genome = 'tutorial/data/genome_1Mbp.fa'
-//The reference gene annotation file
-params.annotation = 'tutorial/data/annotation.gtf'
-//Max number of mismatches. Default 4
-params.mismatches = 4
-//Max number of hits. Default 10
-params.hits = 10
-//The quality offset of the fastq files. Default: 33
-params.quality_offset = 33
-//The maximum read length (used to compute the transcriptomes). Default: 150
-params.max_read_length = 150
-//The directionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default NONE
-params.read_strand = 'NONE'
-//Log level (error, warn, info, debug). Default info
-params.loglevel = 'WARN'
-//Number of threads. Default 1
-params.cpus = 1
-//Specify whether the data is paired-end. Default: false
-params.paired_end = true
- //A comma separated list of elements to be counted by the Flux Capacitor. Possible values: INTRONS,SPLICE_JUNCTIONS. Defalut: none
-params.count_elements = []
-//A comma separated list of tags for the @RG field of the BAM file. Check the SAM specification for details. Default: none
-params.read_group = ''
-//Run the RSeQC stats on the bam file. Default false
-params.bam_stats = false
-//The amount of ram the Flux Capacitor can use. Default: 3G
-params.flux_mem	= '3G'
-//The local temporary folder to copy files when running on shared file systems. Default: TMPDIR
-params.tmp_dir = (env.TMPDIR != null ? true : false)
-//The general output folder
-params.outdir = "$PWD"
-//The steps to be executed
-params.steps = 'mapping,bigwig,contig,flux'
-
 // get list of steps from comma-separated strings
 pipelineSteps = params.steps.split(',').collect { it.trim() }
 
@@ -191,9 +152,26 @@ process filter {
     return command
 }
 
+(map1, map2) = map.into(2)
+
+process gemStats {
+    input:
+    set reads_name, view, gem_filtered from map1
+
+    output:
+    set reads_name, viewm gem_filtered_stats into stats
+
+    script:
+    command="gt.stats -i ${gem_filtered} -t ${params.cpus} -a"
+    if (params.paired_end) {
+        command += " -p"
+    }
+    command += " 2> mapping_filtered.map.gz.stats"
+}
+
 process gemToBam {
     input:
-    set reads_name, view, gem_filtered from map
+    set reads_name, view, gem_filtered from map2
     file genome_index from genome_index3.first()
 
     output:
@@ -217,6 +195,7 @@ process gemToBam {
 
     commnad += " | samtools view -@ ${params.cpus} -Sb -"
     command += " | samtools sort -@ ${params.cpus} -m 4G - mapping"
+    command += " && samtools index mapping.bam"
 
     return command
 }
@@ -326,9 +305,33 @@ process quantification {
 
     script:
     view = 'transcript'
-    """
-    flux-capacitor -i ${bam} -a ${annotation_file} -o flux.gtf -m AUTO --read-strand ${params.read_strand}
-    """
+    command = ""
+    paramFile = 'params.flux'
+
+    if (! paramFile.exists()) {
+       paramFile.write("# Flux Capacitor parameter file for ${reads_name}"
+       annotationMapping = "AUTO"
+       if (params.read_strand != "NONE") {
+           paramFile.write("READ_STRAND ${params.read_strand}")
+           annotationMapping="STRANDED"
+           if (params.paired_end) {
+               annotationMapping="PAIRED_${annotationMapping}"
+           }
+           else {
+               annotationMapping="SINGLE_${annotationMapping}"
+           }
+       }
+       paramFile.write("ANNOTATION_MAPPING ${annotationMapping}")
+       paramFile.write("COUNT_ELEMENTS [${params.count_elements}]")
+    }
+
+    if (params.flux_profile) {
+        paramFile.write("PROFILE_FILE profile.json")
+        command += "flux-capacitor --profile -p ${paramFile} -i ${bam}  -a ${annotation_file}"
+    }
+    command += " && flux-capacitor -p ${paramFile} -i ${bam} -a ${annotation_file} -o flux.gtf"
+
+    return command
 }
 
 process store {
