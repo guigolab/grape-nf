@@ -309,7 +309,7 @@ process quantification {
     paramFile = 'params.flux'
 
     if (! paramFile.exists()) {
-       paramFile.write("# Flux Capacitor parameter file for ${reads_name}"
+       paramFile.write("# Flux Capacitor parameter file for ${reads_name}")
        annotationMapping = "AUTO"
        if (params.read_strand != "NONE") {
            paramFile.write("READ_STRAND ${params.read_strand}")
