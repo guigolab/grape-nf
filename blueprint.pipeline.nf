@@ -123,7 +123,7 @@ process mapping {
     script:
     view = 'gemUnfiltered'
 
-    command = "gemtools rna-pipeline -i ${genome_index} -r ${tx_index} -k ${tx_keys} -f ${read1}"
+    command = "gemtools rna-pipeline -i ${genome_index} -r ${tx_index} -k ${tx_keys} -f ${read1}".toString()
     command += " --no-stats --no-bam".toString()
     if (!params.paired_end) {
         command += " --single-end".toString()
@@ -143,7 +143,7 @@ process filter {
     script:
     view = "gemFiltered"
 
-    command = "gt.quality -i ${gem_unfiltered} -t ${params.cpus}"
+    command = "gt.quality -i ${gem_unfiltered} -t ${params.cpus}".toString()
     command += " | gt.filter --max-levenshtein-error ${params.mismatches} -t ${params.cpus}".toString()
     command += " | gt.filter --max-matches ${params.hits} -t ${params.cpus}".toString()
     command += " | pigz -p ${params.cpus} -c".toString()
@@ -164,7 +164,7 @@ process gemStats {
     script:
     view = "gemFilteredStats"
 
-    command="gt.stats -i ${gem_filtered} -t ${params.cpus} -a"
+    command="gt.stats -i ${gem_filtered} -t ${params.cpus} -a".toString()
     if (params.paired_end) {
         command += " -p".toString()
     }
@@ -182,7 +182,7 @@ process gemToBam {
     script:
     view = "alignments"
 
-    command = "pigz -p ${params.cpus} -dc ${gem_filtered}"
+    command = "pigz -p ${params.cpus} -dc ${gem_filtered}".toString()
     command += " | gem-2-sam -T ${params.cpus} -I ${genome_index} -q offset-${params.quality_offset} -l".toString()
     if (params.read_group) {
        command += " --read-group ${params.read_group}".toString()
@@ -216,7 +216,7 @@ process bigwig {
 
     script:
     view = 'bigwig'
-    command = ''
+    command = ''.toString()
     strand = ['': '']
     mateBit = 0
     awkCommand = 'BEGIN {OFS=\"\\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}'
@@ -254,7 +254,7 @@ process contig {
 
     script:
     view = 'contig'
-    command = ''
+    command = ''.toString()
     strand = ['': '']
     mateBit = 0
     awkCommand = 'BEGIN {OFS=\"\\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}'
@@ -269,7 +269,7 @@ process contig {
         command += " | samtools view -@ ${params.cpus} -Sb -".toString()
         command += " > tmp.bam\n".toString()
         command += "mv -f tmp.bam mapping.bam\n".toString()
-    }.toString()
+    }
 
     command += "bamflag -in ${bam} -out tmp.bam -m 3\n".toString()
     command += "mv -f tmp.bam mapping.bam\n".toString()
@@ -307,7 +307,7 @@ process quantification {
 
     script:
     view = 'transcript'
-    command = ""
+    command = "".toString()
     paramFile = file('params.flux')
 
     if (! paramFile.exists()) {
