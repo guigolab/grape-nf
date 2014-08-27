@@ -162,6 +162,8 @@ process gemStats {
     set reads_name, view, "mapping_filtered.map.gz.stats" into stats
 
     script:
+    view = "gemFilteredStats"
+
     command="gt.stats -i ${gem_filtered} -t ${params.cpus} -a"
     if (params.paired_end) {
         command += " -p"
@@ -336,7 +338,6 @@ process quantification {
 
 process store {
 
-    echo true
     maxForks 1
 
     input:
@@ -344,8 +345,6 @@ process store {
 
     script:
     """
-    echo $IDX_FILE
-    echo $IDX_FORMAT
     idxtools add path=`readlink -f ${store_file}` id=${reads_name} view=${view} type=${store_file.name.split("\\.", 2)[1]} size=`cat ${store_file} | wc -c` md5sum=`md5sum ${store_file} | cut -d" " -f1`
     """
 }
