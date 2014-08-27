@@ -41,27 +41,37 @@ if (!params.annotation) {
     exit 1, "Annotation file not specified"
 }
 
-log.info "BP Pipeline"
-log.info "==========="
+log.info ""
+log.info "B L U E P R I N T ~ RNA Pipeline"
+log.info ""
+log.info "General parameters"
+log.info "------------------"
 log.info "Input                     : ${params.input}"
 log.info "Genome                    : ${params.genome}"
 log.info "Annotation                : ${params.annotation}"
+log.info "Steps to be performed     : ${params.steps.replace(',',' ')}"
+log.info "Use temporary folder      : ${params.tmp_dir}"
+log.info "Number of cpus            : ${params.cpus}"
+log.info ""
+log.info "Mapping parameters"
+log.info "------------------"
 log.info "Max mismatches            : ${params.mismatches}"
-log.info "Max hits                  : ${params.hits}"
+log.info "Max multimaps             : ${params.hits}"
 log.info "Quality offset            : ${params.quality_offset}"
 log.info "Read length               : ${params.max_read_length}"
 log.info "Read strandedness         : ${params.read_strand}"
-log.info "Log level                 : ${params.loglevel}"
-log.info "Number of cpus            : ${params.cpus}"
 log.info "Paired                    : ${params.paired_end}"
-log.info "Flux count elements       : ${params.count_elements}"
 log.info "Read group                : ${params.read_group}"
-log.info "Bam stats                 : ${params.bam_stats}"
-log.info "Flux memory               : ${params.flux_mem}"
-log.info "Temporary folder          : ${params.tmp_dir}"
-log.info "Output folder             : ${file(params.outdir)}"
-log.info "Steps to be performed     : ${params.steps.replace(',',' ')}"
+log.info "Produce BAM stats         : ${params.bam_stats}"
+log.info "Flux Capacitor parameters"
+log.info "Elements to be quantified : ${params.count_elements}"
+log.info "Memory                    : ${params.flux_mem}"
+log.info "Create profile file       : ${params.flux_profile}"
+log.info ""
+log.info "Pipeline folders"
+log.info "----------------"
 log.info "Base folder               : ${baseDir}"
+log.info "Output folder             : ${file(params.outdir)}"
 log.info "Bin folder                : ${binDir}"
 log.info "Quantification folder     : ${quantDir}"
 log.info ""
@@ -310,28 +320,50 @@ process quantification {
     command = "".toString()
     paramFile = file('params.flux')
 
-    if (! paramFile.exists()) {
-       paramFile.write("# Flux Capacitor parameter file for ${reads_name}")
-       annotationMapping = "AUTO"
-       if (params.read_strand != "NONE") {
-           paramFile.write("READ_STRAND ${params.read_strand}")
-           annotationMapping="STRANDED"
-           if (params.paired_end) {
-               annotationMapping="PAIRED_${annotationMapping}"
-           }
-           else {
-               annotationMapping="SINGLE_${annotationMapping}"
-           }
-       }
-       paramFile.write("ANNOTATION_MAPPING ${annotationMapping}")
-       paramFile.write("COUNT_ELEMENTS [${params.count_elements}]")
+    //Flux parameter file has to be in the same folder as the bam - Flux bug
+
+    /* paramFile.append("# Flux Capacitor parameter file for ${reads_name}\n")
+    annotationMapping = "AUTO"
+    if (params.read_strand != "NONE") {
+        paramFile.append("READ_STRAND ${params.read_strand}\n")
+        annotationMapping="STRANDED"
+        if (params.paired_end) {
+            annotationMapping="PAIRED_${annotationMapping}"
+        }
+        else {
+            annotationMapping="SINGLE_${annotationMapping}"
+        }
     }
+    paramFile.append("ANNOTATION_MAPPING ${annotationMapping}\n")
+    paramFile.append("COUNT_ELEMENTS ${params.count_elements}\n")
 
     if (params.flux_profile) {
-        paramFile.write("PROFILE_FILE profile.json")
+        paramFile.append("PROFILE_FILE profile.json\n")
         command += "flux-capacitor --profile -p ${paramFile} -i ${bam}  -a ${annotation_file}".toString()
     }
-    command += "flux-capacitor -p ${paramFile} -i ${bam} -a ${annotation_file} -o flux.gtf".toString()
+    command += "flux-capacitor -p ${paramFile} -i ${bam} -a ${annotation_file} -o flux.gtf".toString() */
+    
+    // Workaround
+    flux_params = ''.toString()
+    annotationMapping = "AUTO"
+    if (params.read_strand != "NONE") {
+        flux_params += " --read-strand ${params.read_strand}".toString()
+        annotationMapping="STRANDED"
+        if (params.paired_end) {
+            annotationMapping="PAIRED_${annotationMapping}"
+        }
+        else {
+            annotationMapping="SINGLE_${annotationMapping}"
+        }
+    }
+    flux_params += " -m ${annotationMapping}".toString()
+    flux_params += " --count-elements ${params.count_elements}".toString()
+
+    if (params.flux_profile) {
+        flux_params += " --profile-file profile.json"
+        command += "flux-capacitor --profile ${flux_params} -i ${bam}  -a ${annotation_file} && ".toString()
+    }
+    command += "flux-capacitor ${flux_params} -i ${bam} -a ${annotation_file} -o flux.gtf".toString()
 
     return command
 }
