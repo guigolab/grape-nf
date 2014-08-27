@@ -138,7 +138,7 @@ process filter {
     set reads_name, view, gem_unfiltered from map
 
     output:
-    set reads_name, view, "mapping_filtered.map.gz" into map
+    set reads_name, view, "mapping_filtered.map.gz" into fmap
 
     script:
     view = "gemFiltered"
@@ -152,14 +152,14 @@ process filter {
     return command
 }
 
-(map1, map2) = map.into(2)
+(map1, map2) = fmap.into(2)
 
 process gemStats {
     input:
     set reads_name, view, gem_filtered from map1
 
     output:
-    set reads_name, viewm gem_filtered_stats into stats
+    set reads_name, view, "mapping_filtered.map.gz.stats" into stats
 
     script:
     command="gt.stats -i ${gem_filtered} -t ${params.cpus} -a"
@@ -181,7 +181,7 @@ process gemToBam {
     view = "alignments"
 
     command = "pigz -p ${params.cpus} -dc ${gem_filtered}"
-    command += " | gem-2-sam -T ${params.cpu/2} -I ${genome_index} -q offset-${params.quality_offset} -l"
+    command += " | gem-2-sam -T ${params.cpus} -I ${genome_index} -q offset-${params.quality_offset} -l"
     if (params.read_group) {
        command += " --read-group ${params.read_group}"
     }
@@ -193,7 +193,7 @@ process gemToBam {
        command += " | awk 'BEGIN{OFS=FS=\"\t\"}\$0!~/^@/{split(\"1_2_8_32_64_128\",a,\"_\");for(i in a){if(and(\$2,a[i])>0){\$2=xor(\$2,a[i])}}}{print}'"
     }
 
-    commnad += " | samtools view -@ ${params.cpus} -Sb -"
+    command += " | samtools view -@ ${params.cpus} -Sb -"
     command += " | samtools sort -@ ${params.cpus} -m 4G - mapping"
     command += " && samtools index mapping.bam"
 
@@ -306,7 +306,7 @@ process quantification {
     script:
     view = 'transcript'
     command = ""
-    paramFile = 'params.flux'
+    paramFile = file('params.flux')
 
     if (! paramFile.exists()) {
        paramFile.write("# Flux Capacitor parameter file for ${reads_name}")
@@ -329,13 +329,14 @@ process quantification {
         paramFile.write("PROFILE_FILE profile.json")
         command += "flux-capacitor --profile -p ${paramFile} -i ${bam}  -a ${annotation_file}"
     }
-    command += " && flux-capacitor -p ${paramFile} -i ${bam} -a ${annotation_file} -o flux.gtf"
+    command += "flux-capacitor -p ${paramFile} -i ${bam} -a ${annotation_file} -o flux.gtf"
 
     return command
 }
 
 process store {
 
+    echo true
     maxForks 1
 
     input:
@@ -343,6 +344,8 @@ process store {
 
     script:
     """
+    echo $IDX_FILE
+    echo $IDX_FORMAT
     idxtools add path=`readlink -f ${store_file}` id=${reads_name} view=${view} type=${store_file.name.split("\\.", 2)[1]} size=`cat ${store_file} | wc -c` md5sum=`md5sum ${store_file} | cut -d" " -f1`
     """
 }
