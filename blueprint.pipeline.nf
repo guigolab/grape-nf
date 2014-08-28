@@ -131,12 +131,12 @@ process mapping {
     script:
     view = 'gemUnfiltered'
 
-    command = "gemtools rna-pipeline -i ${genome_index} -r ${tx_index} -k ${tx_keys} -f ${read1}".toString()
-    command += " --no-stats --no-bam".toString()
+    def command = "gemtools rna-pipeline -i ${genome_index} -r ${tx_index} -k ${tx_keys} -f ${read1}".
+    command += " --no-stats --no-bam".
     if (!params.paired_end) {
-        command += " --single-end".toString()
+        command += " --single-end".
     }
-    command += " -t ${params.cpus} -q ${params.quality_offset} -n mapping".toString()
+    command += " -t ${params.cpus} -q ${params.quality_offset} -n mapping".
 
     return command
 }
@@ -151,11 +151,11 @@ process filter {
     script:
     view = "gemFiltered"
 
-    command = "gt.quality -i ${gem_unfiltered} -t ${params.cpus}".toString()
-    command += " | gt.filter --max-levenshtein-error ${params.mismatches} -t ${params.cpus}".toString()
-    command += " | gt.filter --max-matches ${params.hits} -t ${params.cpus}".toString()
-    command += " | pigz -p ${params.cpus} -c".toString()
-    command += " > mapping_filtered.map.gz".toString()
+    def command = "gt.quality -i ${gem_unfiltered} -t ${params.cpus}".
+    command += " | gt.filter --max-levenshtein-error ${params.mismatches} -t ${params.cpus}".
+    command += " | gt.filter --max-matches ${params.hits} -t ${params.cpus}".
+    command += " | pigz -p ${params.cpus} -c".
+    command += " > mapping_filtered.map.gz".
 
     return command
 }
@@ -172,11 +172,11 @@ process gemStats {
     script:
     view = "gemFilteredStats"
 
-    command="gt.stats -i ${gem_filtered} -t ${params.cpus} -a".toString()
+    command="gt.stats -i ${gem_filtered} -t ${params.cpus} -a".
     if (params.paired_end) {
-        command += " -p".toString()
+        command += " -p".
     }
-    command += " 2> mapping_filtered.map.gz.stats".toString()
+    command += " 2> mapping_filtered.map.gz.stats".
 }
 
 process gemToBam {
@@ -190,22 +190,22 @@ process gemToBam {
     script:
     view = "alignments"
 
-    command = "pigz -p ${params.cpus} -dc ${gem_filtered}".toString()
-    command += " | gem-2-sam -T ${params.cpus} -I ${genome_index} -q offset-${params.quality_offset} -l".toString()
+    def command = "pigz -p ${params.cpus} -dc ${gem_filtered}".
+    command += " | gem-2-sam -T ${params.cpus} -I ${genome_index} -q offset-${params.quality_offset} -l".
     if (params.read_group) {
-       command += " --read-group ${params.read_group}".toString()
+       command += " --read-group ${params.read_group}".
     }
     if (params.paired_end) {
-       command += " --expect-paired-end-reads".toString()
+       command += " --expect-paired-end-reads".
     }
     else {
-       command += " --expect-single-end-reads".toString()
-       command += " | awk 'BEGIN{OFS=FS=\"\t\"}\$0!~/^@/{split(\".toString()1_2_8_32_64_128\",a,\"_\");for(i in a){if(and(\$2,a[i])>0){\$2=xor(\$2,a[i])}}}{print}'".toString()
+       command += " --expect-single-end-reads".
+       command += " | awk 'BEGIN{OFS=FS=\"\t\"}\$0!~/^@/{split(\".toString()1_2_8_32_64_128\",a,\"_\");for(i in a){if(and(\$2,a[i])>0){\$2=xor(\$2,a[i])}}}{print}'".
     }
 
-    command += " | samtools view -@ ${params.cpus} -Sb -".toString()
-    command += " | samtools sort -@ ${params.cpus} -m 4G - mapping".toString()
-    command += " && samtools index mapping.bam".toString()
+    command += " | samtools view -@ ${params.cpus} -Sb -".
+    command += " | samtools sort -@ ${params.cpus} -m 4G - mapping".
+    command += " && samtools index mapping.bam".
 
     return command
 }
@@ -224,28 +224,28 @@ process bigwig {
 
     script:
     view = 'bigwig'
-    command = ''.toString()
+    def command = ''.
     strand = ['': '']
     mateBit = 0
-    awkCommand = 'BEGIN {OFS=\"\\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}'
+    awkdef command = 'BEGIN {OFS=\"\\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}'
     if (params.read_strand != 'NONE') {
         strand = ['+': '.plusRaw','-': '.minusRaw']
         mateBit = (params.read_strand =~ /MATE2/ ? 64 : 128)
     }
 
     if (mateBit > 0) {
-        command += "samtools view -h -@ ${params.cpus} ${bam}".toString()
-        command += " | awk -v MateBit=${mateBit} '${awkCommand}'".toString()
-        command += " | samtools view -@ ${params.cpus} -Sb -".toString()
-        command += " > tmp.bam\n".toString()
-        command += "mv -f tmp.bam mapping.bam\n".toString()
+        command += "samtools view -h -@ ${params.cpus} ${bam}".
+        command += " | awk -v MateBit=${mateBit} '${awkCommand}'".
+        command += " | samtools view -@ ${params.cpus} -Sb -".
+        command += " > tmp.bam\n".
+        command += "mv -f tmp.bam mapping.bam\n".
     }
 
     strand.each( {
-        command += "genomeCoverageBed ".toString()
+        command += "genomeCoverageBed ".
         command += (it.key != '' ? "-strand ${it.key} ".toString() : ''.toString())
-        command += "-split -bg -ibam ${bam} > ${reads_name}${it.value}.bedgraph\n".toString()
-        command += "bedGraphToBigWig ${reads_name}${it.value}.bedgraph ${genomeFai} ${reads_name}${it.value}.bw\n".toString()
+        command += "-split -bg -ibam ${bam} > ${reads_name}${it.value}.bedgraph\n".
+        command += "bedGraphToBigWig ${reads_name}${it.value}.bedgraph ${genomeFai} ${reads_name}${it.value}.bw\n".
     } )
 
     return command
@@ -262,43 +262,43 @@ process contig {
 
     script:
     view = 'contig'
-    command = ''.toString()
+    def command = ''.
     strand = ['': '']
     mateBit = 0
-    awkCommand = 'BEGIN {OFS=\"\\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}'
+    awkdef command = 'BEGIN {OFS=\"\\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}'
     if (params.read_strand != 'NONE') {
         strand = ['+': '.plusRaw','-': '.minusRaw']
         mateBit = (params.read_strand =~ /MATE2/ ? 64 : 128)
     }
 
     if (mateBit > 0) {
-        command += "samtools view -h -@ ${params.cpus} ${bam}".toString()
-        command += " | awk -v MateBit=${mateBit} '${awkCommand}'".toString()
-        command += " | samtools view -@ ${params.cpus} -Sb -".toString()
-        command += " > tmp.bam\n".toString()
-        command += "mv -f tmp.bam mapping.bam\n".toString()
+        command += "samtools view -h -@ ${params.cpus} ${bam}".
+        command += " | awk -v MateBit=${mateBit} '${awkCommand}'".
+        command += " | samtools view -@ ${params.cpus} -Sb -".
+        command += " > tmp.bam\n".
+        command += "mv -f tmp.bam mapping.bam\n".
     }
 
-    command += "bamflag -in ${bam} -out tmp.bam -m 3\n".toString()
-    command += "mv -f tmp.bam mapping.bam\n".toString()
+    command += "bamflag -in ${bam} -out tmp.bam -m 3\n".
+    command += "mv -f tmp.bam mapping.bam\n".
 
     strand.each( {
-        command += "genomeCoverageBed ".toString()
+        command += "genomeCoverageBed ".
         command += (it.key != '' ? "-strand ${it.key} ".toString() : ''.toString())
-        command += "-split -bg -ibam ${bam} > ${reads_name}${it.value}.bedgraph\n".toString()
+        command += "-split -bg -ibam ${bam} > ${reads_name}${it.value}.bedgraph\n".
     } )
 
     if (strand.size() == 2) {
-        command += "contigsNew.py --chrFile ${genomeFai}".toString()
+        command += "contigsNew.py --chrFile ${genomeFai}".
         strand.each( {
-            command += " --file${it.value.substring(1,2).toUpperCase()} ${reads_name}${it.value}.bedgraph".toString()
+            command += " --file${it.value.substring(1,2).toUpperCase()} ${reads_name}${it.value}.bedgraph".
         } )
-        command += " | awk '{s=\"\"; for(i=1; i<=NF; i++){s=(s)(\$i)(\"\t\")} print s}'".toString()
-        command += " > ${reads_name}_contigs.bed".toString()
+        command += " | awk '{s=\"\"; for(i=1; i<=NF; i++){s=(s)(\$i)(\"\t\")} print s}'".
+        command += " > ${reads_name}_contigs.bed".
     } else {
-        command += "bamToBed -i ${bam} | sort -k1,1 -k2,2n".toString()
-        command += " | mergeBed".toString()
-        command += " > ${reads_name}_contigs.bed".toString()
+        command += "bamToBed -i ${bam} | sort -k1,1 -k2,2n".
+        command += " | mergeBed".
+        command += " > ${reads_name}_contigs.bed".
     }
 
     return command
@@ -315,7 +315,7 @@ process quantification {
 
     script:
     view = 'transcript'
-    command = "".toString()
+    def command = "".
     paramFile = file('params.flux')
 
     //Flux parameter file has to be in the same folder as the bam - Flux bug
@@ -337,15 +337,15 @@ process quantification {
 
     if (params.flux_profile) {
         paramFile.append("PROFILE_FILE profile.json\n")
-        command += "flux-capacitor --profile -p ${paramFile} -i ${bam}  -a ${annotation_file}".toString()
+        command += "flux-capacitor --profile -p ${paramFile} -i ${bam}  -a ${annotation_file}".
     }
     command += "flux-capacitor -p ${paramFile} -i ${bam} -a ${annotation_file} -o flux.gtf".toString() */
-    
+
     // Workaround
-    flux_params = ''.toString()
+    flux_params = ''.
     annotationMapping = "AUTO"
     if (params.read_strand != "NONE") {
-        flux_params += " --read-strand ${params.read_strand}".toString()
+        flux_params += " --read-strand ${params.read_strand}".
         annotationMapping="STRANDED"
         if (params.paired_end) {
             annotationMapping="PAIRED_${annotationMapping}"
@@ -354,14 +354,14 @@ process quantification {
             annotationMapping="SINGLE_${annotationMapping}"
         }
     }
-    flux_params += " -m ${annotationMapping}".toString()
-    flux_params += " --count-elements ${params.count_elements}".toString()
+    flux_params += " -m ${annotationMapping}".
+    flux_params += " --count-elements ${params.count_elements}".
 
     if (params.flux_profile) {
         flux_params += " --profile-file profile.json"
-        command += "flux-capacitor --profile ${flux_params} -i ${bam}  -a ${annotation_file} && ".toString()
+        command += "flux-capacitor --profile ${flux_params} -i ${bam}  -a ${annotation_file} && ".
     }
-    command += "flux-capacitor ${flux_params} -i ${bam} -a ${annotation_file} -o flux.gtf".toString()
+    command += "flux-capacitor ${flux_params} -i ${bam} -a ${annotation_file} -o flux.gtf".
 
     return command
 }
