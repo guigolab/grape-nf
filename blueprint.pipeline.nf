@@ -20,6 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// index file hash
+import nextflow.util.CacheHelper
+import nextflow.util.HashMode
+hash = CacheHelper.hasher(file(System.getenv().IDX_FILE), HashMode.DEEP).hash().toString()
+
 // get list of steps from comma-separated strings
 pipelineSteps = params.steps.split(',').collect { it.trim() }
 
@@ -50,6 +55,7 @@ log.info "Annotation                : ${params.annotation}"
 log.info "Steps to be performed     : ${params.steps.replace(',',' ')}"
 log.info "Use temporary folder      : ${params.tmp_dir}"
 log.info "Number of cpus            : ${params.cpus}"
+log.info "Index file hash           : ${hash}"
 log.info ""
 log.info "Mapping parameters"
 log.info "------------------"
@@ -366,22 +372,24 @@ process quantification {
     return command
 }
 
-process store {
-
-    maxForks 1
-
-    input:
-    set reads_name, view, file(store_file) from bam4.mix(bigwig, contig, flux)
-
-    script:
-    """
-    idxtools add path=`readlink -f ${store_file}` id=${reads_name} view=${view} type=${store_file.name.split("\\.", 2)[1]} size=`cat ${store_file} | wc -c` md5sum=`md5sum ${store_file} | cut -d" " -f1`
-    """
+bam4.mix(bigwig, contig, flux).subscribe {
+    println it
 }
 
-//[bam4, bigwig, contig, flux].each {
-//    it.subscribe { println it }
+//process store {
+//
+//    maxForks 1
+//
+//    input:
+//    val hash
+//    set reads_name, view, file(store_file) from bam4.mix(bigwig, contig, flux)
+//
+//    script:
+//    """
+//    idxtools add path=`readlink -f ${store_file}` id=${reads_name} view=${view} type=${store_file.name.split("\\.", 2)[1]} size=`cat ${store_file} | wc -c` md5sum=`md5sum ${store_file} | cut -d" " -f1`
+//    """
 //}
+
 
 //# activate python virtualenv
 //run ". $BASEDIR/bin/activate" "$ECHO"
