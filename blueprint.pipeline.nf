@@ -233,7 +233,7 @@ process bigwig {
     def command = ''
     strand = ['': '']
     mateBit = 0
-    awkdef command = 'BEGIN {OFS=\"\\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}'
+    awkCommand = 'BEGIN {OFS=\"\\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}'
     if (params.read_strand != 'NONE') {
         strand = ['+': '.plusRaw','-': '.minusRaw']
         mateBit = (params.read_strand =~ /MATE2/ ? 64 : 128)
@@ -271,7 +271,7 @@ process contig {
     def command = ''
     strand = ['': '']
     mateBit = 0
-    awkdef command = 'BEGIN {OFS=\"\\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}'
+    awkCommand = 'BEGIN {OFS=\"\\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}'
     if (params.read_strand != 'NONE') {
         strand = ['+': '.plusRaw','-': '.minusRaw']
         mateBit = (params.read_strand =~ /MATE2/ ? 64 : 128)
