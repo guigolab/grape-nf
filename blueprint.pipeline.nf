@@ -19,6 +19,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//Set default values for params
+
+params.steps = 'mapping,bigwig,contig,flux'
+params.tmpDir = (System.env.TMPDIR != null ? true : false)
+params.mismatches = 4
+params.hits = 10
+params.qualityOffset = 33
+params.maxReadLength = 150
+params.readStrand = 'NONE'
+params.pairedEnd = false
+params.readGroup = ''
+params.bamStats = false
+params.countElements = []
+params.fluxMem = '3G'
+params.fluxProfile = false 
+
 // get list of steps from comma-separated strings
 pipelineSteps = params.steps.split(',').collect { it.trim() }
 
@@ -76,9 +92,8 @@ log.info "------------------"
 log.info "Index file                : ${params.index}"
 log.info "Genome                    : ${params.genome}"
 log.info "Annotation                : ${params.annotation}"
-log.info "Steps to be performed     : ${params.steps.replace(',',' ')}"
+log.info "Steps to be performed     : ${pipelineSteps.join(" ")}"
 log.info "Use temporary folder      : ${params.tmpDir}"
-log.info "Number of cpus            : ${params.cpus}"
 log.info ""
 if ('mapping' in pipelineSteps) {
     log.info "Mapping parameters"
@@ -96,7 +111,7 @@ if ('mapping' in pipelineSteps) {
 if ('flux' in pipelineSteps || 'quantification' in pipelineSteps) {
     log.info "Flux Capacitor parameters"
     log.info "-------------------------"
-    log.info "Elements to be quantified : ${params.countElements}"
+    log.info "Elements to be quantified : ${params.countElements.join(" ")}"
     log.info "Memory                    : ${params.fluxMem}"
     log.info "Create profile file       : ${params.fluxProfile}"
     log.info ""
@@ -144,7 +159,7 @@ process index {
     if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
     command += "gemtools index -i ${genome} -t ${task.cpus} -o genome_index.gem"
     if (params.dryRun) command += '";tput sgr0'
-
+    
     return command
 }
 
@@ -170,13 +185,15 @@ process t_index {
     return command
 }
 
+(IdxRefs1, IdxRefs2) = IdxRefs.into(2)
+
 process mapping {
     if (params.dryRun)
         echo true
 
     input:
     set id, file(read1), file(read2) from input_files
-    set species, file(genome), file(annotation), file(genome_index), file(tx_index), file(tx_keys) from IdxRefs.first()
+    set species, file(genome), file(annotation), file(genome_index), file(tx_index), file(tx_keys) from IdxRefs1.first()
 
     output:
     set id, view, "${id}.map.gz" into map
@@ -198,6 +215,8 @@ process mapping {
     return command
 }
 
+pref = "_m${params.mismatches}_n${params.hits}"
+
 process filter {
     if (params.dryRun)
         echo true
@@ -210,7 +229,7 @@ process filter {
 
     script:
     view = "gemFiltered"
-    prefix = "_m${params.mismatches}_n${params.hits}"
+    prefix = pref
     def command = ""
 
     if (params.dryRun) command += "touch ${id}_m${params.mismatches}_n${params.hits}.map.gz; "
@@ -225,54 +244,73 @@ process filter {
     return command
 }
 
-return
-
 (fmap1, fmap2) = fmap.into(2)
 
 process gemStats {
+    if (params.dryRun)
+        echo true
+
     input:
-    set reads_name, view, gem_filtered from map1
+    set id, view, gem_filtered from fmap1
 
     output:
-    set reads_name, view, "mapping_filtered.map.gz.stats" into stats
+    set id, view, "${id}${prefix}.stats" into stats
 
     script:
+    def command = ""
     view = "gemFilteredStats"
-
-    command="gt.stats -i ${gem_filtered} -t ${params.cpus} -a"
-    if (params.paired_end) {
+    prefix = pref
+    
+    if (params.dryRun) command += "touch ${id}${prefix}.stats; "
+    if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
+    command += "gt.stats -i ${gem_filtered} -t ${task.cpus} -a"
+    if (params.pairedEnd) {
         command += " -p"
     }
-    command += " 2> mapping_filtered.map.gz.stats"
+    command += " 2> ${id}${prefix}.stats"
+    if (params.dryRun) command += '";tput sgr0'
+
+    return command
 }
 
 process gemToBam {
+    if (params.dryRun)
+        echo true
+
     input:
-    set reads_name, view, gem_filtered from map2
-    file genome_index from genome_index3.first()
+    set id, view, gem_filtered from fmap2
+    set species, file(genome), file(annotation), file(genome_index), file(tx_index), file(tx_keys) from IdxRefs2.first()
 
     output:
-    set reads_name, view, "mapping.bam" into bam
+    set id, view, "${id}${prefix}.bam" into bam
 
     script:
+    def command = ""
     view = "alignments"
+    prefix = pref
 
-    def command = "pigz -p ${params.cpus} -dc ${gem_filtered}"
-    command += " | gem-2-sam -T ${params.cpus} -I ${genome_index} -q offset-${params.quality_offset} -l"
+    if (params.dryRun) command += "touch ${id}${prefix}.bam; "
+    if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
+    command += "pigz -p ${task.cpus} -dc ${gem_filtered}"
+    command += " | gem-2-sam -T ${task.cpus} -I ${genome_index} -q offset-${params.qualityOffset} -l"
     if (params.read_group) {
-       command += " --read-group ${params.read_group}"
+       command += " --read-group ${params.readGroup}"
     }
     if (params.paired_end) {
        command += " --expect-paired-end-reads"
     }
     else {
        command += " --expect-single-end-reads"
-       command += " | awk 'BEGIN{OFS=FS=\"\t\"}\$0!~/^@/{split(\".toString()1_2_8_32_64_128\",a,\"_\");for(i in a){if(and(\$2,a[i])>0){\$2=xor(\$2,a[i])}}}{print}'"
+       if (params.dryRun)
+           command += " | awk 'BEGIN{OFS=FS=\\\"\\t\\\"}\\\$0!~/^@/{split(\\\".toString()1_2_8_32_64_128\\\",a,\\\"_\\\");for(i in a){if(and(\\\$2,a[i])>0){\\\$2=xor(\\\$2,a[i])}}}{print}'"
+       else
+           command += " | awk 'BEGIN{OFS=FS=\"\t\"}\$0!~/^@/{split(\".toString()1_2_8_32_64_128\",a,\"_\");for(i in a){if(and(\$2,a[i])>0){\$2=xor(\$2,a[i])}}}{print}'"
     }
 
-    command += " | samtools view -@ ${params.cpus} -Sb -"
-    command += " | samtools sort -@ ${params.cpus} -m 4G - mapping"
+    command += " | samtools view -@ ${task.cpus} -Sb -"
+    command += " | samtools sort -@ ${task.cpus} -m 4G - mapping"
     command += " && samtools index mapping.bam"
+    if (params.dryRun) command += '";tput sgr0'
 
     return command
 }
