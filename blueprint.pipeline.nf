@@ -175,24 +175,24 @@ process mapping {
         echo true
 
     input:
-    set reads_name, file(read1), file(read2) from input_files
+    set id, file(read1), file(read2) from input_files
     set species, file(genome), file(annotation), file(genome_index), file(tx_index), file(tx_keys) from IdxRefs.first()
 
     output:
-    set reads_name, view, "mapping.map.gz" into map
+    set id, view, "${id}.map.gz" into map
 
     script:
     view = 'gemUnfiltered'
     def command = ""
 
-    if (params.dryRun) command += 'touch mapping.map.gz; '
+    if (params.dryRun) command += "touch ${id}.map.gz; "
     if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
     command += "gemtools rna-pipeline -i ${genome_index} -r ${tx_index} -k ${tx_keys} -f ${read1}"
     command += " --no-stats --no-bam"
     if (!params.pairedEnd) {
         command += " --single-end"
     }
-    command += " -t ${task.cpus} -q ${params.qualityOffset} -n mapping"
+    command += " -t ${task.cpus} -q ${params.qualityOffset} -n ${id}"
     if (params.dryRun) command += '";tput sgr0'
 
     return command
