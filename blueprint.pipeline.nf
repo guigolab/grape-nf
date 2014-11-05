@@ -25,32 +25,33 @@ pipelineSteps = params.steps.split(',').collect { it.trim() }
 //print usage
 if (params.help) {
     println '''
-### Blueprint RNAseq pipeline ###
+B L U E P R I N T ~ RNA Pipeline
+--------------------------------
 Run the RNAseq pipeline on one sample.
 
-Usage: ./blueprint.pipeline.sh -i FASTQ_FILE -g GENOME_FILE -a ANNOTATION_FILE [OPTION]...
-
-  --index               index file.
-  --genome              reference genome file.
-  --annotation          reference gene annotation file.
+Usage: 
+    ./blueprint.pipeline.sh -i FASTQ_FILE -g GENOME_FILE -a ANNOTATION_FILE [OPTION]...
 
 Options:
-  --mismatches          Max number of mismatches. Default "4".
-  --hits                Max number of hits. Default "10".
-  --quality-offset      The quality offset of the fastq files. Default: "33".
-  --max-read-length     The maximum read length (used to compute the transcriptomes). Default: "150".
-  --read-strand         directionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default "NONE".
-  --loglevel            Log level (error, warn, info, debug). Default "info".
-  --threads             Number of threads. Default "1".
-  --paired-end          Specify whether the data is paired-end. Defalut: "false".
-  --count-elements      A comma separated list of elements to be counted by the Flux Capacitor.
-                        Possible values: INTRONS,SPLICE_JUNCTIONS. Defalut: "none".
-  --help                Show this message and exit.
-  --bam-stats           Run the RSeQC stats on the bam file. Default "false".
-  --flux-mem            Specify the amount of ram the Flux Capacitor can use. Default: "3G".
-  --tmp-dir             Specify local temporary folder to copy files when running on shared file systems.
-                        Default: "$TMPDIR" if the environment variable is defined, "-" otherwise.
-  --dry-run             Test the pipeline. Writes the command to the standard output.
+    --index               index file.
+    --genome              reference genome file.
+    --annotation          reference gene annotation file.
+    --mismatches          Max number of mismatches. Default "4".
+    --hits                Max number of hits. Default "10".
+    --quality-offset      The quality offset of the fastq files. Default: "33".
+    --max-read-length     The maximum read length (used to compute the transcriptomes). Default: "150".
+    --read-strand         directionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default "NONE".
+    --loglevel            Log level (error, warn, info, debug). Default "info".
+    --threads             Number of threads. Default "1".
+    --paired-end          Specify whether the data is paired-end. Defalut: "false".
+    --count-elements      A comma separated list of elements to be counted by the Flux Capacitor.
+                          Possible values: INTRONS,SPLICE_JUNCTIONS. Defalut: "none".
+    --help                Show this message and exit.
+    --bam-stats           Run the RSeQC stats on the bam file. Default "false".
+    --flux-mem            Specify the amount of ram the Flux Capacitor can use. Default: "3G".
+    --tmp-dir             Specify local temporary folder to copy files when running on shared file systems.
+                          Default: "$TMPDIR" if the environment variable is defined, "-" otherwise.
+    --dry-run             Test the pipeline. Writes the command to the standard output.
     '''
     exit 1
 }
