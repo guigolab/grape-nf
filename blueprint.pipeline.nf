@@ -198,29 +198,36 @@ process mapping {
     return command
 }
 
-return
-
 process filter {
+    if (params.dryRun)
+        echo true
+
     input:
-    set reads_name, view, gem_unfiltered from map
+    set id, view, gem_unfiltered from map
 
     output:
-    set reads_name, view, "mapping_filtered.map.gz" into fmap
+    set id, view, file("${id}${prefix}.map.gz") into fmap
 
     script:
     view = "gemFiltered"
+    prefix = "_m${params.mismatches}_n${params.hits}"
     def command = ""
 
-    command += "gt.quality -i ${gem_unfiltered} -t ${params.cpus}"
-    command += " | gt.filter --max-levenshtein-error ${params.mismatches} -t ${params.cpus}"
-    command += " | gt.filter --max-matches ${params.hits} -t ${params.cpus}"
-    command += " | pigz -p ${params.cpus} -c"
-    command += " > mapping_filtered.map.gz"
+    if (params.dryRun) command += "touch ${id}_m${params.mismatches}_n${params.hits}.map.gz; "
+    if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
+    command += "gt.quality -i ${gem_unfiltered} -t ${task.cpus}"
+    command += " | gt.filter --max-levenshtein-error ${params.mismatches} -t ${task.cpus}"
+    command += " | gt.filter --max-matches ${params.hits} -t ${task.cpus}"
+    command += " | pigz -p ${task.cpus} -c"
+    command += " > ${id}_m${params.mismatches}_n${params.hits}.map.gz"
+    if (params.dryRun) command += '";tput sgr0'
 
     return command
 }
 
-(map1, map2) = fmap.into(2)
+return
+
+(fmap1, fmap2) = fmap.into(2)
 
 process gemStats {
     input:
@@ -269,6 +276,8 @@ process gemToBam {
 
     return command
 }
+
+return
 
 (bam1, bam2, bam3, bam4) = bam.into(4)
 
