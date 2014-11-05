@@ -24,7 +24,7 @@ pipelineSteps = params.steps.split(',').collect { it.trim() }
 
 //print usage
 if (params.help) {
-    println '''
+    log.info '''
 B L U E P R I N T ~ RNA Pipeline
 --------------------------------
 Run the RNAseq pipeline on one sample.
@@ -33,31 +33,30 @@ Usage:
     ./blueprint.pipeline.sh -i FASTQ_FILE -g GENOME_FILE -a ANNOTATION_FILE [OPTION]...
 
 Options:
-    --index               index file.
-    --genome              reference genome file.
-    --annotation          reference gene annotation file.
-    --mismatches          Max number of mismatches. Default "4".
-    --hits                Max number of hits. Default "10".
-    --quality-offset      The quality offset of the fastq files. Default: "33".
-    --max-read-length     The maximum read length (used to compute the transcriptomes). Default: "150".
-    --read-strand         directionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default "NONE".
-    --loglevel            Log level (error, warn, info, debug). Default "info".
-    --threads             Number of threads. Default "1".
-    --paired-end          Specify whether the data is paired-end. Defalut: "false".
-    --count-elements      A comma separated list of elements to be counted by the Flux Capacitor.
-                          Possible values: INTRONS,SPLICE_JUNCTIONS. Defalut: "none".
-    --help                Show this message and exit.
-    --bam-stats           Run the RSeQC stats on the bam file. Default "false".
-    --flux-mem            Specify the amount of ram the Flux Capacitor can use. Default: "3G".
-    --tmp-dir             Specify local temporary folder to copy files when running on shared file systems.
-                          Default: "$TMPDIR" if the environment variable is defined, "-" otherwise.
-    --dry-run             Test the pipeline. Writes the command to the standard output.
+    --help              Show this message and exit.
+    --index             Index file.
+    --genome            Reference genome file(s).
+    --annotation        Reference gene annotation file(s).
+    --tmp-dir           Specify the temporary folder to be used as a scratch area.
+                        Default: "$TMPDIR" if the environment variable is defined, "-" otherwise.
+    --paired-end        Specify whether the data is paired-end. Defalut: "false".
+    --mismatches        Max number of mismatches. Default "4".
+    --hits              Max number of hits. Default "10".
+    --quality-offset    The quality offset of the fastq files. Default: "33".
+    --max-read-length   The maximum read length (used to compute the transcriptomes). Default: "150".
+    --read-strand       directionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default "NONE".
+    --flux-mem          Specify the amount of ram the Flux Capacitor can use. Default: "3G".
+    --flux-profile      Specify whether the Flux Capacitor profile file shoudl be written. Default: "false".
+    --count-elements    A comma separated list of elements to be counted by the Flux Capacitor.
+                        Possible values: INTRONS,SPLICE_JUNCTIONS. Defalut: "none".
+    --loglevel          Log level (error, warn, info, debug). Default "info".
+    --dry-run           Test the pipeline. Writes the command to the standard output.
     '''
     exit 1
 }
 
 // Check required parameters
-if (!params.input) {
+if (!params.index) {
     exit 1, "Input file not specified"
 }
 
@@ -74,11 +73,11 @@ log.info "B L U E P R I N T ~ RNA Pipeline"
 log.info ""
 log.info "General parameters"
 log.info "------------------"
-log.info "Input                     : ${params.input}"
+log.info "Index file                : ${params.index}"
 log.info "Genome                    : ${params.genome}"
 log.info "Annotation                : ${params.annotation}"
 log.info "Steps to be performed     : ${params.steps.replace(',',' ')}"
-log.info "Use temporary folder      : ${params.tmp_dir}"
+log.info "Use temporary folder      : ${params.tmpDir}"
 log.info "Number of cpus            : ${params.cpus}"
 log.info ""
 if ('mapping' in pipelineSteps) {
@@ -86,20 +85,20 @@ if ('mapping' in pipelineSteps) {
     log.info "------------------"
     log.info "Max mismatches            : ${params.mismatches}"
     log.info "Max multimaps             : ${params.hits}"
-    log.info "Quality offset            : ${params.quality_offset}"
-    log.info "Read length               : ${params.max_read_length}"
-    log.info "Read strandedness         : ${params.read_strand}"
-    log.info "Paired                    : ${params.paired_end}"
-    log.info "Read group                : ${params.read_group}"
-    log.info "Produce BAM stats         : ${params.bam_stats}"
+    log.info "Quality offset            : ${params.qualityOffset}"
+    log.info "Read length               : ${params.maxReadLength}"
+    log.info "Read strandedness         : ${params.readStrand}"
+    log.info "Paired                    : ${params.pairedEnd}"
+    log.info "Read group                : ${params.readGroup}"
+    log.info "Produce BAM stats         : ${params.bamStats}"
     log.info ""
 }
 if ('flux' in pipelineSteps || 'quantification' in pipelineSteps) {
     log.info "Flux Capacitor parameters"
     log.info "-------------------------"
-    log.info "Elements to be quantified : ${params.count_elements}"
-    log.info "Memory                    : ${params.flux_mem}"
-    log.info "Create profile file       : ${params.flux_profile}"
+    log.info "Elements to be quantified : ${params.countElements}"
+    log.info "Memory                    : ${params.fluxMem}"
+    log.info "Create profile file       : ${params.fluxProfile}"
     log.info ""
 }
 
@@ -120,65 +119,86 @@ input_files = Channel
     .map {
        [it.key, it.value.collect { path, id, type, view -> path }].flatten()
     }
-    .subscribe {
-        println it
+
+Refs = Channel.from(genomes)
+    .merge(Channel.from(annos)) {
+        g, a -> [g.name.split("\\.", 2)[0], g, a]
     }
 
-return
-
-
 process index {
+
+    if (params.dryRun)
+        echo true
+
     input:
-    file genome_file
+    set species, file(genome), file(annotation) from Refs
 
     output:
-    file "genome_index.gem" into genome_index
+    set species, file(genome), file(annotation), file("genome_index.gem") into Refs
 
     script:
-    """
-    gemtools index -i ${genome_file} -t ${params.cpus} -o genome_index.gem
-    """
+    view = "genomeIdx"
+    def command = ""
+    
+    if (params.dryRun) command += 'touch genome_index.gem; '
+    if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
+    command += "gemtools index -i ${genome} -t ${task.cpus} -o genome_index.gem"
+    if (params.dryRun) command += '";tput sgr0'
+
+    return command
 }
-
-(genome_index1, genome_index2, genome_index3) = genome_index.into(3)
-
 
 process t_index {
+
+    if (params.dryRun)
+        echo true
+
     input:
-    file genome_index from genome_index1
-    file annotation_file
+    set species, file(genome), file(annotation), file(genome_index) from Refs
 
     output:
-    set file('tx_index.junctions.gem'), file('tx_index.junctions.keys') into tx_index
+    set species, file(genome), file(annotation), file(genome_index), file('tx_index.junctions.gem'), file('tx_index.junctions.keys') into IdxRefs
 
     script:
-    """
-    gemtools t-index -i ${genome_index} -a ${annotation_file} -m ${params.max_read_length} -t ${params.cpus} -o tx_index
-    """
+    def command = ""
+
+    if (params.dryRun) command += 'touch tx_index.junctions.gem tx_index.junctions.keys; '
+    if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
+    command += "gemtools t-index -i ${genome_index} -a ${annotation} -m ${params.maxReadLength} -t ${task.cpus} -o tx_index" 
+    if (params.dryRun) command += '";tput sgr0'
+
+    return command
 }
 
-
 process mapping {
+    if (params.dryRun)
+        echo true
+
     input:
     set reads_name, file(read1), file(read2) from input_files
-    file genome_index from genome_index2.first()
-    set file(tx_index), file(tx_keys) from tx_index.first()
+    set species, file(genome), file(annotation), file(genome_index), file(tx_index), file(tx_keys) from IdxRefs.first()
 
     output:
     set reads_name, view, "mapping.map.gz" into map
 
     script:
     view = 'gemUnfiltered'
+    def command = ""
 
-    def command = "gemtools rna-pipeline -i ${genome_index} -r ${tx_index} -k ${tx_keys} -f ${read1}"
+    if (params.dryRun) command += 'touch mapping.map.gz; '
+    if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
+    command += "gemtools rna-pipeline -i ${genome_index} -r ${tx_index} -k ${tx_keys} -f ${read1}"
     command += " --no-stats --no-bam"
-    if (!params.paired_end) {
+    if (!params.pairedEnd) {
         command += " --single-end"
     }
-    command += " -t ${params.cpus} -q ${params.quality_offset} -n mapping"
+    command += " -t ${task.cpus} -q ${params.qualityOffset} -n mapping"
+    if (params.dryRun) command += '";tput sgr0'
 
     return command
 }
+
+return
 
 process filter {
     input:
@@ -189,8 +209,9 @@ process filter {
 
     script:
     view = "gemFiltered"
+    def command = ""
 
-    def command = "gt.quality -i ${gem_unfiltered} -t ${params.cpus}"
+    command += "gt.quality -i ${gem_unfiltered} -t ${params.cpus}"
     command += " | gt.filter --max-levenshtein-error ${params.mismatches} -t ${params.cpus}"
     command += " | gt.filter --max-matches ${params.hits} -t ${params.cpus}"
     command += " | pigz -p ${params.cpus} -c"
