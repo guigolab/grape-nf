@@ -283,14 +283,15 @@ process gemToBam {
     set species, file(genome), file(annotation), file(genome_index), file(tx_index), file(tx_keys) from IdxRefs2.first()
 
     output:
-    set id, view, "${id}${prefix}.bam" into bam
+    set id, type, view, "${id}${prefix}.bam" into bam
 
     script:
     def command = ""
     awkCommand = 'BEGIN{OFS=FS=\"\t\"}\$0!~/^@/{split(\"1_2_8_32_64_128\",a,\"_\");for(i in a){if(and(\$2,a[i])>0){\$2=xor(\$2,a[i])}}}{print}'
     if (params.dryRun)
         awkCommand = 'BEGIN{OFS=FS=\\\"\\t\\\"}\\\$0!~/^@/{split(\\\"1_2_8_32_64_128\\\",a,\\\"_\\\");for(i in a){if(and(\\\$2,a[i])>0){\\\$2=xor(\\\$2,a[i])}}}{print}'
-    view = "alignments"
+    type = "bam"
+    view = "Alignments"
     prefix = pref
 
     if (params.dryRun) command += "touch ${id}${prefix}.bam; "
@@ -309,8 +310,8 @@ process gemToBam {
     }
 
     command += " | samtools view -@ ${task.cpus} -Sb -"
-    command += " | samtools sort -@ ${task.cpus} -m 4G - mapping"
-    command += " && samtools index mapping.bam"
+    command += " | samtools sort -@ ${task.cpus} -m 4G - ${id}${prefix}"
+    command += " && samtools index ${id}${prefix}.bam"
     if (params.dryRun) command += '";tput sgr0'
 
     return command
@@ -325,16 +326,18 @@ process bigwig {
         echo true
     
     input:
-    set id, view, file(bam) from bam1
+    set id, type, view, file(bam) from bam1
     file genomeFai from fais1.first()
 
     output:
-    set id, view, file('*.bw') into bigwig
+    set id, type, views, file('*.bw') into bigwig
 
     script:
-    view = 'bigwig'
+    views = []
+    view = 'Signal'
+    type = "bigwig"
     def command = ''
-    strand = ['': '']
+    strand = ['': '.raw']
     mateBit = 0
     awkCommand = 'BEGIN {OFS=\"\\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}'
     if (params.dryRun)
@@ -359,26 +362,36 @@ process bigwig {
         command += (it.key != '' ? "-strand ${it.key} ".toString() : ''.toString())
         command += "-split -bg -ibam ${bam} > ${id}${it.value}.bedgraph\n"
         command += "bedGraphToBigWig ${id}${it.value}.bedgraph ${genomeFai} ${id}${it.value}.bw\n"
+
+        views << "${it.value[1..-1].capitalize()}${view}"
     } )
 
     if (params.dryRun) command += '";tput sgr0'
     return command
 
 }
+bigwig = bigwig.reduce([:]) { files, tuple  ->
+    (id, type, view, path) = tuple
+    a = []
+    (1..path.size()).each { a << [id, type, view[it-1], path[it-1]] }
+    return a
+}
+.flatMap()
 
 process contig {
     if (params.dryRun)
         echo true
 
     input:
-    set id, view, file(bam) from bam2
+    set id, type, view, file(bam) from bam2
     file genomeFai from fais2.first()
 
     output:
-    set id, view, file('*_contigs.bed') into contig
+    set id, type, view, file('*_contigs.bed') into contig
 
     script:
-    view = 'contig'
+    type = 'bed'
+    view = 'Contigs'
     def command = "" 
     strand = ['': '']
     mateBit = 0
@@ -430,27 +443,30 @@ process contig {
 
 }
 
-return
-
 process quantification {
+    if (params.dryRun)
+        echo true
+
     input:
-    set reads_name, in_view, file(bam) from bam3
-    file annotation_file
+    set id, type, view, file(bam) from bam3
+    file annotation from Channel.from(annos) 
 
     output:
-    set reads_name, view, file('flux.gtf') into flux
+    set id, type, view, file("${id}${prefix}.gtf") into flux
 
     script:
-    view = 'transcript'
+    type = "gtf"
+    view = "Transcript${annotation.name.replace('.gtf','').capitalize()}"
+    prefix = pref
     def command = ""
-    paramFile = file('params.flux')
+    paramFile = file('${id}${prefix}.par')
 
     //Flux parameter file has to be in the same folder as the bam - Flux bug
 
-    /* paramFile.append("# Flux Capacitor parameter file for ${reads_name}\n")
+    /* paramFile.append("# Flux Capacitor parameter file for ${id}\n")
     annotationMapping = "AUTO"
     if (params.read_strand != "NONE") {
-        paramFile.append("READ_STRAND ${params.read_strand}\n")
+        paramFile.append("READ_STRAND ${params.readiStrand}\n")
         annotationMapping="STRANDED"
         if (params.paired_end) {
             annotationMapping="PAIRED_${annotationMapping}"
@@ -460,41 +476,47 @@ process quantification {
         }
     }
     paramFile.append("ANNOTATION_MAPPING ${annotationMapping}\n")
-    paramFile.append("COUNT_ELEMENTS ${params.count_elements}\n")
+    paramFile.append("COUNT_ELEMENTS ${params.countElements}\n")
 
-    if (params.flux_profile) {
-        paramFile.append("PROFILE_FILE profile.json\n")
-        command += "flux-capacitor --profile -p ${paramFile} -i ${bam}  -a ${annotation_file}"
+    if (params.fluxProfile) {
+        paramFile.append("PROFILE_FILE ${id}${prefix}_profile.json\n")
+        command += "flux-capacitor --profile -p ${paramFile} -i ${bam}  -a ${annotation}"
     }
-    command += "flux-capacitor -p ${paramFile} -i ${bam} -a ${annotation_file} -o flux.gtf".toString() */
+    command += "flux-capacitor -p ${paramFile} -i ${bam} -a ${annotation} -o ${id}${prefix}.gtf".toString() */
 
+    if (params.dryRun) command += "touch ${id}${prefix}.gtf; "
+    if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
+    
     // Workaround
-    flux_params = ''
+    fluxParams = ""
     annotationMapping = "AUTO"
     if (params.read_strand != "NONE") {
-        flux_params += " --read-strand ${params.read_strand}"
+        fluxParams += " --read-strand ${params.readStrand}"
         annotationMapping="STRANDED"
-        if (params.paired_end) {
+        if (params.pairedEnd) {
             annotationMapping="PAIRED_${annotationMapping}"
         }
         else {
             annotationMapping="SINGLE_${annotationMapping}"
         }
     }
-    flux_params += " -m ${annotationMapping}"
-    flux_params += " --count-elements ${params.count_elements}"
+    fluxParams += " -m ${annotationMapping}"
+    fluxParams += " --count-elements ${params.countElements}"
 
-    if (params.flux_profile) {
-        flux_params += " --profile-file profile.json"
-        command += "flux-capacitor --profile ${flux_params} -i ${bam}  -a ${annotation_file} && "
+    if (params.fluxProfile) {
+        fluxParams += " --profile-file ${id}${prefix}_profile.json"
+        command += "flux-capacitor --profile ${fluxParams} -i ${bam}  -a ${annotation}; "
     }
-    command += "flux-capacitor ${flux_params} -i ${bam} -a ${annotation_file} -o flux.gtf"
+    command += "flux-capacitor ${fluxParams} -i ${bam} -a ${annotation} -o ${id}${prefix}.gtf"
+    if (params.dryRun) command += '";tput sgr0'
 
     return command
 }
 
+db = file('pipeline.db')
+db.delete()
 bam4.mix(bigwig, contig, flux).subscribe {
-    println it
+    db.append("${it[3]}\t${it[0]}\t${it[1]}\t${it[2]}\n")
 }
 
 //process store {
@@ -510,6 +532,3 @@ bam4.mix(bigwig, contig, flux).subscribe {
 //    idxtools add path=`readlink -f ${store_file}` id=${reads_name} view=${view} type=${store_file.name.split("\\.", 2)[1]} size=`cat ${store_file} | wc -c` md5sum=`md5sum ${store_file} | cut -d" " -f1`
 //    """
 //}
-
-
-
