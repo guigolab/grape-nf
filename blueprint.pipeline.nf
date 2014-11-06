@@ -318,6 +318,7 @@ process gemToBam {
 
 fais = Channel.from(genomeFais)
 (bam1, bam2, bam3, bam4) = bam.into(4)
+(fais1, fais2) = fais.into(2)
 
 process bigwig {
     if (params.dryRun)
@@ -325,7 +326,7 @@ process bigwig {
     
     input:
     set id, view, file(bam) from bam1
-    file genomeFai from fais.first()
+    file genomeFai from fais1.first()
 
     output:
     set id, view, file('*.bw') into bigwig
@@ -338,7 +339,7 @@ process bigwig {
     awkCommand = 'BEGIN {OFS=\"\\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}'
     if (params.dryRun)
         awkCommand = 'BEGIN {OFS=\\\"\\t\\\"} {if (\\\$1!~/^@/ && and(\\\$2,MateBit)>0) {\\\$2=xor(\\\$2,0x10)}; print}'
-    if (params.dryRun) command += "touch ${id}${prefix}.bw; "
+    if (params.dryRun) command += "touch ${id}${pref}.bw; "
     if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
     if (params.readStrand != 'NONE') {
         strand = ['+': '.plusRaw','-': '.minusRaw']
@@ -365,57 +366,66 @@ process bigwig {
 
 }
 
-return
-
 process contig {
+    if (params.dryRun)
+        echo true
+
     input:
-    set reads_name, in_view, file(bam) from bam2
-    file genomeFai from fais.first()
+    set id, view, file(bam) from bam2
+    file genomeFai from fais2.first()
 
     output:
-    set reads_name, view, file('*_contigs.bed') into contig
+    set id, view, file('*_contigs.bed') into contig
 
     script:
     view = 'contig'
-    def command = ''
+    def command = "" 
     strand = ['': '']
     mateBit = 0
     awkCommand = 'BEGIN {OFS=\"\\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}'
-    if (params.read_strand != 'NONE') {
+    if (params.dryRun)
+        awkCommand = 'BEGIN {OFS=\\\"\\t\\\"} {if (\\\$1!~/^@/ && and(\\\$2,MateBit)>0) {\\\$2=xor(\\\$2,0x10)}; print}'
+    if (params.dryRun) command += "touch ${id}${pref}_contigs.bed; "
+    if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
+    if (params.readStrand != 'NONE') {
         strand = ['+': '.plusRaw','-': '.minusRaw']
-        mateBit = (params.read_strand =~ /MATE2/ ? 64 : 128)
+        mateBit = (params.readStrand =~ /MATE2/ ? 64 : 128)
     }
 
     if (mateBit > 0) {
-        command += "samtools view -h -@ ${params.cpus} ${bam}"
+        command += "samtools view -h -@ ${task.cpus} ${bam}"
         command += " | awk -v MateBit=${mateBit} '${awkCommand}'"
-        command += " | samtools view -@ ${params.cpus} -Sb -"
+        command += " | samtools view -@ ${task.cpus} -Sb -"
         command += " > tmp.bam\n"
-        command += "mv -f tmp.bam mapping.bam\n"
+        command += "mv -f tmp.bam ${bam}\n"
     }
 
     command += "bamflag -in ${bam} -out tmp.bam -m 3\n"
-    command += "mv -f tmp.bam mapping.bam\n"
+    command += "mv -f tmp.bam ${bam}\n"
 
     strand.each( {
         command += "genomeCoverageBed "
         command += (it.key != '' ? "-strand ${it.key} ".toString() : ''.toString())
-        command += "-split -bg -ibam ${bam} > ${reads_name}${it.value}.bedgraph\n"
+        command += "-split -bg -ibam ${bam} > ${id}${it.value}.bedgraph\n"
     } )
 
     if (strand.size() == 2) {
         command += "contigsNew.py --chrFile ${genomeFai}"
         strand.each( {
-            command += " --file${it.value.substring(1,2).toUpperCase()} ${reads_name}${it.value}.bedgraph"
+            command += " --file${it.value.substring(1,2).toUpperCase()} ${id}${it.value}.bedgraph"
         } )
-        command += " | awk '{s=\"\"; for(i=1; i<=NF; i++){s=(s)(\$i)(\"\t\")} print s}'"
-        command += " > ${reads_name}_contigs.bed"
+        if (params.dryRun)
+            command += " | awk '{s=\\\"\\\"; for(i=1; i<=NF; i++){s=(s)(\\\$i)(\\\"\\t\\\")} print s}'"
+        else
+            command += " | awk '{s=\"\"; for(i=1; i<=NF; i++){s=(s)(\$i)(\"\\t\")} print s}'"
+        command += " > ${id}_contigs.bed"
     } else {
         command += "bamToBed -i ${bam} | sort -k1,1 -k2,2n"
         command += " | mergeBed"
-        command += " > ${reads_name}_contigs.bed"
+        command += " > ${id}_contigs.bed"
     }
-
+    if (params.dryRun) command += '";tput sgr0'
+    
     return command
 
 }
