@@ -55,7 +55,7 @@ Options:
     --annotation        Reference gene annotation file(s).
     --tmp-dir           Specify the temporary folder to be used as a scratch area.
                         Default: "$TMPDIR" if the environment variable is defined, "-" otherwise.
-    --paired-end        Specify whether the data is paired-end. Defalut: "false".
+    --paired-end        Specify whether the data is paired-end. Default: "false".
     --mismatches        Max number of mismatches. Default "4".
     --hits              Max number of hits. Default "10".
     --quality-offset    The quality offset of the fastq files. Default: "33".
@@ -118,6 +118,7 @@ if ('flux' in pipelineSteps || 'quantification' in pipelineSteps) {
 }
 
 genomes=params.genome.split(',').collect { file(it) }
+genomeFais=params.genome.split(',').collect { file("${it}.fai") }
 annos=params.annotation.split(',').collect { file(it) }
 
 index = file(params.index)
@@ -286,6 +287,9 @@ process gemToBam {
 
     script:
     def command = ""
+    awkCommand = 'BEGIN{OFS=FS=\"\t\"}\$0!~/^@/{split(\"1_2_8_32_64_128\",a,\"_\");for(i in a){if(and(\$2,a[i])>0){\$2=xor(\$2,a[i])}}}{print}'
+    if (params.dryRun)
+        awkCommand = 'BEGIN{OFS=FS=\\\"\\t\\\"}\\\$0!~/^@/{split(\\\"1_2_8_32_64_128\\\",a,\\\"_\\\");for(i in a){if(and(\\\$2,a[i])>0){\\\$2=xor(\\\$2,a[i])}}}{print}'
     view = "alignments"
     prefix = pref
 
@@ -293,18 +297,15 @@ process gemToBam {
     if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
     command += "pigz -p ${task.cpus} -dc ${gem_filtered}"
     command += " | gem-2-sam -T ${task.cpus} -I ${genome_index} -q offset-${params.qualityOffset} -l"
-    if (params.read_group) {
+    if (params.readiGroup) {
        command += " --read-group ${params.readGroup}"
     }
-    if (params.paired_end) {
+    if (params.pairedEnd) {
        command += " --expect-paired-end-reads"
     }
     else {
        command += " --expect-single-end-reads"
-       if (params.dryRun)
-           command += " | awk 'BEGIN{OFS=FS=\\\"\\t\\\"}\\\$0!~/^@/{split(\\\".toString()1_2_8_32_64_128\\\",a,\\\"_\\\");for(i in a){if(and(\\\$2,a[i])>0){\\\$2=xor(\\\$2,a[i])}}}{print}'"
-       else
-           command += " | awk 'BEGIN{OFS=FS=\"\t\"}\$0!~/^@/{split(\".toString()1_2_8_32_64_128\",a,\"_\");for(i in a){if(and(\$2,a[i])>0){\$2=xor(\$2,a[i])}}}{print}'"
+       command += " | awk '${awkCommand}'"
     }
 
     command += " | samtools view -@ ${task.cpus} -Sb -"
@@ -315,19 +316,19 @@ process gemToBam {
     return command
 }
 
-return
-
+fais = Channel.from(genomeFais)
 (bam1, bam2, bam3, bam4) = bam.into(4)
 
-genomeFai = file(params.genome+'.fai')
-
 process bigwig {
+    if (params.dryRun)
+        echo true
+    
     input:
-    set reads_name, in_view, file(bam) from bam1
-    file genomeFai
+    set id, view, file(bam) from bam1
+    file genomeFai from fais.first()
 
     output:
-    set reads_name, view, file('*.bw') into bigwig
+    set id, view, file('*.bw') into bigwig
 
     script:
     view = 'bigwig'
@@ -335,34 +336,41 @@ process bigwig {
     strand = ['': '']
     mateBit = 0
     awkCommand = 'BEGIN {OFS=\"\\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}'
-    if (params.read_strand != 'NONE') {
+    if (params.dryRun)
+        awkCommand = 'BEGIN {OFS=\\\"\\t\\\"} {if (\\\$1!~/^@/ && and(\\\$2,MateBit)>0) {\\\$2=xor(\\\$2,0x10)}; print}'
+    if (params.dryRun) command += "touch ${id}${prefix}.bw; "
+    if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
+    if (params.readStrand != 'NONE') {
         strand = ['+': '.plusRaw','-': '.minusRaw']
-        mateBit = (params.read_strand =~ /MATE2/ ? 64 : 128)
+        mateBit = (params.readStrand =~ /MATE2/ ? 64 : 128)
     }
 
     if (mateBit > 0) {
-        command += "samtools view -h -@ ${params.cpus} ${bam}"
+        command += "samtools view -h -@ ${task.cpus} ${bam}"
         command += " | awk -v MateBit=${mateBit} '${awkCommand}'"
-        command += " | samtools view -@ ${params.cpus} -Sb -"
+        command += " | samtools view -@ ${task.cpus} -Sb -"
         command += " > tmp.bam\n"
-        command += "mv -f tmp.bam mapping.bam\n"
+        command += "mv -f tmp.bam ${bam}\n"
     }
 
     strand.each( {
         command += "genomeCoverageBed "
         command += (it.key != '' ? "-strand ${it.key} ".toString() : ''.toString())
-        command += "-split -bg -ibam ${bam} > ${reads_name}${it.value}.bedgraph\n"
-        command += "bedGraphToBigWig ${reads_name}${it.value}.bedgraph ${genomeFai} ${reads_name}${it.value}.bw\n"
+        command += "-split -bg -ibam ${bam} > ${id}${it.value}.bedgraph\n"
+        command += "bedGraphToBigWig ${id}${it.value}.bedgraph ${genomeFai} ${id}${it.value}.bw\n"
     } )
 
+    if (params.dryRun) command += '";tput sgr0'
     return command
 
 }
 
+return
+
 process contig {
     input:
     set reads_name, in_view, file(bam) from bam2
-    file genomeFai
+    file genomeFai from fais.first()
 
     output:
     set reads_name, view, file('*_contigs.bed') into contig
@@ -411,6 +419,8 @@ process contig {
     return command
 
 }
+
+return
 
 process quantification {
     input:
