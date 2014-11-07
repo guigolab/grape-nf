@@ -27,13 +27,13 @@ params.mismatches = 4
 params.hits = 10
 params.qualityOffset = 33
 params.maxReadLength = 150
-params.readStrand = 'NONE'
-params.pairedEnd = false
-params.readGroup = ''
+//params.readStrand = null
+//params.readGroup = ''
 params.bamStats = false
 params.countElements = []
 params.fluxMem = '3G'
 params.fluxProfile = false 
+//params.pairedEnd = null
 
 // get list of steps from comma-separated strings
 pipelineSteps = params.steps.split(',').collect { it.trim() }
@@ -55,7 +55,7 @@ Options:
     --annotation        Reference gene annotation file(s).
     --tmp-dir           Specify the temporary folder to be used as a scratch area.
                         Default: "$TMPDIR" if the environment variable is defined, "-" otherwise.
-    --paired-end        Specify whether the data is paired-end. Default: "false".
+    --paired-end        Specify whether the data is paired-end. Default: "auto".
     --mismatches        Max number of mismatches. Default "4".
     --hits              Max number of hits. Default "10".
     --quality-offset    The quality offset of the fastq files. Default: "33".
@@ -72,9 +72,9 @@ Options:
 }
 
 // Check required parameters
-if (!params.index) {
-    exit 1, "Input file not specified"
-}
+//if (!params.index) {
+    //exit 1, "Input file not specified"
+//}
 
 if (!params.genome) {
     exit 1, "Genome file not specified"
@@ -102,9 +102,9 @@ if ('mapping' in pipelineSteps) {
     log.info "Max multimaps             : ${params.hits}"
     log.info "Quality offset            : ${params.qualityOffset}"
     log.info "Read length               : ${params.maxReadLength}"
-    log.info "Read strandedness         : ${params.readStrand}"
-    log.info "Paired                    : ${params.pairedEnd}"
-    log.info "Read group                : ${params.readGroup}"
+    log.info "Read strandedness         : ${params.readStrand != null ? params.readStrand : 'auto'}"
+    log.info "Paired                    : ${params.pairedEnd != null ? params.pairedEnd : 'auto'}"
+    log.info "Read group                : ${params.readGroup != null ? params.readGroup : '-'}"
     log.info "Produce BAM stats         : ${params.bamStats}"
     log.info ""
 }
@@ -121,7 +121,7 @@ genomes=params.genome.split(',').collect { file(it) }
 genomeFais=params.genome.split(',').collect { file("${it}.fai") }
 annos=params.annotation.split(',').collect { file(it) }
 
-index = file(params.index)
+index = params.index ? file(params.index) : System.in
 
 input_files = Channel
     .from(index.readLines())
@@ -129,11 +129,11 @@ input_files = Channel
         line -> [ file(line.split()[0]), line.split()[1], line.split()[2], line.split()[3] ]
     }
     .groupBy {
-        path, id, type, view ->  path.name.split("\\.", 2)[0][0..-3]
+        path, id, type, view -> id 
     }
     .flatMap ()
     .map {
-       [it.key, it.value.collect { path, id, type, view -> path }].flatten()
+       [it.key, it.value.collect { path, id, type, view -> path }]//.flatten()
     }
 
 Refs = Channel.from(genomes)
@@ -193,21 +193,25 @@ process mapping {
         echo true
 
     input:
-    set id, file(read1), file(read2) from input_files
+    set id, file(reads) from input_files
     set species, file(genome), file(annotation), file(genome_index), file(tx_index), file(tx_keys) from IdxRefs1.first()
 
     output:
-    set id, view, "${id}.map.gz" into map
+    set id, view, "${id}.map.gz", pairedEnd into map
 
     script:
     view = 'gemUnfiltered'
     def command = ""
+    
+    fqs = reads.toString().split(" ")
+    pairedEnd = false
+    if (fqs.size() == 2) pairedEnd = true 
 
     if (params.dryRun) command += "touch ${id}.map.gz; "
     if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
-    command += "gemtools rna-pipeline -i ${genome_index} -r ${tx_index} -k ${tx_keys} -f ${read1}"
+    command += "gemtools rna-pipeline -i ${genome_index} -r ${tx_index} -k ${tx_keys} -f ${fqs[0]}"
     command += " --no-stats --no-bam"
-    if (!params.pairedEnd) {
+    if (!pairedEnd) {
         command += " --single-end"
     }
     command += " -t ${task.cpus} -q ${params.qualityOffset} -n ${id}"
@@ -223,10 +227,10 @@ process filter {
         echo true
 
     input:
-    set id, view, gem_unfiltered from map
+    set id, view, gem_unfiltered, pairedEnd from map
 
     output:
-    set id, view, file("${id}${prefix}.map.gz") into fmap
+    set id, view, file("${id}${prefix}.map.gz"), pairedEnd into fmap
 
     script:
     view = "gemFiltered"
@@ -252,10 +256,10 @@ process gemStats {
         echo true
 
     input:
-    set id, view, gem_filtered from fmap1
+    set id, view, gem_filtered, pairedEnd from fmap1
 
     output:
-    set id, view, "${id}${prefix}.stats" into stats
+    set id, view, "${id}${prefix}.stats", pairedEnd into stats
 
     script:
     def command = ""
@@ -265,7 +269,7 @@ process gemStats {
     if (params.dryRun) command += "touch ${id}${prefix}.stats; "
     if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
     command += "gt.stats -i ${gem_filtered} -t ${task.cpus} -a"
-    if (params.pairedEnd) {
+    if (pairedEnd) {
         command += " -p"
     }
     command += " 2> ${id}${prefix}.stats"
@@ -279,11 +283,11 @@ process gemToBam {
         echo true
 
     input:
-    set id, view, gem_filtered from fmap2
+    set id, view, gem_filtered, pairedEnd from fmap2
     set species, file(genome), file(annotation), file(genome_index), file(tx_index), file(tx_keys) from IdxRefs2.first()
 
     output:
-    set id, type, view, "${id}${prefix}.bam" into bam
+    set id, type, view, "${id}${prefix}.bam", pairedEnd into bam
 
     script:
     def command = ""
@@ -298,10 +302,10 @@ process gemToBam {
     if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
     command += "pigz -p ${task.cpus} -dc ${gem_filtered}"
     command += " | gem-2-sam -T ${task.cpus} -I ${genome_index} -q offset-${params.qualityOffset} -l"
-    if (params.readiGroup) {
+    if (params.readGroup) {
        command += " --read-group ${params.readGroup}"
     }
-    if (params.pairedEnd) {
+    if (pairedEnd) {
        command += " --expect-paired-end-reads"
     }
     else {
@@ -317,6 +321,12 @@ process gemToBam {
     return command
 }
 
+if (!params.readStrand) {
+    process readStrand {
+    
+    }
+}
+
 fais = Channel.from(genomeFais)
 (bam1, bam2, bam3, bam4) = bam.into(4)
 (fais1, fais2) = fais.into(2)
@@ -326,7 +336,7 @@ process bigwig {
         echo true
     
     input:
-    set id, type, view, file(bam) from bam1
+    set id, type, view, file(bam), pairedEnd from bam1
     file genomeFai from fais1.first()
 
     output:
@@ -385,7 +395,7 @@ process contig {
         echo true
 
     input:
-    set id, type, view, file(bam) from bam2
+    set id, type, view, file(bam), pairedEnd from bam2
     file genomeFai from fais2.first()
 
     output:
@@ -450,7 +460,7 @@ process quantification {
         echo true
 
     input:
-    set id, type, view, file(bam) from bam3
+    set id, type, view, file(bam), pairedEnd from bam3
     file annotation from Channel.from(annos).first() 
 
     output:
@@ -470,7 +480,7 @@ process quantification {
     if (params.read_strand != "NONE") {
         paramFile.append("READ_STRAND ${params.readiStrand}\n")
         annotationMapping="STRANDED"
-        if (params.paired_end) {
+        if (pairedEnd) {
             annotationMapping="PAIRED_${annotationMapping}"
         }
         else {
@@ -495,7 +505,7 @@ process quantification {
     if (params.read_strand != "NONE") {
         fluxParams += " --read-strand ${params.readStrand}"
         annotationMapping="STRANDED"
-        if (params.pairedEnd) {
+        if (pairedEnd) {
             annotationMapping="PAIRED_${annotationMapping}"
         }
         else {
