@@ -370,13 +370,15 @@ process bigwig {
     return command
 
 }
-bigwig = bigwig.reduce([:]) { files, tuple  ->
-    (id, type, view, path) = tuple
-    a = []
-    (1..path.size()).each { a << [id, type, view[it-1], path[it-1]] }
-    return a
+
+bigwig = bigwig.reduce([:]) { files, tuple ->
+    (id, type, view, path) = tuple     
+    if (!files) files = []
+    (1..path.size()).each { files << [id, type, view[it-1], path[it-1]] }
+    return files
 }
 .flatMap()
+
 
 process contig {
     if (params.dryRun)
@@ -449,7 +451,7 @@ process quantification {
 
     input:
     set id, type, view, file(bam) from bam3
-    file annotation from Channel.from(annos) 
+    file annotation from Channel.from(annos).first() 
 
     output:
     set id, type, view, file("${id}${prefix}.gtf") into flux
