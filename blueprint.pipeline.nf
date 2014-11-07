@@ -27,13 +27,10 @@ params.mismatches = 4
 params.hits = 10
 params.qualityOffset = 33
 params.maxReadLength = 150
-//params.readStrand = null
-//params.readGroup = ''
 params.bamStats = false
 params.countElements = []
 params.fluxMem = '3G'
 params.fluxProfile = false 
-//params.pairedEnd = null
 
 // get list of steps from comma-separated strings
 pipelineSteps = params.steps.split(',').collect { it.trim() }
@@ -70,11 +67,6 @@ Options:
     '''
     exit 1
 }
-
-// Check required parameters
-//if (!params.index) {
-    //exit 1, "Input file not specified"
-//}
 
 if (!params.genome) {
     exit 1, "Genome file not specified"
@@ -321,14 +313,42 @@ process gemToBam {
     return command
 }
 
-if (!params.readStrand) {
-    process readStrand {
-    
-    }
+process inferExp {
+    input:
+    set id, type, view, file(bam), pairedEnd from bam
+    file anno from Channel.from(annos).first()
+
+    output:
+    set id, type, view, file(bam), pairedEnd, stdout into bamInf
+
+    script:
+    def command = ""
+    def genePred = "${anno.name.split('\\.', 2)[0]}.genePred"
+    def bed12 = "${anno.name.split('\\.', 2)[0]}.bed"
+
+    command += "gtfToGenePred ${anno} -allErrors -ignoreGroupsWithoutExons ${genePred} 2> ${genePred}.err;"
+    command += "genePredToBed12.awk ${genePred} > ${bed12};" 
+    command += "set +eu; . /software/rg/el6.3/virtualenvs/python2.7.3/bin/activate;"
+    command += "set -eu; ${baseDir}/bin/infer_experiment.py -i ${bam} -r ${bed12} 2> /dev/null | tr -d '\n'"
+}
+
+(bamInf1, bamInf2) = bamInf.into(2)
+bamInf1.subscribe {        
+    tuple ->
+        (id, type, view, bam, pairedEnd, readStrand) = tuple
+        if (params.readStrand != null && !readStrand.equals(params.readStrand)) {
+            log.warn "----> '${id}' skipped"
+            log.warn "Detected and supplied read strandedness do not match:"
+            log.warn "${readStrand} != ${params.readStrand}"
+        }
+}
+
+bamStrand = bamInf2.filter { id, type, view, bam, pairedEnd, readStrand ->
+        params.readStrand == null || readStrand.equals(params.readStrand)
 }
 
 fais = Channel.from(genomeFais)
-(bam1, bam2, bam3, bam4) = bam.into(4)
+(bam1, bam2, bam3, bam4) = bamStrand.into(4)
 (fais1, fais2) = fais.into(2)
 
 process bigwig {
@@ -336,7 +356,7 @@ process bigwig {
         echo true
     
     input:
-    set id, type, view, file(bam), pairedEnd from bam1
+    set id, type, view, file(bam), pairedEnd, readStrand from bam1
     file genomeFai from fais1.first()
 
     output:
@@ -354,9 +374,9 @@ process bigwig {
         awkCommand = 'BEGIN {OFS=\\\"\\t\\\"} {if (\\\$1!~/^@/ && and(\\\$2,MateBit)>0) {\\\$2=xor(\\\$2,0x10)}; print}'
     if (params.dryRun) command += "touch ${id}${pref}.bw; "
     if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
-    if (params.readStrand != 'NONE') {
+    if (readStrand != 'NONE') {
         strand = ['+': '.plusRaw','-': '.minusRaw']
-        mateBit = (params.readStrand =~ /MATE2/ ? 64 : 128)
+        if (pairedEnd) mateBit = (readStrand =~ /MATE2/ ? 64 : 128)
     }
 
     if (mateBit > 0) {
@@ -381,21 +401,23 @@ process bigwig {
 
 }
 
+
+
 bigwig = bigwig.reduce([:]) { files, tuple ->
     (id, type, view, path) = tuple     
     if (!files) files = []
-    (1..path.size()).each { files << [id, type, view[it-1], path[it-1]] }
+    paths = path.toString().replaceAll(/[\[\],]/,"").split(" ")
+    (1..paths.size()).each { files << [id, type, view[it-1], paths[it-1]] }
     return files
 }
 .flatMap()
-
 
 process contig {
     if (params.dryRun)
         echo true
 
     input:
-    set id, type, view, file(bam), pairedEnd from bam2
+    set id, type, view, file(bam), pairedEnd, readStrand from bam2
     file genomeFai from fais2.first()
 
     output:
@@ -412,9 +434,9 @@ process contig {
         awkCommand = 'BEGIN {OFS=\\\"\\t\\\"} {if (\\\$1!~/^@/ && and(\\\$2,MateBit)>0) {\\\$2=xor(\\\$2,0x10)}; print}'
     if (params.dryRun) command += "touch ${id}${pref}_contigs.bed; "
     if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
-    if (params.readStrand != 'NONE') {
+    if (readStrand != 'NONE') {
         strand = ['+': '.plusRaw','-': '.minusRaw']
-        mateBit = (params.readStrand =~ /MATE2/ ? 64 : 128)
+        if (pairedEnd) mateBit = (readStrand =~ /MATE2/ ? 64 : 128)
     }
 
     if (mateBit > 0) {
@@ -460,7 +482,7 @@ process quantification {
         echo true
 
     input:
-    set id, type, view, file(bam), pairedEnd from bam3
+    set id, type, view, file(bam), pairedEnd, readStrand from bam3
     file annotation from Channel.from(annos).first() 
 
     output:
@@ -477,8 +499,8 @@ process quantification {
 
     /* paramFile.append("# Flux Capacitor parameter file for ${id}\n")
     annotationMapping = "AUTO"
-    if (params.read_strand != "NONE") {
-        paramFile.append("READ_STRAND ${params.readiStrand}\n")
+    if (readStrand != "NONE") {        
+        paramFile.append("READ_STRAND ${readStrand}\n")
         annotationMapping="STRANDED"
         if (pairedEnd) {
             annotationMapping="PAIRED_${annotationMapping}"
@@ -502,15 +524,15 @@ process quantification {
     // Workaround
     fluxParams = ""
     annotationMapping = "AUTO"
-    if (params.read_strand != "NONE") {
-        fluxParams += " --read-strand ${params.readStrand}"
+    if (readStrand != "NONE") {
         annotationMapping="STRANDED"
         if (pairedEnd) {
-            annotationMapping="PAIRED_${annotationMapping}"
+            annotationMapping="PAIRED_${annotationMapping}"            
         }
         else {
             annotationMapping="SINGLE_${annotationMapping}"
         }
+        fluxParams += " --read-strand ${readStrand}"
     }
     fluxParams += " -m ${annotationMapping}"
     fluxParams += " --count-elements ${params.countElements}"
