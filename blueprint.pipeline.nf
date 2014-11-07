@@ -513,22 +513,16 @@ process quantification {
     return command
 }
 
-db = file('pipeline.db')
-db.delete()
-bam4.mix(bigwig, contig, flux).subscribe {
-    db.append("${it[3]}\t${it[0]}\t${it[1]}\t${it[2]}\n")
+bam4.mix(bigwig, contig, flux).collectFile(name: "pipeline.db", newLine: true) {
+    [it[3], it[0], it[1], it[2]].join("\t")
 }
-
-//process store {
-//
-//    maxForks 1
-//
-//    input:
-//    val hash
-//    set reads_name, view, file(store_file) from bam4.mix(bigwig, contig, flux)
-//
-//    script:
-//    """
-//    idxtools add path=`readlink -f ${store_file}` id=${reads_name} view=${view} type=${store_file.name.split("\\.", 2)[1]} size=`cat ${store_file} | wc -c` md5sum=`md5sum ${store_file} | cut -d" " -f1`
-//    """
-//}
+.subscribe {
+    def msg = "Output files db -> ${it}"
+    log.info ""
+    log.info "-" * msg.size()
+    log.info "Pipeline run completed."
+    log.info ""
+    log.info msg
+    //log.info "${it}"
+    log.info "-" * msg.size()
+}
