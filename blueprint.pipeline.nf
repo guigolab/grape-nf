@@ -201,7 +201,7 @@ process mapping {
 
     if (params.dryRun) command += "touch ${id}.map.gz; "
     if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
-    command += "gemtools rna-pipeline -i ${genome_index} -r ${tx_index} -k ${tx_keys} -f ${fqs[0]}"
+    command += "gemtools rna-pipeline -i ${genome_index} -a ${annotation} -r ${tx_index} -k ${tx_keys} -f ${fqs[0]}"
     command += " --no-stats --no-bam"
     if (!pairedEnd) {
         command += " --single-end"
