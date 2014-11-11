@@ -231,9 +231,9 @@ process filter {
 
     if (params.dryRun) command += "touch ${id}_m${params.mismatches}_n${params.hits}.map.gz; "
     if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
-    command += "gt.quality -i ${gem_unfiltered} -t ${task.cpus}"
-    command += " | gt.filter --max-levenshtein-error ${params.mismatches} -t ${task.cpus}"
-    command += " | gt.filter --max-matches ${params.hits} -t ${task.cpus}"
+    command += "${baseDir}/bin/gt.quality -i ${gem_unfiltered} -t ${task.cpus}"
+    command += " | ${baseDir}/bin/gt.filter --max-levenshtein-error ${params.mismatches} -t ${task.cpus}"
+    command += " | ${baseDir}/bin/gt.filter --max-matches ${params.hits} -t ${task.cpus}"
     command += " | pigz -p ${task.cpus} -c"
     command += " > ${id}_m${params.mismatches}_n${params.hits}.map.gz"
     if (params.dryRun) command += '";tput sgr0'
