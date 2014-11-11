@@ -231,11 +231,10 @@ process filter {
 
     if (params.dryRun) command += "touch ${id}_m${params.mismatches}_n${params.hits}.map.gz; "
     if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
-    command += "${baseDir}/bin/gt.quality -i ${gem_unfiltered} -t ${task.cpus}"
-    command += " | ${baseDir}/bin/gt.filter --max-levenshtein-error ${params.mismatches} -t ${task.cpus}"
-    command += " | ${baseDir}/bin/gt.filter --max-matches ${params.hits} -t ${task.cpus}"
-    command += " | pigz -p ${task.cpus} -c"
-    command += " > ${id}_m${params.mismatches}_n${params.hits}.map.gz"
+    command += "${baseDir}/bin/gt.quality -i ${gem_unfiltered} -t ${task.cpus} > quality.map;"
+    command += "${baseDir}/bin/gt.filter -i quality.map --max-levenshtein-error ${params.mismatches} -t ${task.cpus} > mism.map && rm quality.map;"
+    command += "${baseDir}/bin/gt.filter -i mism.map --max-matches ${params.hits} -t ${task.cpus} > multimaps.map && rm mism.map;"
+    command += "pigz -p ${task.cpus} -c multimaps.map > ${id}_m${params.mismatches}_n${params.hits}.map.gz && rm multimaps.map"
     if (params.dryRun) command += '";tput sgr0'
 
     return command
