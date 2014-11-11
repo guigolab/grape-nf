@@ -124,7 +124,7 @@ input_files = Channel
     }
     .flatMap ()
     .map {
-       [it.key, it.value.collect { path, id, type, view -> path }]//.flatten()
+       [it.key, it.value.collect { path, id, type, view -> path }]
     }
 
 Refs = Channel.from(genomes)
