@@ -63,7 +63,6 @@ Options:
     --count-elements    A comma separated list of elements to be counted by the Flux Capacitor.
                         Possible values: INTRONS,SPLICE_JUNCTIONS. Defalut: "none".
     --loglevel          Log level (error, warn, info, debug). Default "info".
-    --dry-run           Test the pipeline. Writes the command to the standard output.
     '''
     exit 1
 }
@@ -135,9 +134,6 @@ Refs = Channel.from(genomes)
 
 process index {
 
-    if (params.dryRun)
-        echo true
-
     input:
     set species, file(genome), file(annotation) from Refs
 
@@ -148,18 +144,12 @@ process index {
     view = "genomeIdx"
     def command = ""
     
-    if (params.dryRun) command += 'touch genome_index.gem; '
-    if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
     command += "gemtools index -i ${genome} -t ${task.cpus} -o genome_index.gem"
-    if (params.dryRun) command += '";tput sgr0'
     
     return command
 }
 
 process t_index {
-
-    if (params.dryRun)
-        echo true
 
     input:
     set species, file(genome), file(annotation), file(genome_index) from Refs
@@ -170,10 +160,7 @@ process t_index {
     script:
     def command = ""
 
-    if (params.dryRun) command += 'touch tx_index.junctions.gem tx_index.junctions.keys; '
-    if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
     command += "gemtools t-index -i ${genome_index} -a ${annotation} -m ${params.maxReadLength} -t ${task.cpus} -o tx_index" 
-    if (params.dryRun) command += '";tput sgr0'
 
     return command
 }
@@ -181,8 +168,6 @@ process t_index {
 (IdxRefs1, IdxRefs2) = IdxRefs.into(2)
 
 process mapping {
-    if (params.dryRun)
-        echo true
 
     input:
     set id, file(reads) from input_files
@@ -199,15 +184,12 @@ process mapping {
     pairedEnd = false
     if (fqs.size() == 2) pairedEnd = true 
 
-    if (params.dryRun) command += "touch ${id}.map.gz; "
-    if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
     command += "gemtools rna-pipeline -i ${genome_index} -a ${annotation} -r ${tx_index} -k ${tx_keys} -f ${fqs[0]}"
     command += " --no-stats --no-bam"
     if (!pairedEnd) {
         command += " --single-end"
     }
     command += " -t ${task.cpus} -q ${params.qualityOffset} -n ${id}"
-    if (params.dryRun) command += '";tput sgr0'
 
     return command
 }
@@ -215,8 +197,6 @@ process mapping {
 pref = "_m${params.mismatches}_n${params.hits}"
 
 process filter {
-    if (params.dryRun)
-        echo true
 
     input:
     set id, view, gem_unfiltered, pairedEnd from map
@@ -229,13 +209,10 @@ process filter {
     prefix = pref
     def command = ""
 
-    if (params.dryRun) command += "touch ${id}_m${params.mismatches}_n${params.hits}.map.gz; "
-    if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
     command += "${baseDir}/bin/gt.quality -i ${gem_unfiltered} -t ${task.cpus} > quality.map;"
     command += "${baseDir}/bin/gt.filter -i quality.map --max-levenshtein-error ${params.mismatches} -t ${task.cpus} > mism.map && rm quality.map;"
     command += "${baseDir}/bin/gt.filter -i mism.map --max-matches ${params.hits} -t ${task.cpus} > multimaps.map && rm mism.map;"
     command += "pigz -p ${task.cpus} -c multimaps.map > ${id}_m${params.mismatches}_n${params.hits}.map.gz && rm multimaps.map"
-    if (params.dryRun) command += '";tput sgr0'
 
     return command
 }
@@ -243,8 +220,6 @@ process filter {
 (fmap1, fmap2) = fmap.into(2)
 
 process gemStats {
-    if (params.dryRun)
-        echo true
 
     input:
     set id, view, gem_filtered, pairedEnd from fmap1
@@ -257,21 +232,16 @@ process gemStats {
     view = "gemFilteredStats"
     prefix = pref
     
-    if (params.dryRun) command += "touch ${id}${prefix}.stats; "
-    if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
     command += "gt.stats -i ${gem_filtered} -t ${task.cpus} -a"
     if (pairedEnd) {
         command += " -p"
     }
     command += " 2> ${id}${prefix}.stats"
-    if (params.dryRun) command += '";tput sgr0'
 
     return command
 }
 
 process gemToBam {
-    if (params.dryRun)
-        echo true
 
     input:
     set id, view, gem_filtered, pairedEnd from fmap2
@@ -283,14 +253,10 @@ process gemToBam {
     script:
     def command = ""
     awkCommand = 'BEGIN{OFS=FS=\"\t\"}\$0!~/^@/{split(\"1_2_8_32_64_128\",a,\"_\");for(i in a){if(and(\$2,a[i])>0){\$2=xor(\$2,a[i])}}}{print}'
-    if (params.dryRun)
-        awkCommand = 'BEGIN{OFS=FS=\\\"\\t\\\"}\\\$0!~/^@/{split(\\\"1_2_8_32_64_128\\\",a,\\\"_\\\");for(i in a){if(and(\\\$2,a[i])>0){\\\$2=xor(\\\$2,a[i])}}}{print}'
     type = "bam"
     view = "Alignments"
     prefix = pref
 
-    if (params.dryRun) command += "touch ${id}${prefix}.bam; "
-    if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
     command += "pigz -p ${task.cpus} -dc ${gem_filtered}"
     command += " | gem-2-sam -T ${task.cpus} -I ${genome_index} -q offset-${params.qualityOffset} -l"
     if (params.readGroup) {
@@ -307,7 +273,6 @@ process gemToBam {
     command += " | samtools view -@ ${task.cpus} -Sb -"
     command += " | samtools sort -@ ${task.cpus} -m 4G - ${id}${prefix}"
     command += " && samtools index ${id}${prefix}.bam"
-    if (params.dryRun) command += '";tput sgr0'
 
     return command
 }
@@ -351,8 +316,6 @@ fais = Channel.from(genomeFais)
 (fais1, fais2) = fais.into(2)
 
 process bigwig {
-    if (params.dryRun)
-        echo true
     
     input:
     set id, type, view, file(bam), pairedEnd, readStrand from bam1
@@ -369,10 +332,6 @@ process bigwig {
     strand = ['': '.raw']
     mateBit = 0
     awkCommand = 'BEGIN {OFS=\"\\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}'
-    if (params.dryRun)
-        awkCommand = 'BEGIN {OFS=\\\"\\t\\\"} {if (\\\$1!~/^@/ && and(\\\$2,MateBit)>0) {\\\$2=xor(\\\$2,0x10)}; print}'
-    if (params.dryRun) command += "touch ${id}${pref}.bw; "
-    if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
     if (readStrand != 'NONE') {
         strand = ['+': '.plusRaw','-': '.minusRaw']
         if (pairedEnd) mateBit = (readStrand =~ /MATE2/ ? 64 : 128)
@@ -395,7 +354,6 @@ process bigwig {
         views << "${it.value[1..-1].capitalize()}${view}"
     } )
 
-    if (params.dryRun) command += '";tput sgr0'
     return command
 
 }
@@ -412,8 +370,6 @@ bigwig = bigwig.reduce([:]) { files, tuple ->
 .flatMap()
 
 process contig {
-    if (params.dryRun)
-        echo true
 
     input:
     set id, type, view, file(bam), pairedEnd, readStrand from bam2
@@ -429,10 +385,6 @@ process contig {
     strand = ['': '']
     mateBit = 0
     awkCommand = 'BEGIN {OFS=\"\\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}'
-    if (params.dryRun)
-        awkCommand = 'BEGIN {OFS=\\\"\\t\\\"} {if (\\\$1!~/^@/ && and(\\\$2,MateBit)>0) {\\\$2=xor(\\\$2,0x10)}; print}'
-    if (params.dryRun) command += "touch ${id}${pref}_contigs.bed; "
-    if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
     if (readStrand != 'NONE') {
         strand = ['+': '.plusRaw','-': '.minusRaw']
         if (pairedEnd) mateBit = (readStrand =~ /MATE2/ ? 64 : 128)
@@ -460,25 +412,19 @@ process contig {
         strand.each( {
             command += " --file${it.value.substring(1,2).toUpperCase()} ${id}${it.value}.bedgraph"
         } )
-        if (params.dryRun)
-            command += " | awk '{s=\\\"\\\"; for(i=1; i<=NF; i++){s=(s)(\\\$i)(\\\"\\t\\\")} print s}'"
-        else
-            command += " | awk '{s=\"\"; for(i=1; i<=NF; i++){s=(s)(\$i)(\"\\t\")} print s}'"
+        command += " | awk '{s=\"\"; for(i=1; i<=NF; i++){s=(s)(\$i)(\"\\t\")} print s}'"
         command += " > ${id}_contigs.bed"
     } else {
         command += "bamToBed -i ${bam} | sort -k1,1 -k2,2n"
         command += " | mergeBed"
         command += " > ${id}_contigs.bed"
     }
-    if (params.dryRun) command += '";tput sgr0'
     
     return command
 
 }
 
 process quantification {
-    if (params.dryRun)
-        echo true
 
     input:
     set id, type, view, file(bam), pairedEnd, readStrand from bam3
@@ -517,9 +463,6 @@ process quantification {
     }
     command += "flux-capacitor -p ${paramFile} -i ${bam} -a ${annotation} -o ${id}${prefix}.gtf".toString() */
 
-    if (params.dryRun) command += "touch ${id}${prefix}.gtf; "
-    if (params.dryRun) command += 'tput setaf 2; tput bold; echo "'
-    
     // Workaround
     fluxParams = ""
     annotationMapping = "AUTO"
@@ -541,7 +484,6 @@ process quantification {
         command += "flux-capacitor --profile ${fluxParams} -i ${bam}  -a ${annotation}; "
     }
     command += "flux-capacitor ${fluxParams} -i ${bam} -a ${annotation} -o ${id}${prefix}.gtf"
-    if (params.dryRun) command += '";tput sgr0'
 
     return command
 }
