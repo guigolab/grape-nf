@@ -123,10 +123,10 @@ input_files = Channel
         path, id, type, view -> id 
     }
     .flatMap ()
-    .map {
-       [it.key, it.value.collect { path, id, type, view -> path }]
+    .map {        
+       [it.key, it.value.collect { path, id, type, view -> path }, fastq(it.value[0][0]).qualityScore()]
     }
-
+    
 Refs = Channel.from(genomes)
     .merge(Channel.from(annos)) {
         g, a -> [g.name.split("\\.", 2)[0], g, a]
@@ -170,7 +170,7 @@ process t_index {
 process mapping {
 
     input:
-    set id, file(reads) from input_files
+    set id, file(reads), qualityOffset from input_files
     set species, file(genome), file(annotation), file(genome_index), file(tx_index), file(tx_keys) from IdxRefs1.first()
 
     output:
@@ -189,7 +189,7 @@ process mapping {
     if (!pairedEnd) {
         command += " --single-end"
     }
-    command += " -t ${task.cpus} -q ${params.qualityOffset} -n ${id}"
+    command += " -t ${task.cpus} -q ${qualityOffset} -n ${id}"
 
     return command
 }
@@ -271,19 +271,22 @@ process gemToBam {
     }
 
     command += " | samtools view -@ ${task.cpus} -Sb -"
-    command += " | samtools sort -@ ${task.cpus} -m 4G - ${id}${prefix}"
+    command += " | samtools sort -@ ${task.cpus} -m ${task.memory.toBytes()/task.cpus} - ${id}${prefix}"
     command += " && samtools index ${id}${prefix}.bam"
 
     return command
 }
 
+(bam1, bam2) = bam.into(2)
+
 process inferExp {
     input:
-    set id, type, view, file(bam), pairedEnd from bam
+    set id, type, view, file(bam), pairedEnd from bam1
     file anno from Channel.from(annos).first()
 
     output:
-    set id, type, view, file(bam), pairedEnd, stdout into bamInf
+    //set id, type, view, file(bam), pairedEnd, stdout into bamInf
+    set id, stdout into bamInf
 
     script:
     def command = ""
@@ -297,9 +300,10 @@ process inferExp {
 }
 
 (bamInf1, bamInf2) = bamInf.into(2)
+
 bamInf1.subscribe {        
     tuple ->
-        (id, type, view, bam, pairedEnd, readStrand) = tuple
+        (id, readStrand) = tuple
         if (params.readStrand != null && !readStrand.equals(params.readStrand)) {
             log.warn "----> '${id}' skipped"
             log.warn "Detected and supplied read strandedness do not match:"
@@ -307,13 +311,17 @@ bamInf1.subscribe {
         }
 }
 
-bamStrand = bamInf2.filter { id, type, view, bam, pairedEnd, readStrand ->
-        params.readStrand == null || readStrand.equals(params.readStrand)
+bamStrand = bam2.phase(bamInf2)
+.map {
+    [it[0],it[1][1]].flatten()
+}.filter { id, type, view, bam, pairedEnd, readStrand ->
+    params.readStrand == null || readStrand.equals(params.readStrand)
 }
 
 fais = Channel.from(genomeFais)
 (bam1, bam2, bam3, bam4) = bamStrand.into(4)
 (fais1, fais2) = fais.into(2)
+
 
 process bigwig {
     
@@ -357,8 +365,6 @@ process bigwig {
     return command
 
 }
-
-
 
 bigwig = bigwig.reduce([:]) { files, tuple ->
     (id, type, view, path) = tuple     
@@ -426,8 +432,8 @@ process contig {
 
 process quantification {
 
-    input:
-    set id, type, view, file(bam), pairedEnd, readStrand from bam3
+    input:    
+    set id, type, view, file(bam), file(bai), pairedEnd, readStrand from bam3.map { [it[0],it[1],it[2],it[3],file("${it[3].toAbsolutePath()}.bai"),it[4],it[5]] }
     file annotation from Channel.from(annos).first() 
 
     output:
