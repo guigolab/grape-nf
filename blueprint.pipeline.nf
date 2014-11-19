@@ -117,16 +117,16 @@ index = params.index ? file(params.index) : System.in
 input_files = Channel
     .from(index.readLines())
     .map {
-        line -> [ file(line.split()[0]), line.split()[1], line.split()[2], line.split()[3] ]
+        line -> [ line.split()[0], line.split()[1], file(line.split()[2]), line.split()[3], line.split()[4] ]
     }
     .groupBy {
-        path, id, type, view -> id 
+        sample, id, path, type, view -> id 
     }
     .flatMap ()
     .map {        
-       [it.key, it.value.collect { path, id, type, view -> path }, fastq(it.value[0][0]).qualityScore()]
-    }
-    
+       [it.key, it.value[0][0], it.value.collect { sample, id, path, type, view -> path }, fastq(it.value[0][2]).qualityScore()]
+   }
+
 Refs = Channel.from(genomes)
     .merge(Channel.from(annos)) {
         g, a -> [g.name.split("\\.", 2)[0], g, a]
@@ -170,11 +170,11 @@ process t_index {
 process mapping {
 
     input:
-    set id, file(reads), qualityOffset from input_files
+    set id, sample, file(reads), qualityOffset from input_files
     set species, file(genome), file(annotation), file(genome_index), file(tx_index), file(tx_keys) from IdxRefs1.first()
 
     output:
-    set id, view, "${id}.map.gz", pairedEnd into map
+    set id, sample, view, "${id}.map.gz", pairedEnd into map
 
     script:
     view = 'gemUnfiltered'
@@ -199,10 +199,10 @@ pref = "_m${params.mismatches}_n${params.hits}"
 process filter {
 
     input:
-    set id, view, gem_unfiltered, pairedEnd from map
+    set id, sample, view, gem_unfiltered, pairedEnd from map
 
     output:
-    set id, view, file("${id}${prefix}.map.gz"), pairedEnd into fmap
+    set id, sample, view, file("${id}${prefix}.map.gz"), pairedEnd into fmap
 
     script:
     view = "gemFiltered"
@@ -222,10 +222,10 @@ process filter {
 process gemStats {
 
     input:
-    set id, view, gem_filtered, pairedEnd from fmap1
+    set id, sample, view, gem_filtered, pairedEnd from fmap1
 
     output:
-    set id, view, "${id}${prefix}.stats", pairedEnd into stats
+    set id, sample, view, "${id}${prefix}.stats", pairedEnd into stats
 
     script:
     def command = ""
@@ -244,11 +244,11 @@ process gemStats {
 process gemToBam {
 
     input:
-    set id, view, gem_filtered, pairedEnd from fmap2
+    set id, sample, view, gem_filtered, pairedEnd from fmap2
     set species, file(genome), file(annotation), file(genome_index), file(tx_index), file(tx_keys) from IdxRefs2.first()
 
     output:
-    set id, type, view, "${id}${prefix}.bam", pairedEnd into bam
+    set id, sample, type, view, "${id}${prefix}.bam", pairedEnd into bam
 
     script:
     def command = ""
@@ -275,6 +275,41 @@ process gemToBam {
     command += " && samtools index ${id}${prefix}.bam"
 
     return command
+}
+
+singleBam = Channel.create()
+groupedBam = Channel.create()
+
+bam.groupBy() {
+    id, sample, type, view, path, pairedEnd -> sample
+}
+.flatMap()
+.map {
+    [it.value.size() > 1 ? it.key : it.value[0][0], it.value[0][2], it.value[0][3], it.value.collect { id, sample, type, view, path, pairedEnd -> path }, it.value[0][5]]
+}.choice(singleBam, groupedBam) {
+    it[3].size() > 1 ? 1 : 0
+}
+
+process mergeBam {
+    
+    input:
+    set id, type, view, file(bam), pairedEnd from groupedBam
+
+    output:
+    set id, type, view, "${id}${prefix}.bam", pairedEnd into mergedBam
+
+    script:
+    def command = ""
+    prefix = pref
+
+    command += "(samtools view -H ${bam} | grep -v \"@RG\";for f in ${bam};do samtools view -H \$f | grep \"@RG\";done) > header.txt\n"
+    command += "samtools merge -@ ${task.cpus} -h header.txt ${id}${prefix}.bam ${bam}"
+}
+
+bam = singleBam
+.mix(mergedBam)
+.map { 
+    it.flatten() 
 }
 
 (bam1, bam2) = bam.into(2)
