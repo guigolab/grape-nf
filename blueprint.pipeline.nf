@@ -57,7 +57,11 @@ Options:
     --hits              Max number of hits. Default "10".
     --quality-offset    The quality offset of the fastq files. Default: "33".
     --max-read-length   The maximum read length (used to compute the transcriptomes). Default: "150".
-    --read-strand       directionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default "NONE".
+    --read-strand       Directionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default "NONE".
+    --rg-platform       Platform/technology used to produce the reads for the BAM @RG tag.
+    --rg-library        Sequencing library name for the BAM @RG tag.
+    --rg-center-name    Name of sequencing center that produced the reads for the BAM @RG tag.
+    --rg-desc           Description for the BAM @RG tag.
     --flux-mem          Specify the amount of ram the Flux Capacitor can use. Default: "3G".
     --flux-profile      Specify whether the Flux Capacitor profile file shoudl be written. Default: "false".
     --count-elements    A comma separated list of elements to be counted by the Flux Capacitor.
@@ -95,8 +99,11 @@ if ('mapping' in pipelineSteps) {
     log.info "Read length               : ${params.maxReadLength}"
     log.info "Read strandedness         : ${params.readStrand != null ? params.readStrand : 'auto'}"
     log.info "Paired                    : ${params.pairedEnd != null ? params.pairedEnd : 'auto'}"
-    log.info "Read group                : ${params.readGroup != null ? params.readGroup : '-'}"
     log.info "Produce BAM stats         : ${params.bamStats}"
+    if ( params.rgPlatform ) log.info "Sequencing platform       : ${params.rgPlatform}"  
+    if ( params.rgLibrary ) log.info "Sequencing library        : ${params.rgLibrary}"  
+    if ( params.rgCenterName ) log.info "Sequencing center         : ${params.rgCenterName}" 
+    if ( params.rgDesc ) log.info "@RG Descritpiton          : ${params.rgDesc}" 
     log.info ""
 }
 if ('flux' in pipelineSteps || 'quantification' in pipelineSteps) {
@@ -251,6 +258,20 @@ process gemToBam {
     set id, sample, type, view, "${id}${prefix}.bam", pairedEnd into bam
 
     script:
+    
+    //params.readGroup='ID=${id},PL=ILLUMINA,PU=${id},LB=${project},SM=${sample},DT=${date},CN=${lab},DS=${project}'
+    def date = new Date().format("yyyy-MM-dd'T'HH:mmZ", TimeZone.getTimeZone("UTC"))
+    def readGroup = []
+    readGroup << "ID=${id}" 
+    readGroup << "PU=${id}" 
+    readGroup << "SM=${sample}" 
+    readGroup << "DT=${date}"
+    if ( params.rgPlatform ) readGroup << "PL=${params.rgPlatform}"
+    if ( params.rgLibrary ) readGroup << "LB=${params.rgLibrary}"
+    if ( params.rgCenterName ) readGroup << "CN=${params.rgCenterName}"
+    if ( params.rgDesc ) readGroup << "DS=${params.rgDesc}"
+
+    println readGroup.join(',')
     def command = ""
     awkCommand = 'BEGIN{OFS=FS=\"\t\"}\$0!~/^@/{split(\"1_2_8_32_64_128\",a,\"_\");for(i in a){if(and(\$2,a[i])>0){\$2=xor(\$2,a[i])}}}{print}'
     type = "bam"
@@ -259,8 +280,8 @@ process gemToBam {
 
     command += "pigz -p ${task.cpus} -dc ${gem_filtered}"
     command += " | gem-2-sam -T ${task.cpus} -I ${genome_index} -q offset-${params.qualityOffset} -l"
-    if (params.readGroup) {
-       command += " --read-group ${params.readGroup}"
+    if (readGroup) {
+       command += " --read-group ${readGroup.join(',')}"
     }
     if (pairedEnd) {
        command += " --expect-paired-end-reads"
@@ -311,6 +332,9 @@ bam = singleBam
 .map { 
     it.flatten() 
 }
+
+bam.subscribe { println it }
+return
 
 (bam1, bam2) = bam.into(2)
 
