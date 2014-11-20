@@ -23,8 +23,8 @@
 
 params.steps = 'mapping,bigwig,contig,flux'
 params.tmpDir = (System.env.TMPDIR != null ? true : false)
-params.mismatches = 4
-params.hits = 10
+params.maxMismatches = 4
+params.maxMultimaps = 10
 params.qualityOffset = 33
 params.maxReadLength = 150
 params.bamStats = false
@@ -43,30 +43,33 @@ B L U E P R I N T ~ RNA Pipeline
 Run the RNAseq pipeline on one sample.
 
 Usage: 
-    ./blueprint.pipeline.sh -i FASTQ_FILE -g GENOME_FILE -a ANNOTATION_FILE [OPTION]...
+    blueprint.pipeline.nf -i INDEX_FILE -g GENOME_FILE -a ANNOTATION_FILE [OPTION]...
 
 Options:
-    --help              Show this message and exit.
-    --index             Index file.
-    --genome            Reference genome file(s).
-    --annotation        Reference gene annotation file(s).
-    --tmp-dir           Specify the temporary folder to be used as a scratch area.
-                        Default: "$TMPDIR" if the environment variable is defined, "-" otherwise.
-    --paired-end        Specify whether the data is paired-end. Default: "auto".
-    --mismatches        Max number of mismatches. Default "4".
-    --hits              Max number of hits. Default "10".
-    --quality-offset    The quality offset of the fastq files. Default: "33".
-    --max-read-length   The maximum read length (used to compute the transcriptomes). Default: "150".
-    --read-strand       Directionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default "NONE".
-    --rg-platform       Platform/technology used to produce the reads for the BAM @RG tag.
-    --rg-library        Sequencing library name for the BAM @RG tag.
-    --rg-center-name    Name of sequencing center that produced the reads for the BAM @RG tag.
-    --rg-desc           Description for the BAM @RG tag.
-    --flux-mem          Specify the amount of ram the Flux Capacitor can use. Default: "3G".
-    --flux-profile      Specify whether the Flux Capacitor profile file shoudl be written. Default: "false".
-    --count-elements    A comma separated list of elements to be counted by the Flux Capacitor.
-                        Possible values: INTRONS,SPLICE_JUNCTIONS. Defalut: "none".
-    --loglevel          Log level (error, warn, info, debug). Default "info".
+    --help                              Show this message and exit.
+    --index INDEX_FILE                  Index file.
+    --genome GENOME_FILE                Reference genome file(s).
+    --annotation ANNOTAION_FILE         Reference gene annotation file(s).
+    --tmp-dir                           Specify the temporary folder to be used as a scratch area.
+                                        Default: "$TMPDIR" if the environment variable is defined, "-" otherwise.
+    --paired-end                        Specify whether the data is paired-end. Default: "auto".
+    --max-read-length READ_LENGTH       The maximum read length (used to compute the transcriptomes). Default: "150".
+    --max-mismatches THRESHOLD          Set maps with more than <threshold> error events to unmapped. Default "4".
+    --max-multimaps THRESHOLD           Set multi-maps with more than <threshold> mappings to unmapped. Default "10".
+    --filter-intron-length THRESHOLD    Filter multimaps preferring ones with intron length > <threshold>
+    --filter-block-length THRESHOLD     Filter multimaps preferring ones with block length > <threshold>
+    --filter-level THRESHOLD            Reduce multimaps using the specified uniqueness level.
+    --quality-offset OFFSET             The quality offset of the fastq files. Default: "auto".
+    --read-strand READ_STRAND           Directionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default "auto".
+    --rg-platform PLATFORM              Platform/technology used to produce the reads for the BAM @RG tag.
+    --rg-library LIBRARY                Sequencing library name for the BAM @RG tag.
+    --rg-center-name CENTER_NAME        Name of sequencing center that produced the reads for the BAM @RG tag.
+    --rg-desc DESCRIPTION               Description for the BAM @RG tag.
+    --flux-mem MEMORY                   Specify the amount of ram the Flux Capacitor can use. Default: "3G".
+    --flux-profile                      Specify whether the Flux Capacitor profile file shoudl be written. Default: "false".
+    --count-elements ELEMENTS           A comma separated list of elements to be counted by the Flux Capacitor.
+                                        Possible values: INTRONS,SPLICE_JUNCTIONS. Defalut: "none".
+    --loglevel LOGLEVEL                 Log level (error, warn, info, debug). Default "info".
     '''
     exit 1
 }
@@ -93,8 +96,8 @@ log.info ""
 if ('mapping' in pipelineSteps) {
     log.info "Mapping parameters"
     log.info "------------------"
-    log.info "Max mismatches            : ${params.mismatches}"
-    log.info "Max multimaps             : ${params.hits}"
+    log.info "Max mismatches            : ${params.maxMismatches}"
+    log.info "Max multimaps             : ${params.maxMultimaps}"
     log.info "Quality offset            : ${params.qualityOffset}"
     log.info "Read length               : ${params.maxReadLength}"
     log.info "Read strandedness         : ${params.readStrand != null ? params.readStrand : 'auto'}"
@@ -174,6 +177,8 @@ process t_index {
 
 (IdxRefs1, IdxRefs2) = IdxRefs.into(2)
 
+pref = "_m${params.maxMismatches}_n${params.maxMultimaps}"
+
 process mapping {
 
     input:
@@ -192,7 +197,12 @@ process mapping {
     if (fqs.size() == 2) pairedEnd = true 
 
     command += "gemtools rna-pipeline -i ${genome_index} -a ${annotation} -r ${tx_index} -k ${tx_keys} -f ${fqs[0]}"
-    command += " --no-stats --no-bam"
+    command += " --filter-max-multi-maps ${params.maxMultimaps}"
+    command += " --filter-max-error-events ${params.maxMismatches}"
+    if ( params.filterBlockLength ) command += " --filter-block-length ${params.filterBlockLength}"
+    if ( params.filterIntronLength ) command += " --filter-intron-length ${params.filterIntronLength}"
+    if ( params.filterUniqLevel ) command += " --filter-level ${params.filterUniqLevel}"
+    command += " --no-bam"
     if (!pairedEnd) {
         command += " --single-end"
     }
@@ -201,57 +211,10 @@ process mapping {
     return command
 }
 
-pref = "_m${params.mismatches}_n${params.hits}"
-
-process filter {
-
-    input:
-    set id, sample, view, gem_unfiltered, pairedEnd from map
-
-    output:
-    set id, sample, view, file("${id}${prefix}.map.gz"), pairedEnd into fmap
-
-    script:
-    view = "gemFiltered"
-    prefix = pref
-    def command = ""
-
-    command += "${baseDir}/bin/gt.quality -i ${gem_unfiltered} -t ${task.cpus} > quality.map;"
-    command += "${baseDir}/bin/gt.filter -i quality.map --max-levenshtein-error ${params.mismatches} -t ${task.cpus} > mism.map && rm quality.map;"
-    command += "${baseDir}/bin/gt.filter -i mism.map --max-matches ${params.hits} -t ${task.cpus} > multimaps.map && rm mism.map;"
-    command += "pigz -p ${task.cpus} -c multimaps.map > ${id}_m${params.mismatches}_n${params.hits}.map.gz && rm multimaps.map"
-
-    return command
-}
-
-(fmap1, fmap2) = fmap.into(2)
-
-process gemStats {
-
-    input:
-    set id, sample, view, gem_filtered, pairedEnd from fmap1
-
-    output:
-    set id, sample, view, "${id}${prefix}.stats", pairedEnd into stats
-
-    script:
-    def command = ""
-    view = "gemFilteredStats"
-    prefix = pref
-    
-    command += "gt.stats -i ${gem_filtered} -t ${task.cpus} -a"
-    if (pairedEnd) {
-        command += " -p"
-    }
-    command += " 2> ${id}${prefix}.stats"
-
-    return command
-}
-
 process gemToBam {
 
     input:
-    set id, sample, view, gem_filtered, pairedEnd from fmap2
+    set id, sample, view, gem_filtered, pairedEnd from map
     set species, file(genome), file(annotation), file(genome_index), file(tx_index), file(tx_keys) from IdxRefs2.first()
 
     output:
@@ -339,7 +302,6 @@ process inferExp {
     file anno from Channel.from(annos).first()
 
     output:
-    //set id, type, view, file(bam), pairedEnd, stdout into bamInf
     set id, stdout into bamInf
 
     script:
@@ -373,9 +335,8 @@ bamStrand = bam2.phase(bamInf2)
 }
 
 fais = Channel.from(genomeFais)
-(bam1, bam2, bam3, bam4) = bamStrand.into(4)
+(bam1, bam2, bam3, out) = bamStrand.into(4)
 (fais1, fais2) = fais.into(2)
-
 
 process bigwig {
     
@@ -484,6 +445,10 @@ process contig {
 
 }
 
+bam3.subscribe { println it }
+
+return
+
 process quantification {
 
     input:    
@@ -548,7 +513,7 @@ process quantification {
     return command
 }
 
-bam4.mix(bigwig, contig, flux).collectFile(name: "pipeline.db", newLine: true) {
+out.mix(bigwig, contig, flux).collectFile(name: "pipeline.db", newLine: true) {
     [it[3], it[0], it[1], it[2]].join("\t")
 }
 .subscribe {
