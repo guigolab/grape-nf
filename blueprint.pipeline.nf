@@ -257,8 +257,8 @@ process gemToBam {
     output:
     set id, sample, type, view, "${id}${prefix}.bam", pairedEnd into bam
 
-    script:
-    
+    script:    
+    // prepare BAM @RG tag information
     def date = new Date().format("yyyy-MM-dd'T'HH:mmZ", TimeZone.getTimeZone("UTC"))
     def readGroup = []
     readGroup << "ID=${id}" 
@@ -270,7 +270,6 @@ process gemToBam {
     if ( params.rgCenterName ) readGroup << "CN=${params.rgCenterName}"
     if ( params.rgDesc ) readGroup << "DS=${params.rgDesc}"
 
-    println readGroup.join(',')
     def command = ""
     awkCommand = 'BEGIN{OFS=FS=\"\t\"}\$0!~/^@/{split(\"1_2_8_32_64_128\",a,\"_\");for(i in a){if(and(\$2,a[i])>0){\$2=xor(\$2,a[i])}}}{print}'
     type = "bam"
@@ -331,9 +330,6 @@ bam = singleBam
 .map { 
     it.flatten() 
 }
-
-bam.subscribe { println it }
-return
 
 (bam1, bam2) = bam.into(2)
 
