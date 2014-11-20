@@ -445,10 +445,6 @@ process contig {
 
 }
 
-bam3.subscribe { println it }
-
-return
-
 process quantification {
 
     input:    
