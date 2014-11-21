@@ -186,10 +186,10 @@ process mapping {
     set species, file(genome), file(annotation), file(genome_index), file(tx_index), file(tx_keys) from IdxRefs1.first()
 
     output:
-    set id, sample, view, "${id}.map.gz", pairedEnd into map
+    set id, sample, view, "${id}.filtered.map.gz", pairedEnd into map
 
     script:
-    view = 'gemUnfiltered'
+    view = 'gemFiltered'
     def command = ""
     
     fqs = reads.toString().split(" ")
