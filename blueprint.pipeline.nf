@@ -196,7 +196,7 @@ process mapping {
     pairedEnd = false
     if (fqs.size() == 2) pairedEnd = true 
 
-    command += "gemtools rna-pipeline -i ${genome_index} -a ${annotation} -r ${tx_index} -k ${tx_keys} -f ${fqs[0]}"
+    command += "gemtools rna-pipeline -i ${genome_index} -a ${annotation} -r ${tx_index} -k ${tx_keys} -f ${reads}"
     command += " --filter-max-multi-maps ${params.maxMultimaps}"
     command += " --filter-max-error-events ${params.maxMismatches}"
     if ( params.filterBlockLength ) command += " --filter-block-length ${params.filterBlockLength}"
@@ -222,12 +222,12 @@ process gemToBam {
 
     script:    
     // prepare BAM @RG tag information
-    def date = new Date().format("yyyy-MM-dd'T'HH:mmZ", TimeZone.getTimeZone("UTC"))
+    // def date = new Date().format("yyyy-MM-dd'T'HH:mmZ", TimeZone.getTimeZone("UTC"))
     def readGroup = []
     readGroup << "ID=${id}" 
     readGroup << "PU=${id}" 
     readGroup << "SM=${sample}" 
-    readGroup << "DT=${date}"
+    if ( date ) readGroup << "DT=${date}"
     if ( params.rgPlatform ) readGroup << "PL=${params.rgPlatform}"
     if ( params.rgLibrary ) readGroup << "LB=${params.rgLibrary}"
     if ( params.rgCenterName ) readGroup << "CN=${params.rgCenterName}"
