@@ -312,8 +312,7 @@ process inferExp {
 
     command += "gtfToGenePred ${anno} -allErrors -ignoreGroupsWithoutExons ${genePred} 2> ${genePred}.err;"
     command += "genePredToBed12.awk ${genePred} > ${bed12};" 
-    command += "set +eu; . /software/rg/el6.3/virtualenvs/python2.7.3/bin/activate;"
-    command += "set -eu; ${baseDir}/bin/infer_experiment.py -i ${bam} -r ${bed12} 2> /dev/null | tr -d '\n'"
+    command += "${baseDir}/bin/infer_experiment.py -i ${bam} -r ${bed12} 2> /dev/null | tr -d '\n'"
 }
 
 (bamInf1, bamInf2) = bamInf.into(2)
