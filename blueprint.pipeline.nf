@@ -223,6 +223,7 @@ process gemToBam {
     script:    
     // prepare BAM @RG tag information
     // def date = new Date().format("yyyy-MM-dd'T'HH:mmZ", TimeZone.getTimeZone("UTC"))
+    def date = ""
     def readGroup = []
     readGroup << "ID=${id}" 
     readGroup << "PU=${id}" 
@@ -253,7 +254,7 @@ process gemToBam {
     }
 
     command += " | samtools view -@ ${task.cpus} -Sb -"
-    command += " | samtools sort -@ ${task.cpus} -m ${task.memory.toBytes()/task.cpus} - ${id}${prefix}"
+    command += " | samtools sort -@ ${task.cpus} -m ${(long)(task.memory.toBytes()/(2*task.cpus))} - ${id}${prefix}"
     command += " && samtools index ${id}${prefix}.bam"
 
     return command
