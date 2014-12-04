@@ -310,9 +310,10 @@ process inferExp {
     def genePred = "${anno.name.split('\\.', 2)[0]}.genePred"
     def bed12 = "${anno.name.split('\\.', 2)[0]}.bed"
 
-    command += "gtfToGenePred ${anno} -allErrors -ignoreGroupsWithoutExons ${genePred} 2> ${genePred}.err;"
-    command += "genePredToBed12.awk ${genePred} > ${bed12};" 
-    command += "${baseDir}/bin/infer_experiment.py -i ${bam} -r ${bed12} 2> /dev/null | tr -d '\n'"
+    command += "set -o pipefail\n"
+    command += "gtfToGenePred ${anno} -allErrors -ignoreGroupsWithoutExons ${genePred} 2> ${genePred}.err\n"
+    command += "genePredToBed12.awk ${genePred} > ${bed12}\n" 
+    command += "${baseDir}/bin/infer_experiment.py -i ${bam} -r ${bed12} 2> /dev/null | tr -d '\\n'"
 }
 
 (bamInf1, bamInf2) = bamInf.into(2)
