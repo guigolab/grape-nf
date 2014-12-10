@@ -25,10 +25,9 @@ params.steps = 'mapping,bigwig,contig,flux'
 params.tmpDir = (System.env.TMPDIR != null ? true : false)
 params.maxMismatches = 4
 params.maxMultimaps = 10
-params.qualityOffset = 33
 params.maxReadLength = 150
 params.bamStats = false
-params.countElements = []
+params.countElements = [] 
 params.fluxMem = '3G'
 params.fluxProfile = false 
 
@@ -59,7 +58,6 @@ Options:
     --filter-intron-length THRESHOLD    Filter multimaps preferring ones with intron length > <threshold>
     --filter-block-length THRESHOLD     Filter multimaps preferring ones with block length > <threshold>
     --filter-level THRESHOLD            Reduce multimaps using the specified uniqueness level.
-    --quality-offset OFFSET             The quality offset of the fastq files. Default: "auto".
     --read-strand READ_STRAND           Directionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default "auto".
     --rg-platform PLATFORM              Platform/technology used to produce the reads for the BAM @RG tag.
     --rg-library LIBRARY                Sequencing library name for the BAM @RG tag.
@@ -98,8 +96,7 @@ if ('mapping' in pipelineSteps) {
     log.info "------------------"
     log.info "Max mismatches            : ${params.maxMismatches}"
     log.info "Max multimaps             : ${params.maxMultimaps}"
-    log.info "Quality offset            : ${params.qualityOffset}"
-    log.info "Read length               : ${params.maxReadLength}"
+    log.info "Max read length           : ${params.maxReadLength}"
     log.info "Read strandedness         : ${params.readStrand != null ? params.readStrand : 'auto'}"
     log.info "Paired                    : ${params.pairedEnd != null ? params.pairedEnd : 'auto'}"
     log.info "Produce BAM stats         : ${params.bamStats}"
@@ -112,9 +109,9 @@ if ('mapping' in pipelineSteps) {
 if ('flux' in pipelineSteps || 'quantification' in pipelineSteps) {
     log.info "Flux Capacitor parameters"
     log.info "-------------------------"
-    log.info "Elements to be quantified : ${params.countElements.join(" ")}"
-    log.info "Memory                    : ${params.fluxMem}"
-    log.info "Create profile file       : ${params.fluxProfile}"
+    log.info "Additional quantified elements: ${params.countElements.size()==0 ? 'NONE' : params.countElements.join(" ")}"
+    log.info "Memory                        : ${params.fluxMem}"
+    log.info "Create profile file           : ${params.fluxProfile}"
     log.info ""
 }
 
@@ -186,7 +183,7 @@ process mapping {
     set species, file(genome), file(annotation), file(genome_index), file(tx_index), file(tx_keys) from IdxRefs1.first()
 
     output:
-    set id, sample, view, "${id}.filtered.map.gz", pairedEnd into map
+    set id, sample, view, "${id}.filtered.map.gz", pairedEnd, qualityOffset into map
 
     script:
     view = 'gemFiltered'
@@ -214,7 +211,7 @@ process mapping {
 process gemToBam {
 
     input:
-    set id, sample, view, gem_filtered, pairedEnd from map
+    set id, sample, view, gem_filtered, pairedEnd, qualityOffset from map
     set species, file(genome), file(annotation), file(genome_index), file(tx_index), file(tx_keys) from IdxRefs2.first()
 
     output:
@@ -241,7 +238,7 @@ process gemToBam {
     prefix = pref
 
     command += "pigz -p ${task.cpus} -dc ${gem_filtered}"
-    command += " | gem-2-sam -T ${task.cpus} -I ${genome_index} -q offset-${params.qualityOffset} -l"
+    command += " | gem-2-sam -T ${task.cpus} -I ${genome_index} -q offset-${qualityOffset} -l"
     if (readGroup) {
        command += " --read-group ${readGroup.join(',')}"
     }
