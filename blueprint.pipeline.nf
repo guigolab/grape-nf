@@ -109,9 +109,9 @@ if ('mapping' in pipelineSteps) {
 if ('flux' in pipelineSteps || 'quantification' in pipelineSteps) {
     log.info "Flux Capacitor parameters"
     log.info "-------------------------"
-    log.info "Additional quantified elements: ${params.countElements.size()==0 ? 'NONE' : params.countElements.join(" ")}"
-    log.info "Memory                        : ${params.fluxMem}"
-    log.info "Create profile file           : ${params.fluxProfile}"
+    log.info "Additional quantified elements : ${params.countElements.size()==0 ? 'NONE' : params.countElements.join(" ")}"
+    log.info "Memory                         : ${params.fluxMem}"
+    log.info "Create profile file            : ${params.fluxProfile}"
     log.info ""
 }
 
