@@ -538,6 +538,5 @@ out.mix(bigwig, contig, flux2, genes).collectFile(name: "pipeline.db", newLine: 
     log.info "Pipeline run completed."
     log.info ""
     log.info msg
-    //log.info "${it}"
     log.info "-" * msg.size()
 }
