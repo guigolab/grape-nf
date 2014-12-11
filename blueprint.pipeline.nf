@@ -512,7 +512,7 @@ process quantification {
 process geneQuantification {
     
     input:
-    set id, type, view, file("${id}${prefix}.gtf") from flux1
+    set id, type, view, file(fluxGtf) from flux1
     file annotation from Channel.from(annos).first() 
 
     output:
@@ -522,13 +522,13 @@ process geneQuantification {
     type = "gff"
     view = "Gene${annotation.name.replace('.gtf','').capitalize()}"
     prefix = pref
-    command = "TrtoGn_RPKM.sh -a ${annotation} -i $fluxGtf -o ${id}${prefix}_gene_with_rpkm.gff"
+    command = "TrtoGn_RPKM.sh -a ${annotation} -i ${fluxGtf} -o ${id}${prefix}_gene_with_rpkm.gff"
     
     return command
 
 }
 
-out.mix(bigwig, contig, flux).collectFile(name: "pipeline.db", newLine: true) {
+out.mix(bigwig, contig, flux2, genes).collectFile(name: "pipeline.db", newLine: true) {
     [it[3], it[0], it[1], it[2]].join("\t")
 }
 .subscribe {
