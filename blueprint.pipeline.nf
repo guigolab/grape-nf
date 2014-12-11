@@ -522,7 +522,7 @@ process geneQuantification {
     type = "gff"
     view = "Gene${annotation.name.replace('.gtf','').capitalize()}"
     prefix = pref
-    command = "TrtoGn_RPKM.sh -a ${annotation} -i ${fluxGtf} -o ${id}${prefix}_gene_with_rpkm.gff"
+    command = "TrtoGn_RPKM.sh -a ${annotation} -i ${fluxGtf}"
     
     return command
 
