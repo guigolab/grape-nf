@@ -116,7 +116,6 @@ if ('flux' in pipelineSteps || 'quantification' in pipelineSteps) {
 }
 
 genomes=params.genome.split(',').collect { file(it) }
-genomeFais=params.genome.split(',').collect { file("${it}.fai") }
 annos=params.annotation.split(',').collect { file(it) }
 
 index = params.index ? file(params.index) : System.in
@@ -134,21 +133,46 @@ input_files = Channel
        [it.key, it.value[0][0], it.value.collect { sample, id, path, type, view -> path }, fastq(it.value[0][2]).qualityScore()]
    }
 
-Refs = Channel.from(genomes)
+Genomes = Channel.create()
+Annotations = Channel.create()
+Channel.from(genomes)
     .merge(Channel.from(annos)) {
         g, a -> [g.name.split("\\.", 2)[0], g, a]
     }
+    .separate(Genomes, Annotations) {
+        a -> [[a[0],a[1]], [a[0],a[2]]]
+    }
+
+(Genomes1, Genomes2) = Genomes.into(2)
+(Annotations1, Annotations2, Annotations3, Annotations4, Annotations5, Annotations6) = Annotations.into(6)
+
+process fastaIndex {
+    input:
+    set species, file(genome) from Genomes1
+    set species, file(annotation) from Annotations1
+
+    output:
+    set species, file("${genome}.fai") into FaiIdx
+
+    script:
+    def command = ""
+    
+    command += "samtools faidx ${genome}"
+    
+    return command
+}
+
+(FaiIdx1, FaiIdx2) = FaiIdx.into(2)
 
 process index {
 
     input:
-    set species, file(genome), file(annotation) from Refs
+    set species, file(genome) from Genomes2
 
     output:
-    set species, file(genome), file(annotation), file("genome_index.gem") into Refs
+    set species, file("genome_index.gem") into GenomeIdx
 
     script:
-    view = "genomeIdx"
     def command = ""
     
     command += "gemtools index -i ${genome} -t ${task.cpus} -o genome_index.gem"
@@ -156,13 +180,16 @@ process index {
     return command
 }
 
+(GenomeIdx1, GenomeIdx2, GenomeIdx3) = GenomeIdx.into(3)
+
 process t_index {
 
     input:
-    set species, file(genome), file(annotation), file(genome_index) from Refs
+    set species, file(genome_index) from GenomeIdx1
+    set species, file(annotation) from Annotations2
 
     output:
-    set species, file(genome), file(annotation), file(genome_index), file('tx_index.junctions.gem'), file('tx_index.junctions.keys') into IdxRefs
+    set species, file('tx_index.junctions.gem'), file('tx_index.junctions.keys') into TranscriptIdx
 
     script:
     def command = ""
@@ -172,15 +199,15 @@ process t_index {
     return command
 }
 
-(IdxRefs1, IdxRefs2) = IdxRefs.into(2)
-
 pref = "_m${params.maxMismatches}_n${params.maxMultimaps}"
 
 process mapping {
 
     input:
     set id, sample, file(reads), qualityOffset from input_files
-    set species, file(genome), file(annotation), file(genome_index), file(tx_index), file(tx_keys) from IdxRefs1.first()
+    set species, file(annotation) from Annotations3.first()
+    set species, file(genome_index) from GenomeIdx2.first()
+    set species, file(tx_index), file(tx_keys) from TranscriptIdx.first()
 
     output:
     set id, sample, view, "${id}.filtered.map.gz", pairedEnd, qualityOffset into map
@@ -212,7 +239,7 @@ process gemToBam {
 
     input:
     set id, sample, view, gem_filtered, pairedEnd, qualityOffset from map
-    set species, file(genome), file(annotation), file(genome_index), file(tx_index), file(tx_keys) from IdxRefs2.first()
+    set species, file(genome_index) from GenomeIdx3.first()
 
     output:
     set id, sample, type, view, "${id}${prefix}.bam", pairedEnd into bam
@@ -297,18 +324,18 @@ bam = singleBam
 process inferExp {
     input:
     set id, type, view, file(bam), pairedEnd from bam1
-    file anno from Channel.from(annos).first()
+    set species, file(annotation) from Annotations4.first()
 
     output:
     set id, stdout into bamInf
 
     script:
     def command = ""
-    def genePred = "${anno.name.split('\\.', 2)[0]}.genePred"
-    def bed12 = "${anno.name.split('\\.', 2)[0]}.bed"
+    def genePred = "${annotation.name.split('\\.', 2)[0]}.genePred"
+    def bed12 = "${annotation.name.split('\\.', 2)[0]}.bed"
 
     command += "set -o pipefail\n"
-    command += "gtfToGenePred ${anno} -allErrors -ignoreGroupsWithoutExons ${genePred} 2> ${genePred}.err\n"
+    command += "gtfToGenePred ${annotation} -allErrors -ignoreGroupsWithoutExons ${genePred} 2> ${genePred}.err\n"
     command += "genePredToBed ${genePred} ${bed12}\n" 
     command += "${baseDir}/bin/infer_experiment.py -i ${bam} -r ${bed12} 2> infer_experiment.log | tr -d '\\n'"
 }
@@ -332,16 +359,14 @@ bamStrand = bam2.phase(bamInf2)
     params.readStrand == null || readStrand.equals(params.readStrand)
 }
 
-fais = Channel.from(genomeFais)
 (bam1, bam2, bam3, out) = bamStrand.into(4)
-(fais1, fais2) = fais.into(2)
 
 process bigwig {
     
     input:
     set id, type, view, file(bam), pairedEnd, readStrand from bam1
-    file genomeFai from fais1.first()
-
+    set species, file(genomefai) from FaiIdx1.first()
+    
     output:
     set id, type, views, file('*.bw') into bigwig
 
@@ -370,7 +395,7 @@ process bigwig {
         command += "genomeCoverageBed "
         command += (it.key != '' ? "-strand ${it.key} ".toString() : ''.toString())
         command += "-split -bg -ibam ${bam} > ${id}${it.value}.bedgraph\n"
-        command += "bedGraphToBigWig ${id}${it.value}.bedgraph ${genomeFai} ${id}${it.value}.bw\n"
+        command += "bedGraphToBigWig ${id}${it.value}.bedgraph ${genomefai} ${id}${it.value}.bw\n"
 
         views << "${it.value[1..-1].capitalize()}${view}"
     } )
@@ -392,7 +417,7 @@ process contig {
 
     input:
     set id, type, view, file(bam), pairedEnd, readStrand from bam2
-    file genomeFai from fais2.first()
+    set species, file(genomefai) from FaiIdx2.first()
 
     output:
     set id, type, view, file('*_contigs.bed') into contig
@@ -428,7 +453,7 @@ process contig {
     } )
 
     if (strand.size() == 2) {
-        command += "contigsNew.py --chrFile ${genomeFai}"
+        command += "contigsNew.py --chrFile ${genomefai}"
         strand.each( {
             command += " --file${it.value.substring(1,2).toUpperCase()} ${id}${it.value}.bedgraph"
         } )
@@ -448,7 +473,7 @@ process quantification {
 
     input:    
     set id, type, view, file(bam), file(bai), pairedEnd, readStrand from bam3.map { [it[0],it[1],it[2],it[3],file("${it[3].toAbsolutePath()}.bai"),it[4],it[5]] }
-    file annotation from Channel.from(annos).first() 
+    set species, file(annotation) from Annotations5.first() 
 
     output:
     set id, type, view, file("${id}${prefix}.gtf") into flux
@@ -514,7 +539,7 @@ process geneQuantification {
     
     input:
     set id, type, view, file(fluxGtf) from flux1
-    file annotation from Channel.from(annos).first() 
+    set species, file(annotation) from Annotations6.first() 
 
     output:
     set id, type, view, file("${id}${prefix}_gene_with_rpkm.gff") into genes
