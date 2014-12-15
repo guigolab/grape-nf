@@ -400,6 +400,7 @@ process contig {
     script:
     type = 'bed'
     view = 'Contigs'
+    bamflagMode = '2'
     def command = "" 
     strand = ['': '']
     mateBit = 0
@@ -417,7 +418,7 @@ process contig {
         command += "mv -f tmp.bam ${bam}\n"
     }
 
-    command += "bamflag -in ${bam} -out tmp.bam -m 3\n"
+    command += "bamflag -in ${bam} -out tmp.bam -m ${bamflagMode}\n"
     command += "mv -f tmp.bam ${bam}\n"
 
     strand.each( {
