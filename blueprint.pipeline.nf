@@ -30,6 +30,7 @@ params.bamStats = false
 params.countElements = [] 
 params.fluxMem = '3G'
 params.fluxProfile = false 
+params.chunkSize = -1
 
 // get list of steps from comma-separated strings
 pipelineSteps = params.steps.split(',').collect { it.trim() }
@@ -119,12 +120,17 @@ genomes=params.genome.split(',').collect { file(it) }
 annos=params.annotation.split(',').collect { file(it) }
 
 index = params.index ? file(params.index) : System.in
+input_files = Channel.create()
+input_chunks = Channel.create()
 
-input_files = Channel
+Channel
     .from(index.readLines())
     .map {
         line -> [ line.split()[0], line.split()[1], file(line.split()[2]), line.split()[3], line.split()[4] ]
     }
+    .subscribe onNext: { sample, id, path, type, view -> if( params.chunkSize != -1 ) { file(path).splitFastq(by: params.chunkSize, file: true, autoClose: false, into: input_chunks) { chunk, source -> tuple(sample, id+chunk.baseName.find(/\..+$/), chunk, type, view) } } else {input_chunks << tuple(sample, id, path, type, view)} }, onComplete: { input_chunks << Channel.STOP }
+
+input_files = input_chunks
     .groupBy {
         sample, id, path, type, view -> id 
     }
