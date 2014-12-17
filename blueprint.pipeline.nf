@@ -25,12 +25,10 @@ params.steps = 'mapping,bigwig,contig,flux'
 params.tmpDir = (System.env.TMPDIR != null ? true : false)
 params.maxMismatches = 4
 params.maxMultimaps = 10
-params.maxReadLength = 150
 params.bamStats = false
 params.countElements = [] 
 params.fluxMem = '3G'
 params.fluxProfile = false 
-params.chunkSize = -1
 
 // get list of steps from comma-separated strings
 pipelineSteps = params.steps.split(',').collect { it.trim() }
@@ -90,6 +88,7 @@ log.info "Index file                : ${params.index}"
 log.info "Genome                    : ${params.genome}"
 log.info "Annotation                : ${params.annotation}"
 log.info "Steps to be performed     : ${pipelineSteps.join(" ")}"
+log.info "Input chunk size          : ${params.chunkSize != null ? params.chunkSize : 'no split'}"
 log.info "Use temporary folder      : ${params.tmpDir}"
 log.info ""
 if ('mapping' in pipelineSteps) {
@@ -97,7 +96,7 @@ if ('mapping' in pipelineSteps) {
     log.info "------------------"
     log.info "Max mismatches            : ${params.maxMismatches}"
     log.info "Max multimaps             : ${params.maxMultimaps}"
-    log.info "Max read length           : ${params.maxReadLength}"
+    log.info "Max read length           : ${params.maxReadLength != null ? params.maxReadLength : 'auto'}"
     log.info "Read strandedness         : ${params.readStrand != null ? params.readStrand : 'auto'}"
     log.info "Paired                    : ${params.pairedEnd != null ? params.pairedEnd : 'auto'}"
     log.info "Produce BAM stats         : ${params.bamStats}"
@@ -128,7 +127,7 @@ Channel
     .map {
         line -> [ line.split()[0], line.split()[1], file(line.split()[2]), line.split()[3], line.split()[4] ]
     }
-    .subscribe onNext: { sample, id, path, type, view -> if( params.chunkSize != -1 ) { file(path).splitFastq(by: params.chunkSize, file: true, autoClose: false, into: input_chunks) { chunk, source -> tuple(sample, id+chunk.baseName.find(/\..+$/), chunk, type, view) } } else {input_chunks << tuple(sample, id, path, type, view)} }, onComplete: { input_chunks << Channel.STOP }
+    .subscribe onNext: { sample, id, path, type, view -> if( params.chunkSize != null ) { file(path).splitFastq(by: params.chunkSize, file: true, autoClose: false, into: input_chunks) { chunk, source -> tuple(sample, id+chunk.baseName.find(/\..+$/), chunk, type, view) } } else {input_chunks << tuple(sample, id, path, type, view)} }, onComplete: { input_chunks << Channel.STOP }
 
 input_files = input_chunks
     .groupBy {
@@ -200,7 +199,8 @@ process t_index {
     script:
     def command = ""
 
-    command += "gemtools t-index -i ${genome_index} -a ${annotation} -m ${params.maxReadLength} -t ${task.cpus} -o tx_index" 
+    command += "gemtools t-index -i ${genome_index} -a ${annotation} -t ${task.cpus} -o tx_index" 
+    if ( params.maxReadLength != null ) command += ' -m ${params.maxReadLength}'
 
     return command
 }
