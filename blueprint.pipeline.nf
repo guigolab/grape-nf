@@ -22,12 +22,12 @@
 //Set default values for params
 
 params.steps = 'mapping,bigwig,contig,flux'
-params.tmpDir = (System.env.TMPDIR != null ? true : false)
+//params.tmpDir = (System.env.TMPDIR != null ? true : false)
 params.maxMismatches = 4
 params.maxMultimaps = 10
 params.bamStats = false
 params.countElements = [] 
-params.fluxMem = '3G'
+//params.fluxMem = '3G'
 params.fluxProfile = false 
 if ( params.chunkSize != null ) params.chunkSize = params.chunkSize as int
 
@@ -36,39 +36,39 @@ pipelineSteps = params.steps.split(',').collect { it.trim() }
 
 //print usage
 if (params.help) {
-    log.info '''
-B L U E P R I N T ~ RNA Pipeline
---------------------------------
-Run the RNAseq pipeline on one sample.
-
-Usage: 
-    blueprint.pipeline.nf -i INDEX_FILE -g GENOME_FILE -a ANNOTATION_FILE [OPTION]...
-
-Options:
-    --help                              Show this message and exit.
-    --index INDEX_FILE                  Index file.
-    --genome GENOME_FILE                Reference genome file(s).
-    --annotation ANNOTAION_FILE         Reference gene annotation file(s).
-    --tmp-dir                           Specify the temporary folder to be used as a scratch area.
-                                        Default: "$TMPDIR" if the environment variable is defined, "-" otherwise.
-    --paired-end                        Specify whether the data is paired-end. Default: "auto".
-    --max-read-length READ_LENGTH       The maximum read length (used to compute the transcriptomes). Default: "150".
-    --max-mismatches THRESHOLD          Set maps with more than <threshold> error events to unmapped. Default "4".
-    --max-multimaps THRESHOLD           Set multi-maps with more than <threshold> mappings to unmapped. Default "10".
-    --filter-intron-length THRESHOLD    Filter multimaps preferring ones with intron length > <threshold>
-    --filter-block-length THRESHOLD     Filter multimaps preferring ones with block length > <threshold>
-    --filter-level THRESHOLD            Reduce multimaps using the specified uniqueness level.
-    --read-strand READ_STRAND           Directionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default "auto".
-    --rg-platform PLATFORM              Platform/technology used to produce the reads for the BAM @RG tag.
-    --rg-library LIBRARY                Sequencing library name for the BAM @RG tag.
-    --rg-center-name CENTER_NAME        Name of sequencing center that produced the reads for the BAM @RG tag.
-    --rg-desc DESCRIPTION               Description for the BAM @RG tag.
-    --flux-mem MEMORY                   Specify the amount of ram the Flux Capacitor can use. Default: "3G".
-    --flux-profile                      Specify whether the Flux Capacitor profile file shoudl be written. Default: "false".
-    --count-elements ELEMENTS           A comma separated list of elements to be counted by the Flux Capacitor.
-                                        Possible values: INTRONS,SPLICE_JUNCTIONS. Defalut: "none".
-    --loglevel LOGLEVEL                 Log level (error, warn, info, debug). Default "info".
-    '''
+    log.info ''
+    log.info 'B L U E P R I N T ~ RNA Pipeline'
+    log.info '--------------------------------'
+    log.info 'Run the RNAseq pipeline on one sample.'
+    log.info ''
+    log.info 'Usage: '
+    log.info '    blueprint.pipeline.nf -i INDEX_FILE -g GENOME_FILE -a ANNOTATION_FILE [OPTION]...'
+    log.info ''
+    log.info 'Options:'
+    log.info '    --help                              Show this message and exit.'
+    log.info '    --index INDEX_FILE                  Index file.'
+    log.info '    --genome GENOME_FILE                Reference genome file(s).'
+    log.info '    --annotation ANNOTAION_FILE         Reference gene annotation file(s).'
+//    log.info '    --tmp-dir                           Specify the temporary folder to be used as a scratch area.'
+    log.info '                                        Default: "$TMPDIR" if the environment variable is defined, "-" otherwise.'
+    log.info '    --chunk-size                        The number of records to be put in each chunk when splitting the input. Default: no split'
+    log.info '    --paired-end                        Specify whether the data is paired-end. Default: "auto".'
+    log.info '    --max-read-length READ_LENGTH       The maximum read length (used to compute the transcriptomes). Default: "auto".'
+    log.info '    --max-mismatches THRESHOLD          Set maps with more than <threshold> error events to unmapped. Default "4".'
+    log.info '    --max-multimaps THRESHOLD           Set multi-maps with more than <threshold> mappings to unmapped. Default "10".'
+    log.info '    --filter-intron-length THRESHOLD    Filter multimaps preferring ones with intron length > THRESHOLD'
+    log.info '    --filter-block-length THRESHOLD     Filter multimaps preferring ones with block length > THRESHOLD'
+    log.info '    --filter-level LEVEL                Reduce multimaps using the specified uniqueness level.'
+    log.info '    --read-strand READ_STRAND           Directionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default "auto".'
+    log.info '    --rg-platform PLATFORM              Platform/technology used to produce the reads for the BAM @RG tag.'
+    log.info '    --rg-library LIBRARY                Sequencing library name for the BAM @RG tag.'
+    log.info '    --rg-center-name CENTER_NAME        Name of sequencing center that produced the reads for the BAM @RG tag.'
+    log.info '    --rg-desc DESCRIPTION               Description for the BAM @RG tag.'
+//    log.info '    --flux-mem MEMORY                   Specify the amount of ram the Flux Capacitor can use. Default: "3G".'
+    log.info '    --flux-profile                      Specify whether the Flux Capacitor profile file shoudl be written. Default: "false".'
+    log.info '    --count-elements ELEMENTS           A comma separated list of elements to be counted by the Flux Capacitor.'
+    log.info '                                        Possible values: INTRONS,SPLICE_JUNCTIONS. Defalut: "none".'
+//    log.info '    --loglevel LOGLEVEL                 Log level (error, warn, info, debug). Default "info".'
     exit 1
 }
 
@@ -90,7 +90,7 @@ log.info "Genome                    : ${params.genome}"
 log.info "Annotation                : ${params.annotation}"
 log.info "Steps to be performed     : ${pipelineSteps.join(" ")}"
 log.info "Input chunk size          : ${params.chunkSize != null ? params.chunkSize : 'no split'}"
-log.info "Use temporary folder      : ${params.tmpDir}"
+//log.info "Use temporary folder      : ${params.tmpDir}"
 log.info ""
 if ('mapping' in pipelineSteps) {
     log.info "Mapping parameters"
@@ -111,7 +111,7 @@ if ('flux' in pipelineSteps || 'quantification' in pipelineSteps) {
     log.info "Flux Capacitor parameters"
     log.info "-------------------------"
     log.info "Additional quantified elements : ${params.countElements.size()==0 ? 'NONE' : params.countElements.join(" ")}"
-    log.info "Memory                         : ${params.fluxMem}"
+//    log.info "Memory                         : ${params.fluxMem}"
     log.info "Create profile file            : ${params.fluxProfile}"
     log.info ""
 }
