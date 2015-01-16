@@ -39,7 +39,7 @@ if (params.help) {
     log.info ''
     log.info 'B L U E P R I N T ~ RNA Pipeline'
     log.info '--------------------------------'
-    log.info 'Run the RNAseq pipeline on one sample.'
+    log.info 'Run the RNAseq pipeline on a set of data.'
     log.info ''
     log.info 'Usage: '
     log.info '    blueprint.pipeline.nf -i INDEX_FILE -g GENOME_FILE -a ANNOTATION_FILE [OPTION]...'
