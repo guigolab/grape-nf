@@ -61,7 +61,7 @@ if (params.help) {
     log.info '    --filter-intron-length THRESHOLD    Filter multimaps preferring ones with intron length > THRESHOLD'
     log.info '    --filter-block-length THRESHOLD     Filter multimaps preferring ones with block length > THRESHOLD'
     log.info '    --filter-level LEVEL                Reduce multimaps using the specified uniqueness level.'
-    log.info '    --read-strand READ_STRAND           Directionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default "auto".'
+//    log.info '    --read-strand READ_STRAND           Directionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default "auto".'
     log.info '    --rg-platform PLATFORM              Platform/technology used to produce the reads for the BAM @RG tag.'
     log.info '    --rg-library LIBRARY                Sequencing library name for the BAM @RG tag.'
     log.info '    --rg-center-name CENTER_NAME        Name of sequencing center that produced the reads for the BAM @RG tag.'
@@ -367,10 +367,11 @@ process inferExp {
     set species, file(annotation) from Annotations4.first()
 
     output:
-    set id, stdout into bamInf
+    set id, type, view, file("${id}${prefix}.bam"), pairedEnd, stdout into bamStrand
 
     script:
     def command = ""
+    prefix = pref
     def genePred = "${annotation.name.split('\\.', 2)[0]}.genePred"
     def bed12 = "${annotation.name.split('\\.', 2)[0]}.bed"
 
@@ -380,24 +381,6 @@ process inferExp {
     command += "${baseDir}/bin/infer_experiment.py -i ${bam} -r ${bed12} 2> infer_experiment.log | tr -d '\\n'"
 }
 
-(bamInf1, bamInf2) = bamInf.into(2)
-
-bamInf1.subscribe {        
-    tuple ->
-        (id, readStrand) = tuple
-        if (params.readStrand != null && !readStrand.equals(params.readStrand)) {
-            log.warn "----> '${id}' skipped"
-            log.warn "Detected and supplied read strandedness do not match:"
-            log.warn "${readStrand} != ${params.readStrand}"
-        }
-}
-
-bamStrand = bam2.phase(bamInf2)
-.map {
-    [it[0],it[1][1]].flatten()
-}.filter { id, type, view, bam, pairedEnd, readStrand ->
-    params.readStrand == null || readStrand.equals(params.readStrand)
-}
 
 (bam1, bam2, bam3, out) = bamStrand.into(4)
 
