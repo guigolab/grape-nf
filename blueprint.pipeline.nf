@@ -126,12 +126,35 @@ index = params.index ? file(params.index) : System.in
 input_files = Channel.create()
 input_chunks = Channel.create()
 
+data = ['samples': [], 'ids': []]
+merge = false
 Channel
     .from(index.readLines())
     .map {
         line -> [ line.split()[0], line.split()[1], file(line.split()[2]), line.split()[3], line.split()[4] ]
     }
-    .subscribe onNext: { sample, id, path, type, view -> if( params.chunkSize != null ) { file(path).splitFastq(by: (params.chunkSize), file: true, autoClose: false, into: input_chunks) { chunk, source -> tuple(sample, id+chunk.baseName.find(/\..+$/), chunk, type, view) } } else {input_chunks << tuple(sample, id, path, type, view)} }, onComplete: { input_chunks << Channel.STOP }
+    .subscribe onNext: { 
+        sample, id, path, type, view -> if( params.chunkSize != null ) { 
+            file(path).splitFastq(by: (params.chunkSize), file: true, autoClose: false, into: input_chunks) { 
+                chunk, source -> tuple(sample, id+chunk.baseName.find(/\..+$/), chunk, type, view) 
+            } 
+        } else { 
+            input_chunks << tuple(sample, id, path, type, view)
+        }
+        data['samples'] << sample
+        data['ids'] << id }, 
+    onComplete: { 
+        ids=data['ids'].unique().size()
+        samples=data['samples'].unique().size()
+        if (ids != samples) merge=true
+        log.info "Dataset information"
+        log.info "-------------------"
+        log.info "Number of sequenced samples     : ${samples}"
+        log.info "Number of sequencing runs       : ${ids}" 
+        log.info "Merging                         : ${ merge ? 'by sample' : 'none' }"
+        log.info ""
+        input_chunks << Channel.STOP 
+    }
 
 input_files = input_chunks
     .groupBy {
@@ -294,42 +317,49 @@ process gemToBam {
     return command
 }
 
-singleBam = Channel.create()
-groupedBam = Channel.create()
+if (merge) {
 
-bam.groupBy() {
-    id, sample, type, view, path, pairedEnd -> sample
-}
-.flatMap()
-.map {
-    [it.value.size() > 1 ? it.key : it.value[0][0], it.value[0][2], it.value[0][3], it.value.collect { id, sample, type, view, path, pairedEnd -> path }, it.value[0][5]]
-}.choice(singleBam, groupedBam) {
-    it[3].size() > 1 ? 1 : 0
-}
-
-process mergeBam {
+    singleBam = Channel.create()
+    groupedBam = Channel.create()
+   
+    bam.groupBy() {
+        id, sample, type, view, path, pairedEnd -> sample
+    }
+    .flatMap()
+    .map {
+        [it.value.size() > 1 ? it.key : it.value[0][0], it.value[0][2], it.value[0][3], it.value.collect { id, sample, type, view, path, pairedEnd -> path }, it.value[0][5]]
+    }.choice(singleBam, groupedBam) {
+        it[3].size() > 1 ? 1 : 0
+    }
     
-    input:
-    set id, type, view, file(bam), pairedEnd from groupedBam
-
-    output:
-    set id, type, view, "${id}${prefix}.bam", pairedEnd into mergedBam
-
-    script:
-    def command = ""
-    prefix = pref
-
-    command += "(samtools view -H ${bam} | grep -v \"@RG\";for f in ${bam};do samtools view -H \$f | grep \"@RG\";done) > header.txt\n"
-    command += "samtools merge -@ ${task.cpus} -h header.txt ${id}${prefix}.bam ${bam}"
+    process mergeBam {
+        
+        input:
+        set id, type, view, file(bam), pairedEnd from groupedBam
+    
+        output:
+        set id, id, type, view, "${id}${prefix}.bam", pairedEnd into mergedBam
+    
+        script:
+        def command = ""
+        prefix = pref
+    
+        command += "(samtools view -H ${bam} | grep -v \"@RG\";for f in ${bam};do samtools view -H \$f | grep \"@RG\";done) > header.txt\n"
+        command += "samtools merge -@ ${task.cpus} -h header.txt ${id}${prefix}.bam ${bam}"
+    }
+    
+    bam = singleBam
+    .mix(mergedBam)
+    .map { 
+        it.flatten() 
+    }
 }
 
-bam = singleBam
-.mix(mergedBam)
-.map { 
-    it.flatten() 
+(bam1, bam2) = bam
+.map {
+    [ it[0], it[2], it[3], it[4], it[5] ]
 }
-
-(bam1, bam2) = bam.into(2)
+.into(2)
 
 process inferExp {
     input:
