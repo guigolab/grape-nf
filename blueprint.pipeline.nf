@@ -52,7 +52,7 @@ if (params.help) {
 //    log.info '    --tmp-dir                           Specify the temporary folder to be used as a scratch area.'
 //    log.info '                                        Default: "$TMPDIR" if the environment variable is defined, "-" otherwise.'
     log.info '    --chunk-size                        The number of records to be put in each chunk when splitting the input. Default: no split'
-    log.info '    --paired-end                        Specify whether the data is paired-end. Default: "auto".'
+//    log.info '    --paired-end                        Specify whether the data is paired-end. Default: "auto".'
     log.info '    --error-strategy                    Specify how an error condition is managed by the pipeline processes. Default: the entire pipeline'
     log.info '                                        terminates if a process returns an error status.'
     log.info '    --max-read-length READ_LENGTH       The maximum read length (used to compute the transcriptomes). Default: "auto".'
@@ -87,35 +87,35 @@ log.info "B L U E P R I N T ~ RNA Pipeline"
 log.info ""
 log.info "General parameters"
 log.info "------------------"
-log.info "Index file                : ${params.index}"
-log.info "Genome                    : ${params.genome}"
-log.info "Annotation                : ${params.annotation}"
-log.info "Steps to be performed     : ${pipelineSteps.join(" ")}"
-log.info "Input chunk size          : ${params.chunkSize != null ? params.chunkSize : 'no split'}"
-log.info "Error strategy            : ${params.errorStrategy != null ? params.errorStrategy : 'default'}"
+log.info "Index file                      : ${params.index}"
+log.info "Genome                          : ${params.genome}"
+log.info "Annotation                      : ${params.annotation}"
+log.info "Steps to be performed           : ${pipelineSteps.join(" ")}"
+log.info "Input chunk size                : ${params.chunkSize != null ? params.chunkSize : 'no split'}"
+log.info "Error strategy                  : ${params.errorStrategy != null ? params.errorStrategy : 'default'}"
 //log.info "Use temporary folder      : ${params.tmpDir}"
 log.info ""
 if ('mapping' in pipelineSteps) {
     log.info "Mapping parameters"
     log.info "------------------"
-    log.info "Max mismatches            : ${params.maxMismatches}"
-    log.info "Max multimaps             : ${params.maxMultimaps}"
-    log.info "Max read length           : ${params.maxReadLength != null ? params.maxReadLength : 'auto'}"
-    log.info "Read strandedness         : ${params.readStrand != null ? params.readStrand : 'auto'}"
-    log.info "Paired                    : ${params.pairedEnd != null ? params.pairedEnd : 'auto'}"
-    log.info "Produce BAM stats         : ${params.bamStats}"
-    if ( params.rgPlatform ) log.info "Sequencing platform       : ${params.rgPlatform}"  
-    if ( params.rgLibrary ) log.info "Sequencing library        : ${params.rgLibrary}"  
-    if ( params.rgCenterName ) log.info "Sequencing center         : ${params.rgCenterName}" 
-    if ( params.rgDesc ) log.info "@RG Descritpiton          : ${params.rgDesc}" 
+    log.info "Max mismatches                  : ${params.maxMismatches}"
+    log.info "Max multimaps                   : ${params.maxMultimaps}"
+    log.info "Max read length                 : ${params.maxReadLength != null ? params.maxReadLength : 'auto'}"
+//    log.info "Read strandedness               : ${params.readStrand != null ? params.readStrand : 'auto'}"
+//    log.info "Paired-end                      : ${params.pairedEnd != null ? params.pairedEnd : 'auto'}"
+    log.info "Produce BAM stats               : ${params.bamStats}"
+    if ( params.rgPlatform ) log.info "Sequencing platform             : ${params.rgPlatform}"  
+    if ( params.rgLibrary ) log.info "Sequencing library              : ${params.rgLibrary}"  
+    if ( params.rgCenterName ) log.info "Sequencing center               : ${params.rgCenterName}" 
+    if ( params.rgDesc ) log.info "@RG Descritpiton                : ${params.rgDesc}" 
     log.info ""
 }
 if ('flux' in pipelineSteps || 'quantification' in pipelineSteps) {
     log.info "Flux Capacitor parameters"
     log.info "-------------------------"
-    log.info "Additional quantified elements : ${params.countElements.size()==0 ? 'NONE' : params.countElements.join(" ")}"
-//    log.info "Memory                         : ${params.fluxMem}"
-    log.info "Create profile file            : ${params.fluxProfile}"
+    log.info "Additional quantified elements  : ${params.countElements.size()==0 ? 'NONE' : params.countElements.join(" ")}"
+//    log.info "Memory                          : ${params.fluxMem}"
+    log.info "Create profile file             : ${params.fluxProfile}"
     log.info ""
 }
 
