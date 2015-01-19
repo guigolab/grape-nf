@@ -50,9 +50,11 @@ if (params.help) {
     log.info '    --genome GENOME_FILE                Reference genome file(s).'
     log.info '    --annotation ANNOTAION_FILE         Reference gene annotation file(s).'
 //    log.info '    --tmp-dir                           Specify the temporary folder to be used as a scratch area.'
-    log.info '                                        Default: "$TMPDIR" if the environment variable is defined, "-" otherwise.'
+//    log.info '                                        Default: "$TMPDIR" if the environment variable is defined, "-" otherwise.'
     log.info '    --chunk-size                        The number of records to be put in each chunk when splitting the input. Default: no split'
     log.info '    --paired-end                        Specify whether the data is paired-end. Default: "auto".'
+    log.info '    --error-strategy                    Specify how an error condition is managed by the pipeline processes. Default: the entire pipeline'
+    log.info '                                        terminates if a process returns an error status.'
     log.info '    --max-read-length READ_LENGTH       The maximum read length (used to compute the transcriptomes). Default: "auto".'
     log.info '    --max-mismatches THRESHOLD          Set maps with more than <threshold> error events to unmapped. Default "4".'
     log.info '    --max-multimaps THRESHOLD           Set multi-maps with more than <threshold> mappings to unmapped. Default "10".'
@@ -90,6 +92,7 @@ log.info "Genome                    : ${params.genome}"
 log.info "Annotation                : ${params.annotation}"
 log.info "Steps to be performed     : ${pipelineSteps.join(" ")}"
 log.info "Input chunk size          : ${params.chunkSize != null ? params.chunkSize : 'no split'}"
+log.info "Error strategy            : ${params.errorStrategy != null ? params.errorStrategy : 'default'}"
 //log.info "Use temporary folder      : ${params.tmpDir}"
 log.info ""
 if ('mapping' in pipelineSteps) {
