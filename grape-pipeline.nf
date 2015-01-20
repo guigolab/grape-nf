@@ -37,12 +37,12 @@ pipelineSteps = params.steps.split(',').collect { it.trim() }
 //print usage
 if (params.help) {
     log.info ''
-    log.info 'B L U E P R I N T ~ RNA Pipeline'
-    log.info '--------------------------------'
+    log.info 'G R A P E ~ RNA-seq Pipeline'
+    log.info '----------------------------'
     log.info 'Run the RNAseq pipeline on a set of data.'
     log.info ''
     log.info 'Usage: '
-    log.info '    blueprint.pipeline.nf -i INDEX_FILE -g GENOME_FILE -a ANNOTATION_FILE [OPTION]...'
+    log.info '    grape-pipeline.nf -i INDEX_FILE -g GENOME_FILE -a ANNOTATION_FILE [OPTION]...'
     log.info ''
     log.info 'Options:'
     log.info '    --help                              Show this message and exit.'
