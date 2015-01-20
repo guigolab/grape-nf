@@ -1,10 +1,6 @@
 SHELL = bash
 VENV = env
 
-ifndef DEPLOYSERVER
-	DEPLOYSERVER = ant
-endif
-
 ifndef DEPLOYDIR
 	DEPLOYDIR = ~/public_html/grape/docs
 endif
@@ -22,3 +18,14 @@ sphinx: venv
 
 test: compare.sh
 	@./compare.sh
+
+clean-docs: $(VENV)/bin/sphinx-build 
+	@source $(VENV)/bin/activate && $(MAKE) -C docs clean > /dev/null
+
+clean-env: $(VENV) 
+	@rm -rf $(VENV)
+	
+clean-test:
+	@rm -rf work
+
+clean-all: clean-docs clean-env clean-test
