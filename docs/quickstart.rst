@@ -49,27 +49,27 @@ To get the usage string and the list of options use this command:
 
 .. code-block:: bash
 
-    $ nextflow run blueprint.pipeline.nf --help
+    $ nextflow run -hub bitbucket emi80/grape --help
     N E X T F L O W  ~  version 0.12.0
-
-    B L U E P R I N T ~ RNA Pipeline
-    --------------------------------
+    
+    G R A P E ~ RNA-seq Pipeline
+    ----------------------------
     Run the RNAseq pipeline on a set of data.
     
     Usage: 
-        blueprint.pipeline.nf -i INDEX_FILE -g GENOME_FILE -a ANNOTATION_FILE [OPTION]...
+        grape-pipeline.nf -i INDEX_FILE -g GENOME_FILE -a ANNOTATION_FILE [OPTION]...
     
     Options:
         --help                              Show this message and exit.
         --index INDEX_FILE                  Index file.
         --genome GENOME_FILE                Reference genome file(s).
         --annotation ANNOTAION_FILE         Reference gene annotation file(s).
-        --chunk-size                        The number of records to be put in each chunk when splitting the input. Default: no split
-        --error-strategy                    Specify how an error condition is managed by the pipeline processes. Default: the entire pipeline
-                                            terminates if a process returns an error status.
+        --chunk-size CHUNK_SIZE             The number of records to be put in each chunk when splitting the input. Default: no split
+        --error-strategy ERROR_STRATEGY     Specify how an error condition is managed by the pipeline processes. Possible values: ignore, retry
+                                            Default: the entire pipeline  terminates if a process returns an error status.
         --max-read-length READ_LENGTH       The maximum read length (used to compute the transcriptomes). Default: "auto".
-        --max-mismatches THRESHOLD          Set maps with more than <threshold> error events to unmapped. Default "4".
-        --max-multimaps THRESHOLD           Set multi-maps with more than <threshold> mappings to unmapped. Default "10".
+        --max-mismatches THRESHOLD          Set maps with more than THRESHOLD error events to unmapped. Default "4".
+        --max-multimaps THRESHOLD           Set multi-maps with more than THRESHOLD mappings to unmapped. Default "10".
         --filter-intron-length THRESHOLD    Filter multimaps preferring ones with intron length > THRESHOLD
         --filter-block-length THRESHOLD     Filter multimaps preferring ones with block length > THRESHOLD
         --filter-level LEVEL                Reduce multimaps using the specified uniqueness level.
@@ -79,7 +79,7 @@ To get the usage string and the list of options use this command:
         --rg-desc DESCRIPTION               Description for the BAM @RG tag.
         --flux-profile                      Specify whether the Flux Capacitor profile file shoudl be written. Default: "false".
         --count-elements ELEMENTS           A comma separated list of elements to be counted by the Flux Capacitor.
-                                            Possible values: INTRONS,SPLICE_JUNCTIONS. Defalut: "none".
+                                            Possible values: INTRONS, SPLICE_JUNCTIONS. Default: "none".
 
 
 Input format

@@ -140,27 +140,27 @@ Encoding: UTF-8 <span class="o">(</span>UTF-8<span class="o">)</span>
 <div class="section" id="pipeline-usage">
 <h2>Pipeline usage<a class="headerlink" href="#pipeline-usage" title="Permalink to this headline">¶</a></h2>
 <p>To get the usage string and the list of options use this command:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>nextflow run blueprint.pipeline.nf --help
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>nextflow run -hub bitbucket emi80/grape --help
 N E X T F L O W  ~  version 0.12.0
 
-B L U E P R I N T ~ RNA Pipeline
---------------------------------
+G R A P E ~ RNA-seq Pipeline
+----------------------------
 Run the RNAseq pipeline on a <span class="nb">set </span>of data.
 
 Usage:
-    blueprint.pipeline.nf -i INDEX_FILE -g GENOME_FILE -a ANNOTATION_FILE <span class="o">[</span>OPTION<span class="o">]</span>...
+    grape-pipeline.nf -i INDEX_FILE -g GENOME_FILE -a ANNOTATION_FILE <span class="o">[</span>OPTION<span class="o">]</span>...
 
 Options:
     --help                              Show this message and exit.
     --index INDEX_FILE                  Index file.
     --genome GENOME_FILE                Reference genome file<span class="o">(</span>s<span class="o">)</span>.
     --annotation ANNOTAION_FILE         Reference gene annotation file<span class="o">(</span>s<span class="o">)</span>.
-    --chunk-size                        The number of records to be put in each chunk when splitting the input. Default: no split
-    --error-strategy                    Specify how an error condition is managed by the pipeline processes. Default: the entire pipeline
-                                        terminates <span class="k">if </span>a process returns an error status.
+    --chunk-size CHUNK_SIZE             The number of records to be put in each chunk when splitting the input. Default: no split
+    --error-strategy ERROR_STRATEGY     Specify how an error condition is managed by the pipeline processes. Possible values: ignore, retry
+                                        Default: the entire pipeline  terminates <span class="k">if </span>a process returns an error status.
     --max-read-length READ_LENGTH       The maximum <span class="nb">read </span>length <span class="o">(</span>used to compute the transcriptomes<span class="o">)</span>. Default: <span class="s2">&quot;auto&quot;</span>.
-    --max-mismatches THRESHOLD          Set maps with more than &lt;threshold&gt; error events to unmapped. Default <span class="s2">&quot;4&quot;</span>.
-    --max-multimaps THRESHOLD           Set multi-maps with more than &lt;threshold&gt; mappings to unmapped. Default <span class="s2">&quot;10&quot;</span>.
+    --max-mismatches THRESHOLD          Set maps with more than THRESHOLD error events to unmapped. Default <span class="s2">&quot;4&quot;</span>.
+    --max-multimaps THRESHOLD           Set multi-maps with more than THRESHOLD mappings to unmapped. Default <span class="s2">&quot;10&quot;</span>.
     --filter-intron-length THRESHOLD    Filter multimaps preferring ones with intron length &gt; THRESHOLD
     --filter-block-length THRESHOLD     Filter multimaps preferring ones with block length &gt; THRESHOLD
     --filter-level LEVEL                Reduce multimaps using the specified uniqueness level.
@@ -170,7 +170,7 @@ Options:
     --rg-desc DESCRIPTION               Description <span class="k">for </span>the BAM @RG tag.
     --flux-profile                      Specify whether the Flux Capacitor profile file shoudl be written. Default: <span class="s2">&quot;false&quot;</span>.
     --count-elements ELEMENTS           A comma separated list of elements to be counted by the Flux Capacitor.
-                                        Possible values: INTRONS,SPLICE_JUNCTIONS. Defalut: <span class="s2">&quot;none&quot;</span>.
+                                        Possible values: INTRONS, SPLICE_JUNCTIONS. Default: <span class="s2">&quot;none&quot;</span>.
 </pre></div>
 </div>
 </div>
