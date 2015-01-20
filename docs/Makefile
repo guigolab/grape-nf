@@ -6,6 +6,11 @@ SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = _build
+ifdef DEPLOYSERVER
+	ifneq ($(DEPLOYSERVER), '/')
+		DEPLOYSEP = :
+	endif
+endif
 
 # User-friendly check for sphinx-build
 ifeq ($(shell which $(SPHINXBUILD) >/dev/null 2>&1; echo $$?), 1)
@@ -47,7 +52,7 @@ help:
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
 deploy: clean html
-	rsync -avz $(BUILDDIR)/html/ $(DEPLOYDIR)
+	rsync -avz -e ssh $(BUILDDIR)/html/ $(DEPLOYSERVER)$(DEPLOYSEP)$(DEPLOYDIR)
 	@echo
 	@echo "Deploy finished. The HTML pages are in $(DEPLOYDIR)."
 
