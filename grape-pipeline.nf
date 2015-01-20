@@ -29,7 +29,7 @@ params.bamStats = false
 params.countElements = [] 
 //params.fluxMem = '3G'
 params.fluxProfile = false 
-if ( params.chunkSize != null ) params.chunkSize = params.chunkSize as int
+if (params.chunkSize) params.chunkSize = params.chunkSize as int
 
 // get list of steps from comma-separated strings
 pipelineSteps = params.steps.split(',').collect { it.trim() }
@@ -128,29 +128,34 @@ input_chunks = Channel.create()
 
 data = ['samples': [], 'ids': []]
 merge = false
-Channel
+input = Channel
     .from(index.readLines())
     .map {
         line -> [ line.split()[0], line.split()[1], file(line.split()[2]), line.split()[3], line.split()[4] ]
     }
-    .subscribe onNext: { 
-        sample, id, path, type, view -> if( params.chunkSize != null ) { 
-            file(path).splitFastq(by: (params.chunkSize), file: true, autoClose: false, into: input_chunks) { 
-                chunk, source -> tuple(sample, id+chunk.baseName.find(/\..+$/), chunk, type, view) 
-            } 
-        } else { 
-            input_chunks << tuple(sample, id, path, type, view)
-        }
+
+if (params.chunkSize) {
+    input = input.splitFastq(by: params.chunkSize, file: true, elem: 2)
+}
+
+input.subscribe onNext: { 
+        sample, id, path, type, view ->
+        items = "sequencing runs"
+        if( params.chunkSize ) {
+            items = "chunks         "
+            id = id+path.baseName.find(/\..+$/)
+        } 
+        input_chunks << tuple(sample, id, path, type, view)
         data['samples'] << sample
-        data['ids'] << id }, 
-    onComplete: { 
+        data['ids'] << id 
+    }, onComplete: { 
         ids=data['ids'].unique().size()
         samples=data['samples'].unique().size()
         if (ids != samples) merge=true
         log.info "Dataset information"
         log.info "-------------------"
         log.info "Number of sequenced samples     : ${samples}"
-        log.info "Number of sequencing runs       : ${ids}" 
+        log.info "Number of ${items}       : ${ids}" 
         log.info "Merging                         : ${ merge ? 'by sample' : 'none' }"
         log.info ""
         input_chunks << Channel.STOP 
