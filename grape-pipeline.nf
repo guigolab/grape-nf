@@ -39,7 +39,7 @@ if (params.help) {
     log.info ''
     log.info 'G R A P E ~ RNA-seq Pipeline'
     log.info '----------------------------'
-    log.info 'Run the RNAseq pipeline on a set of data.'
+    log.info 'Run the GRAPE RNA-seq pipeline on a set of data.'
     log.info ''
     log.info 'Usage: '
     log.info '    grape-pipeline.nf -i INDEX_FILE -g GENOME_FILE -a ANNOTATION_FILE [OPTION]...'

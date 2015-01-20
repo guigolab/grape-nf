@@ -54,7 +54,7 @@ To get the usage string and the list of options use this command:
     
     G R A P E ~ RNA-seq Pipeline
     ----------------------------
-    Run the RNAseq pipeline on a set of data.
+    Run the GRAPE RNA-seq pipeline on a set of data.
     
     Usage: 
         grape-pipeline.nf -i INDEX_FILE -g GENOME_FILE -a ANNOTATION_FILE [OPTION]...
