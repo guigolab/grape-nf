@@ -135,6 +135,7 @@ input = Channel
     }
 
 if (params.chunkSize) {
+    merge = true
     input = input.splitFastq(by: params.chunkSize, file: true, elem: 2)
 }
 
