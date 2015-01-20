@@ -9,8 +9,7 @@ Move to the folder where you want to create the base directory for the pipeline 
 
 .. code-block:: bash
 
-    $ git clone -b nextflow /users/rg/projects/git/bp.pipeline.git <pipeline name>
-    $ cd <pipeline name>
+    $ mkdir <pipeline name> && cd <pipeline name>
 
 
 Reference files
@@ -43,22 +42,24 @@ This step will install nextflow for your user. It is only needed once. These are
     Encoding: UTF-8 (UTF-8)
 
 
-Pipeline usage
---------------
-To get the usage string and the list of options use this command:
+Pipeline command
+----------------
+The first time you run the GRAPE pipeline it will be automatically downloaded from the Bitbucket git repository. To get the usage string and list of options use the following command:
 
 .. code-block:: bash
 
     $ nextflow run -hub bitbucket emi80/grape --help
     N E X T F L O W  ~  version 0.12.0
-    
+    Checking emi80/grape ...
+     downloaded from https://bitbucket.org/emi80/grape.git
+
     G R A P E ~ RNA-seq Pipeline
     ----------------------------
     Run the GRAPE RNA-seq pipeline on a set of data.
-    
-    Usage: 
+
+    Usage:
         grape-pipeline.nf -i INDEX_FILE -g GENOME_FILE -a ANNOTATION_FILE [OPTION]...
-    
+
     Options:
         --help                              Show this message and exit.
         --index INDEX_FILE                  Index file.
@@ -81,6 +82,18 @@ To get the usage string and the list of options use this command:
         --count-elements ELEMENTS           A comma separated list of elements to be counted by the Flux Capacitor.
                                             Possible values: INTRONS, SPLICE_JUNCTIONS. Default: "none".
 
+It is possible to download the pipeline in advance. Use this command to get it:
+
+.. code-block:: bash
+
+    $ nextflow pull -hub bitbucket emi80/grape
+
+And then get the same help message with:
+
+.. code-block:: bash
+
+    $ nextflow run emi80/grape --help
+
 
 Input format
 ------------
@@ -95,7 +108,7 @@ The pipeline needs a tab separated file as one of the inputs. This files should 
 ``view``    an attribute that specifies the content of the file (e.g. FastqRd1)
 ==========  ====================================================================================================
 
-Here is an example:: 
+Here is an example::
 
    sample1  test1   data/test1_1.fastq.gz   fastq   FastqRd1
    sample1  test1   data/test1_2.fastq.gz   fastq   FastqRd2
