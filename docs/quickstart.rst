@@ -2,6 +2,46 @@
 Getting started
 ===============
 
+The pipeline uses Nextflow_ for the execution and can be run in a simple way using the sharing features offered by it. Please check `Nextflow documentation`_ for more information.
+
+
+Installing Nextflow
+===================
+This step will install nextflow for your user. It is only needed once. These are the commands:
+
+.. code-block:: bash
+
+    $ curl -fsSL get.nextflow.io | bash
+    $ mv nextflow <folder in your path>
+    $ nextflow info
+    Version: 0.12.0 build 2580
+    Modified: 05-01-2015 15:07 UTC (16:07 CEST)
+    System: Linux 2.6.32-504.1.3.el6.x86_64
+    Runtime: Groovy 2.3.9 on Java HotSpot(TM) 64-Bit Server VM 1.7.0_60-b19
+    Encoding: UTF-8 (UTF-8)
+
+Pipeline command
+================
+Once you have Nextflow installed you can run the GRAPE pipeline command.The first time you do it Nextflow will automatically download the pipeline from the Bitbucket git repository:
+
+.. code-block:: bash
+
+    $ nextflow run -hub bitbucket emi80/grape ...
+
+It is also possible to download the pipeline in advance and the run it:
+
+.. code-block:: bash
+
+    $ nextflow pull -hub bitbucket emi80/grape
+    # use the following command every time you want to run the pipeline
+    $ nextflow run emi80/grape ...
+
+
+Running your first pipeline
+===========================
+
+.. note:: To run the pipeline at the CRG cluster you need to add the option ``-r crg`` to the command line. In this way a Nextflow config file specific for the CRG cluster will be used. For example: ``nextflow run emi80/grape -r crg ...``.
+
 Creating a working directory
 ----------------------------
 
@@ -26,32 +66,14 @@ Only genome FASTA file and annotation file are required. Reference files can be 
 .. note:: The genome and the annotation needs to be sorted by **genomic position**.
 
 
-Installing Nextflow
--------------------
-This step will install nextflow for your user. It is only needed once. These are the commands:
-
-.. code-block:: bash
-
-    $ curl -fsSL get.nextflow.io | bash
-    $ mv nextflow <folder in your path>
-    $ nextflow info
-    Version: 0.12.0 build 2580
-    Modified: 05-01-2015 15:07 UTC (16:07 CEST)
-    System: Linux 2.6.32-504.1.3.el6.x86_64
-    Runtime: Groovy 2.3.9 on Java HotSpot(TM) 64-Bit Server VM 1.7.0_60-b19
-    Encoding: UTF-8 (UTF-8)
-
-
-Pipeline command
+Getting the help
 ----------------
-The first time you run the GRAPE pipeline it will be automatically downloaded from the Bitbucket git repository. To get the usage string and list of options use the following command:
+To get the pipeline usage string and list of options use the following command:
 
 .. code-block:: bash
 
-    $ nextflow run -hub bitbucket emi80/grape --help
-    N E X T F L O W  ~  version 0.12.0
-    Checking emi80/grape ...
-     downloaded from https://bitbucket.org/emi80/grape.git
+    $ nextflow run emi80/grape --help
+    N E X T F L O W  ~  version 0.12.0    
 
     G R A P E ~ RNA-seq Pipeline
     ----------------------------
@@ -82,18 +104,6 @@ The first time you run the GRAPE pipeline it will be automatically downloaded fr
         --count-elements ELEMENTS           A comma separated list of elements to be counted by the Flux Capacitor.
                                             Possible values: INTRONS, SPLICE_JUNCTIONS. Default: "none".
 
-It is possible to download the pipeline in advance. Use this command to get it:
-
-.. code-block:: bash
-
-    $ nextflow pull -hub bitbucket emi80/grape
-
-And then get the same help message with:
-
-.. code-block:: bash
-
-    $ nextflow run emi80/grape --help
-
 
 Input format
 ------------
@@ -117,6 +127,17 @@ Sample and id can be the same in case you don't have/know sample identifiers::
 
    test  test   data/test.fastq.gz   fastq   FastqRd
 
+Also bam files can be specified in the index, with or without fastqs::
+
+   sample1  test1   data/test1_1.fastq.gz   fastq   FastqRd1
+   sample1  test1   data/test1_2.fastq.gz   fastq   FastqRd2
+   sample2  test2   data/test2.bam  bam     Alignment
+
+In this case the bam file will skip the mapping process and  wiil be sent to the subsequent processes.
+
+.. note:: Bam and fastq files should not refer to the same sample unless you want to merge them!
+
+
 Run the pipeline
 ----------------
 
@@ -125,6 +146,13 @@ Here is a simple example of the command to run the pipeline:
 .. code-block:: bash
 
     $ nextflow -bg run blueprint.pipeline.nf --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume 2>&1 > pipeline.log
+
+It is possible to run only some of the pipeline steps using the option ``--steps``. For example the following command will only run the ``mappping`` and ``quantification`` steps:
+
+.. code-block:: bash
+
+   $ nextflow -bg run blueprint.pipeline.nf --steps mapping,quantification --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume 2>&1 > pipeline.log
+
 
 Stop the pipeline
 -----------------
@@ -162,4 +190,6 @@ The string bewtween square brackets represents the prefix of the relative path t
     $ find work/b5 -name '0e02e9*' -exec ls -a {} \+
     .  ..  .command.begin  .command.env  .command.out  .command.run  .command.sh  .command.val  .exitcode  genome_index.gem  genome_index.log  hg38_AXM.fa
 
-
+.. Links
+.. _Nextflow: http://nextflow.io
+.. _Nextflow documentation: http://www.nextflow.io/docs/latest/index.html
