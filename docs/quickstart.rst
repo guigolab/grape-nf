@@ -87,6 +87,7 @@ To get the pipeline usage string and list of options use the following command:
         --index INDEX_FILE                  Index file.
         --genome GENOME_FILE                Reference genome file(s).
         --annotation ANNOTAION_FILE         Reference gene annotation file(s).
+        --steps STEP[,STEP]...              The steps to be executed within the pipeline run. Possible values: "mapping", "bigwig", "contig", "quantification". Default: all
         --error-strategy ERROR_STRATEGY     Specify how an error condition is managed by the pipeline processes. Possible values: ignore, retry
                                             Default: the entire pipeline  terminates if a process returns an error status.
         --max-read-length READ_LENGTH       The maximum read length (used to compute the transcriptomes). Default: "auto".
@@ -148,11 +149,11 @@ Here is a simple example of the command to run the pipeline:
 
 By default the pipeline execution will stop as far as one of the processes fails. To change this behaviour you can use the ``--error-strategy`` option. For example to ignore errors and keep processing use ``--errror-strategy ignore``.
 
-.. It is possible to run only some of the pipeline steps using the option ``--steps``. For example the following command will only run the ``mappping`` and ``quantification`` steps:
+It is possible to run only some of the pipeline steps using the option ``--steps``. For example the following command will only run the ``mappping`` and ``quantification`` steps:
 
-.. .. code-block:: bash
+.. code-block:: bash
 
-..    $ nextflow -bg run grape-pipeline.nf --steps mapping,quantification --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume 2>&1 > pipeline.log
+   $ nextflow -bg run grape-pipeline.nf --steps mapping,quantification --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume 2>&1 > pipeline.log
 
 
 Stop the pipeline
