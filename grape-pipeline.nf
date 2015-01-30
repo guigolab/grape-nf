@@ -21,7 +21,7 @@
 
 //Set default values for params
 
-params.steps = 'mapping,bigwig,contig,flux'
+params.steps = 'mapping,bigwig,contig,quantification'
 //params.tmpDir = (System.env.TMPDIR != null ? true : false)
 params.maxMismatches = 4
 params.maxMultimaps = 10
@@ -49,9 +49,10 @@ if (params.help) {
     log.info '    --index INDEX_FILE                  Index file.'
     log.info '    --genome GENOME_FILE                Reference genome file(s).'
     log.info '    --annotation ANNOTAION_FILE         Reference gene annotation file(s).'
+    log.info '    --steps STEP[,STEP]...              The steps to be executed within the pipeline run. Possible values: "mapping", "bigwig", "contig", "quantification". Default: all'
 //    log.info '    --tmp-dir                           Specify the temporary folder to be used as a scratch area.'
 //    log.info '                                        Default: "$TMPDIR" if the environment variable is defined, "-" otherwise.'
-    log.info '    --chunk-size CHUNK_SIZE             The number of records to be put in each chunk when splitting the input. Default: no split'
+//    log.info '    --chunk-size CHUNK_SIZE             The number of records to be put in each chunk when splitting the input. Default: no split'
 //    log.info '    --paired-end                        Specify whether the data is paired-end. Default: "auto".'
     log.info '    --error-strategy ERROR_STRATEGY     Specify how an error condition is managed by the pipeline processes. Possible values: ignore, retry'
     log.info '                                        Default: the entire pipeline  terminates if a process returns an error status.'
@@ -67,7 +68,7 @@ if (params.help) {
     log.info '    --rg-center-name CENTER_NAME        Name of sequencing center that produced the reads for the BAM @RG tag.'
     log.info '    --rg-desc DESCRIPTION               Description for the BAM @RG tag.'
 //    log.info '    --flux-mem MEMORY                   Specify the amount of ram the Flux Capacitor can use. Default: "3G".'
-    log.info '    --flux-profile                      Specify whether the Flux Capacitor profile file shoudl be written. Default: "false".'
+    log.info '    --flux-profile                      Specify whether the Flux Capacitor profile file should be written. Default: "false".'
     log.info '    --count-elements ELEMENTS           A comma separated list of elements to be counted by the Flux Capacitor.'
     log.info '                                        Possible values: INTRONS, SPLICE_JUNCTIONS. Default: "none".'
 //    log.info '    --loglevel LOGLEVEL                 Log level (error, warn, info, debug). Default "info".'
@@ -91,7 +92,7 @@ log.info "Index file                      : ${params.index}"
 log.info "Genome                          : ${params.genome}"
 log.info "Annotation                      : ${params.annotation}"
 log.info "Pipeline steps                  : ${pipelineSteps.join(" ")}"
-log.info "Input chunk size                : ${params.chunkSize != null ? params.chunkSize : 'no split'}"
+//log.info "Input chunk size                : ${params.chunkSize != null ? params.chunkSize : 'no split'}"
 log.info "Error strategy                  : ${params.errorStrategy != null ? params.errorStrategy : 'default'}"
 //log.info "Use temporary folder      : ${params.tmpDir}"
 log.info ""
@@ -110,7 +111,7 @@ if ('mapping' in pipelineSteps) {
     if ( params.rgDesc ) log.info "@RG Descritpiton                : ${params.rgDesc}" 
     log.info ""
 }
-if ('flux' in pipelineSteps || 'quantification' in pipelineSteps) {
+if ('quantification' in pipelineSteps) {
     log.info "Flux Capacitor parameters"
     log.info "-------------------------"
     log.info "Additional quantified elements  : ${params.countElements.size()==0 ? 'NONE' : params.countElements.join(" ")}"
@@ -411,9 +412,7 @@ process inferExp {
 
 if (!('bigwig' in pipelineSteps)) bam1 = Channel.just(Channel.STOP)
 if (!('contig' in pipelineSteps)) bam2 = Channel.just(Channel.STOP)
-if (!('flux' in pipelineSteps) && !('quantification' in pipelineSteps)) { 
-    bam3 = Channel.just(Channel.STOP)
-}
+if (!('quantification' in pipelineSteps)) bam3 = Channel.just(Channel.STOP)
 
 process bigwig {
     
