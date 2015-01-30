@@ -51,7 +51,7 @@ if (params.help) {
     log.info '    --annotation ANNOTAION_FILE         Reference gene annotation file(s).'
 //    log.info '    --tmp-dir                           Specify the temporary folder to be used as a scratch area.'
 //    log.info '                                        Default: "$TMPDIR" if the environment variable is defined, "-" otherwise.'
-//    log.info '    --chunk-size CHUNK_SIZE             The number of records to be put in each chunk when splitting the input. Default: no split'
+    log.info '    --chunk-size CHUNK_SIZE             The number of records to be put in each chunk when splitting the input. Default: no split'
 //    log.info '    --paired-end                        Specify whether the data is paired-end. Default: "auto".'
     log.info '    --error-strategy ERROR_STRATEGY     Specify how an error condition is managed by the pipeline processes. Possible values: ignore, retry'
     log.info '                                        Default: the entire pipeline  terminates if a process returns an error status.'
@@ -91,7 +91,7 @@ log.info "Index file                      : ${params.index}"
 log.info "Genome                          : ${params.genome}"
 log.info "Annotation                      : ${params.annotation}"
 log.info "Pipeline steps                  : ${pipelineSteps.join(" ")}"
-//log.info "Input chunk size                : ${params.chunkSize != null ? params.chunkSize : 'no split'}"
+log.info "Input chunk size                : ${params.chunkSize != null ? params.chunkSize : 'no split'}"
 log.info "Error strategy                  : ${params.errorStrategy != null ? params.errorStrategy : 'default'}"
 //log.info "Use temporary folder      : ${params.tmpDir}"
 log.info ""
@@ -128,7 +128,7 @@ input_chunks = Channel.create()
 
 data = ['samples': [], 'ids': []]
 merge = false
-input = Channel
+Channel
     .from(index.readLines())
     .map {
         line -> [ line.split()[0], line.split()[1], file(line.split()[2]), line.split()[3], line.split()[4] ]
@@ -148,8 +148,8 @@ input.subscribe onNext: {
         } 
         input_chunks << tuple(sample, id, path, type, view)
         data['samples'] << sample
-        data['ids'] << id 
-    }, onComplete: { 
+        data['ids'] << id }, 
+    onComplete: { 
         ids=data['ids'].unique().size()
         samples=data['samples'].unique().size()
         if (ids != samples) merge=true
@@ -162,14 +162,27 @@ input.subscribe onNext: {
         input_chunks << Channel.STOP 
     }
 
-input_files = input_chunks
+input_bams = Channel.create()
+bam = Channel.create()
+
+input_chunks
     .groupBy {
         sample, id, path, type, view -> id 
     }
     .flatMap ()
-    .map {        
-       [it.key, it.value[0][0], it.value.collect { sample, id, path, type, view -> path }, fastq(it.value[0][2]).qualityScore()]
-   }
+    .choice(input_files, input_bams) { it -> if ( it.value[0][3] == 'fastq' ) 0 else if ( it.value[0][3] == 'bam' ) 1}
+    
+input_files = input_files.map {        
+    [it.key, it.value[0][0], it.value.collect { sample, id, path, type, view -> path }, fastq(it.value[0][2]).qualityScore()]
+}
+
+// id, sample, type, view, "${id}${prefix}.bam", pairedEnd
+input_bams.map {
+    [it.key, it.value[0][0], it.value[0][3], it.value[0][4], it.value.collect { sample, id, path, type, view -> path }, true].flatten()
+}
+.subscribe onNext: {
+    bam << it
+}, onComplete: {}
 
 Genomes = Channel.create()
 Annotations = Channel.create()
@@ -184,143 +197,149 @@ Channel.from(genomes)
 (Genomes1, Genomes2) = Genomes.into(2)
 (Annotations1, Annotations2, Annotations3, Annotations4, Annotations5, Annotations6) = Annotations.into(6)
 
-process fastaIndex {
-    input:
-    set species, file(genome) from Genomes1
-    set species, file(annotation) from Annotations1
+pref = "_m${params.maxMismatches}_n${params.maxMultimaps}"
 
-    output:
-    set species, file("${genome}.fai") into FaiIdx
-
-    script:
-    def command = ""
+if ('contig' in pipelineSteps || 'bigwig' in pipelineSteps) {
+    process fastaIndex {
+        input:
+        set species, file(genome) from Genomes1
+        set species, file(annotation) from Annotations1
     
-    command += "samtools faidx ${genome}"
+        output:
+        set species, file("${genome}.fai") into FaiIdx
     
-    return command
+        script:
+        def command = ""
+        
+        command += "samtools faidx ${genome}"
+        
+        return command
+    }
+} else {
+    FaiIdx = Channel.just(Channel.STOP)
 }
 
 (FaiIdx1, FaiIdx2) = FaiIdx.into(2)
-
-process index {
-
-    input:
-    set species, file(genome) from Genomes2
-
-    output:
-    set species, file("genome_index.gem") into GenomeIdx
-
-    script:
-    def command = ""
+ 
+if ('mapping' in pipelineSteps) {
+    process index {
     
-    command += "gemtools index -i ${genome} -t ${task.cpus} -o genome_index.gem"
+        input:
+        set species, file(genome) from Genomes2
     
-    return command
-}
-
-(GenomeIdx1, GenomeIdx2, GenomeIdx3) = GenomeIdx.into(3)
-
-process t_index {
-
-    input:
-    set species, file(genome_index) from GenomeIdx1
-    set species, file(annotation) from Annotations2
-
-    output:
-    set species, file('tx_index.junctions.gem'), file('tx_index.junctions.keys') into TranscriptIdx
-
-    script:
-    def command = ""
-
-    command += "gemtools t-index -i ${genome_index} -a ${annotation} -t ${task.cpus} -o tx_index" 
-    if ( params.maxReadLength != null ) command += ' -m ${params.maxReadLength}'
-
-    return command
-}
-
-pref = "_m${params.maxMismatches}_n${params.maxMultimaps}"
-
-process mapping {
-
-    input:
-    set id, sample, file(reads), qualityOffset from input_files
-    set species, file(annotation) from Annotations3.first()
-    set species, file(genome_index) from GenomeIdx2.first()
-    set species, file(tx_index), file(tx_keys) from TranscriptIdx.first()
-
-    output:
-    set id, sample, view, "${id}.filtered.map.gz", pairedEnd, qualityOffset into map
-
-    script:
-    view = 'gemFiltered'
-    def command = ""
+        output:
+        set species, file("genome_index.gem") into GenomeIdx
     
-    fqs = reads.toString().split(" ")
-    pairedEnd = false
-    if (fqs.size() == 2) pairedEnd = true 
-
-    command += "gemtools rna-pipeline -i ${genome_index} -a ${annotation} -r ${tx_index} -k ${tx_keys} -f ${reads}"
-    command += " --filter-max-multi-maps ${params.maxMultimaps}"
-    command += " --filter-max-error-events ${params.maxMismatches}"
-    if ( params.filterBlockLength ) command += " --filter-block-length ${params.filterBlockLength}"
-    if ( params.filterIntronLength ) command += " --filter-intron-length ${params.filterIntronLength}"
-    if ( params.filterUniqLevel ) command += " --filter-level ${params.filterUniqLevel}"
-    command += " --no-bam"
-    if (!pairedEnd) {
-        command += " --single-end"
+        script:
+        def command = ""
+        
+        command += "gemtools index -i ${genome} -t ${task.cpus} -o genome_index.gem"
+        
+        return command
     }
-    command += " -t ${task.cpus} -q ${qualityOffset} -n ${id}"
-
-    return command
-}
-
-process gemToBam {
-
-    input:
-    set id, sample, view, gem_filtered, pairedEnd, qualityOffset from map
-    set species, file(genome_index) from GenomeIdx3.first()
-
-    output:
-    set id, sample, type, view, "${id}${prefix}.bam", pairedEnd into bam
-
-    script:    
-    // prepare BAM @RG tag information
-    // def date = new Date().format("yyyy-MM-dd'T'HH:mmZ", TimeZone.getTimeZone("UTC"))
-    def date = ""
-    def readGroup = []
-    readGroup << "ID=${id}" 
-    readGroup << "PU=${id}" 
-    readGroup << "SM=${sample}" 
-    if ( date ) readGroup << "DT=${date}"
-    if ( params.rgPlatform ) readGroup << "PL=${params.rgPlatform}"
-    if ( params.rgLibrary ) readGroup << "LB=${params.rgLibrary}"
-    if ( params.rgCenterName ) readGroup << "CN=${params.rgCenterName}"
-    if ( params.rgDesc ) readGroup << "DS=${params.rgDesc}"
-
-    def command = ""
-    awkCommand = 'BEGIN{OFS=FS=\"\t\"}\$0!~/^@/{split(\"1_2_8_32_64_128\",a,\"_\");for(i in a){if(and(\$2,a[i])>0){\$2=xor(\$2,a[i])}}}{print}'
-    type = "bam"
-    view = "Alignments"
-    prefix = pref
-
-    command += "pigz -p ${task.cpus} -dc ${gem_filtered}"
-    command += " | gem-2-sam -T ${task.cpus} -I ${genome_index} -q offset-${qualityOffset} -l"
-    if (readGroup) {
-       command += " --read-group ${readGroup.join(',')}"
+    
+    (GenomeIdx1, GenomeIdx2, GenomeIdx3) = GenomeIdx.into(3)
+    
+    process t_index {
+    
+        input:
+        set species, file(genome_index) from GenomeIdx1
+        set species, file(annotation) from Annotations2
+    
+        output:
+        set species, file('tx_index.junctions.gem'), file('tx_index.junctions.keys') into TranscriptIdx
+    
+        script:
+        def command = ""
+    
+        command += "gemtools t-index -i ${genome_index} -a ${annotation} -t ${task.cpus} -o tx_index" 
+        if ( params.maxReadLength != null ) command += ' -m ${params.maxReadLength}'
+    
+        return command
     }
-    if (pairedEnd) {
-       command += " --expect-paired-end-reads"
-    }
-    else {
-       command += " --expect-single-end-reads"
-       command += " | awk '${awkCommand}'"
+ 
+    process mapping {
+    
+        input:
+        set id, sample, file(reads), qualityOffset from input_files
+        set species, file(annotation) from Annotations3.first()
+        set species, file(genome_index) from GenomeIdx2.first()
+        set species, file(tx_index), file(tx_keys) from TranscriptIdx.first()
+    
+        output:
+        set id, sample, view, "${id}.filtered.map.gz", pairedEnd, qualityOffset into map
+    
+        script:
+        view = 'gemFiltered'
+        def command = ""
+        
+        fqs = reads.toString().split(" ")
+        pairedEnd = false
+        if (fqs.size() == 2) pairedEnd = true 
+    
+        command += "gemtools rna-pipeline -i ${genome_index} -a ${annotation} -r ${tx_index} -k ${tx_keys} -f ${reads}"
+        command += " --filter-max-multi-maps ${params.maxMultimaps}"
+        command += " --filter-max-error-events ${params.maxMismatches}"
+        if ( params.filterBlockLength ) command += " --filter-block-length ${params.filterBlockLength}"
+        if ( params.filterIntronLength ) command += " --filter-intron-length ${params.filterIntronLength}"
+        if ( params.filterUniqLevel ) command += " --filter-level ${params.filterUniqLevel}"
+        command += " --no-bam"
+        if (!pairedEnd) {
+            command += " --single-end"
+        }
+        command += " -t ${task.cpus} -q ${qualityOffset} -n ${id}"
+    
+        return command
     }
 
-    command += " | samtools view -@ ${task.cpus} -Sb -"
-    command += " | samtools sort -@ ${task.cpus} -m ${(long)(task.memory.toBytes()/(2*task.cpus))} - ${id}${prefix}"
-    command += " && samtools index ${id}${prefix}.bam"
-
-    return command
+    process gemToBam {
+    
+        input:
+        set id, sample, view, gem_filtered, pairedEnd, qualityOffset from map
+        set species, file(genome_index) from GenomeIdx3.first()
+    
+        output:
+        set id, sample, type, view, "${id}${prefix}.bam", pairedEnd into bam
+    
+        script:    
+        // prepare BAM @RG tag information
+        // def date = new Date().format("yyyy-MM-dd'T'HH:mmZ", TimeZone.getTimeZone("UTC"))
+        def date = ""
+        def readGroup = []
+        readGroup << "ID=${id}" 
+        readGroup << "PU=${id}" 
+        readGroup << "SM=${sample}" 
+        if ( date ) readGroup << "DT=${date}"
+        if ( params.rgPlatform ) readGroup << "PL=${params.rgPlatform}"
+        if ( params.rgLibrary ) readGroup << "LB=${params.rgLibrary}"
+        if ( params.rgCenterName ) readGroup << "CN=${params.rgCenterName}"
+        if ( params.rgDesc ) readGroup << "DS=${params.rgDesc}"
+    
+        def command = ""
+        awkCommand = 'BEGIN{OFS=FS=\"\t\"}\$0!~/^@/{split(\"1_2_8_32_64_128\",a,\"_\");for(i in a){if(and(\$2,a[i])>0){\$2=xor(\$2,a[i])}}}{print}'
+        type = "bam"
+        view = "Alignments"
+        prefix = pref
+    
+        command += "pigz -p ${task.cpus} -dc ${gem_filtered}"
+        command += " | gem-2-sam -T ${task.cpus} -I ${genome_index} -q offset-${qualityOffset} -l"
+        if (readGroup) {
+           command += " --read-group ${readGroup.join(',')}"
+        }
+        if (pairedEnd) {
+           command += " --expect-paired-end-reads"
+        }
+        else {
+           command += " --expect-single-end-reads"
+           command += " | awk '${awkCommand}'"
+        }
+    
+        command += " | samtools view -@ ${task.cpus} -Sb -"
+        command += " | samtools sort -@ ${task.cpus} -m ${(long)(task.memory.toBytes()/(2*task.cpus))} - ${id}${prefix}"
+        command += " && samtools index ${id}${prefix}.bam"
+    
+        return command
+    }
 }
 
 if (merge) {
@@ -389,6 +408,12 @@ process inferExp {
 
 
 (bam1, bam2, bam3, out) = bamStrand.into(4)
+
+if (!('bigwig' in pipelineSteps)) bam1 = Channel.just(Channel.STOP)
+if (!('contig' in pipelineSteps)) bam2 = Channel.just(Channel.STOP)
+if (!('flux' in pipelineSteps) && !('quantification' in pipelineSteps)) { 
+    bam3 = Channel.just(Channel.STOP)
+}
 
 process bigwig {
     
