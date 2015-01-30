@@ -87,7 +87,6 @@ To get the pipeline usage string and list of options use the following command:
         --index INDEX_FILE                  Index file.
         --genome GENOME_FILE                Reference genome file(s).
         --annotation ANNOTAION_FILE         Reference gene annotation file(s).
-        --chunk-size CHUNK_SIZE             The number of records to be put in each chunk when splitting the input. Default: no split
         --error-strategy ERROR_STRATEGY     Specify how an error condition is managed by the pipeline processes. Possible values: ignore, retry
                                             Default: the entire pipeline  terminates if a process returns an error status.
         --max-read-length READ_LENGTH       The maximum read length (used to compute the transcriptomes). Default: "auto".
