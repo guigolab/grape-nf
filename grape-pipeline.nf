@@ -128,7 +128,7 @@ input_chunks = Channel.create()
 
 data = ['samples': [], 'ids': []]
 merge = false
-Channel
+input = Channel
     .from(index.readLines())
     .map {
         line -> [ line.split()[0], line.split()[1], file(line.split()[2]), line.split()[3], line.split()[4] ]
