@@ -51,7 +51,7 @@ if (params.help) {
     log.info '    --annotation ANNOTAION_FILE         Reference gene annotation file(s).'
 //    log.info '    --tmp-dir                           Specify the temporary folder to be used as a scratch area.'
 //    log.info '                                        Default: "$TMPDIR" if the environment variable is defined, "-" otherwise.'
-    log.info '    --chunk-size CHUNK_SIZE             The number of records to be put in each chunk when splitting the input. Default: no split'
+//    log.info '    --chunk-size CHUNK_SIZE             The number of records to be put in each chunk when splitting the input. Default: no split'
 //    log.info '    --paired-end                        Specify whether the data is paired-end. Default: "auto".'
     log.info '    --error-strategy ERROR_STRATEGY     Specify how an error condition is managed by the pipeline processes. Possible values: ignore, retry'
     log.info '                                        Default: the entire pipeline  terminates if a process returns an error status.'
@@ -91,7 +91,7 @@ log.info "Index file                      : ${params.index}"
 log.info "Genome                          : ${params.genome}"
 log.info "Annotation                      : ${params.annotation}"
 log.info "Pipeline steps                  : ${pipelineSteps.join(" ")}"
-log.info "Input chunk size                : ${params.chunkSize != null ? params.chunkSize : 'no split'}"
+//log.info "Input chunk size                : ${params.chunkSize != null ? params.chunkSize : 'no split'}"
 log.info "Error strategy                  : ${params.errorStrategy != null ? params.errorStrategy : 'default'}"
 //log.info "Use temporary folder      : ${params.tmpDir}"
 log.info ""
