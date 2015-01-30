@@ -144,13 +144,15 @@ Here is a simple example of the command to run the pipeline:
 
 .. code-block:: bash
 
-    $ nextflow -bg run blueprint.pipeline.nf --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume 2>&1 > pipeline.log
+    $ nextflow -bg run grape-pipeline.nf --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume 2>&1 > pipeline.log
 
-It is possible to run only some of the pipeline steps using the option ``--steps``. For example the following command will only run the ``mappping`` and ``quantification`` steps:
+By default the pipeline execution will stop as far as one of the processes fails. To change this behaviour you can use the ``--error-strategy`` option. For example to ignore errors and keep processing use ``--errror-strategy ignore``.
 
-.. code-block:: bash
+.. It is possible to run only some of the pipeline steps using the option ``--steps``. For example the following command will only run the ``mappping`` and ``quantification`` steps:
 
-   $ nextflow -bg run blueprint.pipeline.nf --steps mapping,quantification --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume 2>&1 > pipeline.log
+.. .. code-block:: bash
+
+..    $ nextflow -bg run grape-pipeline.nf --steps mapping,quantification --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume 2>&1 > pipeline.log
 
 
 Stop the pipeline
