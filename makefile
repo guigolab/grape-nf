@@ -1,6 +1,9 @@
 SHELL = bash
 VENV = env
 
+ifndef DEPLOYSERVER
+	DEPLOYSERVER = localhost
+endif
 ifndef DEPLOYDIR
 	DEPLOYDIR = ~/public_html/grape/docs
 endif
