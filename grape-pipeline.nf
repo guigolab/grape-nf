@@ -244,10 +244,6 @@ if ('mapping' in pipelineSteps) {
      
     (GenomeIdx1, GenomeIdx2, GenomeIdx3) = GenomeIdx.into(3)
     
-    GenomeIdx1.subscribe {
-        println it
-    }
-
     process t_index {
     
         input:
@@ -266,94 +262,52 @@ if ('mapping' in pipelineSteps) {
         return command
     }
 
-    TranscriptIdx.subscribe {
-        println it
-    }
-
-    return
- 
     process mapping {
     
         input:
         set id, sample, file(reads), qualityOffset from input_files
         set species, file(annotation) from Annotations3.first()
-        set species, file(genome_index) from GenomeIdx2.first()
-        set species, file(tx_index), file(tx_keys) from TranscriptIdx.first()
+        set species, file(genomeDir) from GenomeIdx2.first()
     
         output:
-        set id, sample, view, "${id}.filtered.map.gz", pairedEnd, qualityOffset into map
+        set id, sample, type, view, file("${id}${prefix}.bam"), pairedEnd into bam
     
         script:
-        view = 'gemFiltered'
+        type = 'bam'
+        view = 'Alignments'
+        prefix = pref
+        
+        // prepare BAM @RG tag information
+        // def date = new Date().format("yyyy-MM-dd'T'HH:mmZ", TimeZone.getTimeZone("UTC"))
+        def date = ""
+        def readGroup = []
+        readGroup << "ID:${id}" 
+        readGroup << "PU:${id}" 
+        readGroup << "SM:${sample}" 
+        if ( date ) readGroup << "DT:${date}"
+        if ( params.rgPlatform ) readGroup << "PL:${params.rgPlatform}"
+        if ( params.rgLibrary ) readGroup << "LB:${params.rgLibrary}"
+        if ( params.rgCenterName ) readGroup << "CN:${params.rgCenterName}"
+        if ( params.rgDesc ) readGroup << "DS:${params.rgDesc}"
+
         def command = ""
         
         fqs = reads.toString().split(" ")
         pairedEnd = false
         if (fqs.size() == 2) pairedEnd = true 
-    
-        command += "gemtools rna-pipeline -i ${genome_index} -a ${annotation} -r ${tx_index} -k ${tx_keys} -f ${reads}"
-        command += " --filter-max-multi-maps ${params.maxMultimaps}"
-        command += " --filter-max-error-events ${params.maxMismatches}"
-        if ( params.filterBlockLength ) command += " --filter-block-length ${params.filterBlockLength}"
-        if ( params.filterIntronLength ) command += " --filter-intron-length ${params.filterIntronLength}"
-        if ( params.filterUniqLevel ) command += " --filter-level ${params.filterUniqLevel}"
-        command += " --no-bam"
-        if (!pairedEnd) {
-            command += " --single-end"
-        }
-        command += " -t ${task.cpus} -q ${qualityOffset} -n ${id}"
-    
+   
+        command += "STAR --runThreadN ${task.cpus} --genomeDir ${genomeDir} --readFilesIn ${reads} --outSAMunmapped Within --outFilterType BySJout --outSAMattributes NH HI AS NM MD"
+        command += " --outFilterMultimapNmax ${params.maxMultimaps}   --outFilterMismatchNmax 999 --outFilterMismatchNoverReadLmax 0.0${params.maxMismatches}"
+        command += " --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000 --alignSJoverhangMin 8   --alignSJDBoverhangMin 1 --readFilesCommand pigz -p${task.cpus} -dc"
+        command += " --outSAMtype BAM SortedByCoordinate --quantMode TranscriptomeSAM --outSAMstrandField intronMotif"
+        command += " --outSAMattrRGline ${readGroup.join(' ')} "
+        command += " && mv Aligned.sortedByCoord.out.bam ${id}${prefix}.bam"
+        command += " && mv Aligned.toTranscriptome.out.bam ${id}${prefix}.toTranscriptome.bam"
+        command += " && samtools index ${id}${prefix}.bam"
+        
         return command
     }
 
-    process gemToBam {
-    
-        input:
-        set id, sample, view, gem_filtered, pairedEnd, qualityOffset from map
-        set species, file(genome_index) from GenomeIdx3.first()
-    
-        output:
-        set id, sample, type, view, "${id}${prefix}.bam", pairedEnd into bam
-    
-        script:    
-        // prepare BAM @RG tag information
-        // def date = new Date().format("yyyy-MM-dd'T'HH:mmZ", TimeZone.getTimeZone("UTC"))
-        def date = ""
-        def readGroup = []
-        readGroup << "ID=${id}" 
-        readGroup << "PU=${id}" 
-        readGroup << "SM=${sample}" 
-        if ( date ) readGroup << "DT=${date}"
-        if ( params.rgPlatform ) readGroup << "PL=${params.rgPlatform}"
-        if ( params.rgLibrary ) readGroup << "LB=${params.rgLibrary}"
-        if ( params.rgCenterName ) readGroup << "CN=${params.rgCenterName}"
-        if ( params.rgDesc ) readGroup << "DS=${params.rgDesc}"
-    
-        def command = ""
-        awkCommand = 'BEGIN{OFS=FS=\"\t\"}\$0!~/^@/{split(\"1_2_8_32_64_128\",a,\"_\");for(i in a){if(and(\$2,a[i])>0){\$2=xor(\$2,a[i])}}}{print}'
-        type = "bam"
-        view = "Alignments"
-        prefix = pref
-    
-        command += "pigz -p ${task.cpus} -dc ${gem_filtered}"
-        command += " | gem-2-sam -T ${task.cpus} -I ${genome_index} -q offset-${qualityOffset} -l"
-        if (readGroup) {
-           command += " --read-group ${readGroup.join(',')}"
-        }
-        if (pairedEnd) {
-           command += " --expect-paired-end-reads"
-        }
-        else {
-           command += " --expect-single-end-reads"
-           command += " | awk '${awkCommand}'"
-        }
-    
-        command += " | samtools view -@ ${task.cpus} -Sb -"
-        command += " | samtools sort -@ ${task.cpus} -m ${(long)(task.memory.toBytes()/(2*task.cpus))} - ${id}${prefix}"
-        command += " && samtools index ${id}${prefix}.bam"
-    
-        return command
-    }
 }
 
 if (merge) {
