@@ -30,6 +30,7 @@ params.countElements = []
 //params.fluxMem = '3G'
 params.fluxProfile = false 
 if (params.chunkSize) params.chunkSize = params.chunkSize as int
+if (params.sjOverHang) params.sjOverHang = params.sjOverHang as int else params.sjOverHang = 50
 
 // get list of steps from comma-separated strings
 pipelineSteps = params.steps.split(',').collect { it.trim() }
@@ -195,8 +196,8 @@ Channel.from(genomes)
         a -> [[a[0],a[1]], [a[0],a[2]]]
     }
 
-(Genomes1, Genomes2) = Genomes.into(2)
-(Annotations1, Annotations2, Annotations3, Annotations4, Annotations5, Annotations6) = Annotations.into(6)
+(Genomes1, Genomes2, Genomes3) = Genomes.into(3)
+(Annotations1, Annotations2, Annotations3, Annotations4, Annotations5, Annotations6, Annotations7) = Annotations.into(7)
 
 pref = "_m${params.maxMismatches}_n${params.maxMultimaps}"
 
@@ -227,37 +228,49 @@ if ('mapping' in pipelineSteps) {
     
         input:
         set species, file(genome) from Genomes2
+        set species, file(annotation) from Annotations7
     
         output:
-        set species, file("genome_index.gem") into GenomeIdx
+        set species, file("genomeDir") into GenomeIdx
     
         script:
         def command = ""
-        
-        command += "gemtools index -i ${genome} -t ${task.cpus} -o genome_index.gem"
+       
+        command += "mkdir genomeDir\n"
+        command += "STAR --runThreadN ${task.cpus} --runMode genomeGenerate --genomeDir genomeDir --genomeFastaFiles ${genome} --sjdbGTFfile ${annotation} --sjdbOverhang ${params.sjOverHang}" 
         
         return command
     }
-    
+     
     (GenomeIdx1, GenomeIdx2, GenomeIdx3) = GenomeIdx.into(3)
     
+    GenomeIdx1.subscribe {
+        println it
+    }
+
     process t_index {
     
         input:
-        set species, file(genome_index) from GenomeIdx1
+        set species, file(genome) from Genomes3
         set species, file(annotation) from Annotations2
     
         output:
-        set species, file('tx_index.junctions.gem'), file('tx_index.junctions.keys') into TranscriptIdx
+        set species, file('txDir') into TranscriptIdx
     
         script:
         def command = ""
-    
-        command += "gemtools t-index -i ${genome_index} -a ${annotation} -t ${task.cpus} -o tx_index" 
-        if ( params.maxReadLength != null ) command += ' -m ${params.maxReadLength}'
+   
+        command += "mkdir txDir\n"
+        command += "rsem-prepare-reference --no-polyA --gtf ${annotation} ${genome} txDir/RSEMref"
     
         return command
     }
+
+    TranscriptIdx.subscribe {
+        println it
+    }
+
+    return
  
     process mapping {
     
