@@ -360,7 +360,7 @@ process inferExp {
     set species, file(annotation) from Annotations4.first()
 
     output:
-    set id, type, view, file("${id}${prefix}.bam"), pairedEnd, stdout into bamStrand
+    set id, stdout into bamStrand
 
     script:
     def command = ""
@@ -375,7 +375,13 @@ process inferExp {
 }
 
 
-(bam1, bam2, bam3, out) = bamStrand.into(4)
+allBams = bam2.mix(bamStrand)
+.groupBy()
+.flatMap {
+    bam -> bam.collect { [ it.value[0], it.value[1][-1] ].flatten() } 
+}
+
+(bam1, bam2, bam3, out) = allBams.into(4)
 
 if (!('bigwig' in pipelineSteps)) bam1 = Channel.just(Channel.STOP)
 if (!('contig' in pipelineSteps)) bam2 = Channel.just(Channel.STOP)
@@ -491,89 +497,40 @@ process contig {
 process quantification {
 
     input:    
-    set id, type, view, file(bam), file(bai), pairedEnd, readStrand from bam3.map { [it[0],it[1],it[2],it[3],file("${it[3].toAbsolutePath()}.bai"),it[4],it[5]] }
-    set species, file(annotation) from Annotations5.first() 
+    set id, type, view, file(bam), file(bai), pairedEnd, readStrand from bam3.map { [it[0],it[1],it[2],file("${it[3].toAbsolutePath().toString().replace('.bam','.toTranscriptome.bam')}"),file("${it[3].toAbsolutePath()}.bai"),it[4],it[5]] }
+    set species, file(txDir) from TranscriptIdx.first()
 
     output:
-    set id, type, view, file("${id}${prefix}.gtf") into flux
+    set id, type, viewTx, file("Quant.genes.results") into flux
+    set id, type, viewGn, file("Quant.isoforms.results") into flux
 
     script:
     type = "gtf"
-    view = "Transcript${annotation.name.replace('.gtf','').capitalize()}"
+    viewTx = "Transcript${txDir.name.replace('.gtf','').capitalize()}"
+    viewGn = "Gene${txDir.name.replace('.gtf','').capitalize()}"
     prefix = pref
     def command = ""
-    paramFile = file('${id}${prefix}.par')
 
-    //Flux parameter file has to be in the same folder as the bam - Flux bug
+    command += "cat <( samtools view -H ${bam} )  <( samtools view -@ ${task.cpus} ${bam}"
+    if (pairedEnd) command += " | paste -d ' ' - -"
+    command += " | sort -S ${task.memory.toBytes()} -T ./"
+    if (pairedEnd) command += " | tr ' ' '\n'"
+    command += " ) | samtools view -@ ${task.cpus} -bS - > tmp.bam"
+    command += " && mv tmp.bam ${bam}\n"
 
-    /* paramFile.append("# Flux Capacitor parameter file for ${id}\n")
-    annotationMapping = "AUTO"
-    if (readStrand != "NONE") {        
-        paramFile.append("READ_STRAND ${readStrand}\n")
-        annotationMapping="STRANDED"
-        if (pairedEnd) {
-            annotationMapping="PAIRED_${annotationMapping}"
-        }
-        else {
-            annotationMapping="SINGLE_${annotationMapping}"
-        }
-    }
-    paramFile.append("ANNOTATION_MAPPING ${annotationMapping}\n")
-    paramFile.append("COUNT_ELEMENTS ${params.countElements}\n")
+    command += "rsem-calculate-expression --bam --estimate-rspd  --calc-ci --no-bam-output --seed 12345"
+    command += " -p ${task.cpus} --ci-memory ${task.memory.toMega()}" 
 
-    if (params.fluxProfile) {
-        paramFile.append("PROFILE_FILE ${id}${prefix}_profile.json\n")
-        command += "flux-capacitor --profile -p ${paramFile} -i ${bam}  -a ${annotation}"
-    }
-    command += "flux-capacitor -p ${paramFile} -i ${bam} -a ${annotation} -o ${id}${prefix}.gtf".toString() */
+    if (pairedEnd) command += " --paired-end"
+    if (readStrand != "NONE") command += " --forward-prob 0"
 
-    // Workaround
-    fluxParams = ""
-    annotationMapping = "AUTO"
-    if (readStrand != "NONE") {
-        annotationMapping="STRANDED"
-        if (pairedEnd) {
-            annotationMapping="PAIRED_${annotationMapping}"            
-        }
-        else {
-            annotationMapping="SINGLE_${annotationMapping}"
-        }
-        fluxParams += " --read-strand ${readStrand}"
-    }
-    fluxParams += " -m ${annotationMapping}"
-    fluxParams += " --count-elements ${params.countElements}"
-
-    if (params.fluxProfile) {
-        fluxParams += " --profile-file ${id}${prefix}_profile.json"
-        command += "flux-capacitor --profile ${fluxParams} -i ${bam}  -a ${annotation}; "
-    }
-    command += "flux-capacitor ${fluxParams} -i ${bam} -a ${annotation} -o ${id}${prefix}.gtf"
+    command += " ${bam} ${txDir}/RSEMref Quant"
+    command += " && rsem-plot-model Quant Quant.pdf"
 
     return command
 }
 
-(flux1, flux2) = flux.into(2)
-
-process geneQuantification {
-    
-    input:
-    set id, type, view, file(fluxGtf) from flux1
-    set species, file(annotation) from Annotations6.first() 
-
-    output:
-    set id, type, view, file("${id}${prefix}_gene_with_rpkm.gff") into genes
-
-    script:
-    type = "gff"
-    view = "Gene${annotation.name.replace('.gtf','').capitalize()}"
-    prefix = pref
-    command = "TrtoGn_RPKM.sh -a ${annotation} -i ${fluxGtf}"
-    
-    return command
-
-}
-
-out.mix(bigwig, contig, flux2, genes).collectFile(name: "pipeline.db", newLine: true) {
+out.mix(bigwig, contig, flux).collectFile(name: "pipeline.db", newLine: true) {
     [it[3], it[0], it[1], it[2]].join("\t")
 }
 .subscribe {
