@@ -501,8 +501,8 @@ process quantification {
     set species, file(txDir) from TranscriptIdx.first()
 
     output:
-    set id, type, viewTx, file("Quant.genes.results") into flux
-    set id, type, viewGn, file("Quant.isoforms.results") into flux
+    set id, type, viewTx, file("Quant.genes.results") into isoforms
+    set id, type, viewGn, file("Quant.isoforms.results") into genes
 
     script:
     type = "gtf"
@@ -530,7 +530,7 @@ process quantification {
     return command
 }
 
-out.mix(bigwig, contig, flux).collectFile(name: "pipeline.db", newLine: true) {
+out.mix(bigwig, contig, isoforms, genes).collectFile(name: "pipeline.db", newLine: true) {
     [it[3], it[0], it[1], it[2]].join("\t")
 }
 .subscribe {
