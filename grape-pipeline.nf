@@ -400,30 +400,27 @@ process bigwig {
     views = []
     view = 'Signal'
     type = "bigwig"
+    strand = ['unstranded': '.raw']
+    bedGraphs = ['.Unique', '.UniqueMultiple']
+    
     def command = ''
-    strand = ['': '.raw']
-    mateBit = 0
-    awkCommand = 'BEGIN {OFS=\"\\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}'
+    command += "mkdir Signal\n"
+    command += "STAR --runMode inputAlignmentsFromBAM --inputBAMfile ${bam} --outWigType bedGraph"
     if (readStrand != 'NONE') {
-        strand = ['+': '.plusRaw','-': '.minusRaw']
-        if (pairedEnd) mateBit = (readStrand =~ /MATE2/ ? 64 : 128)
+        strand = ['strand+': '.plusRaw','strand-': '.minusRaw'] 
+        command += " --outWigStrand Stranded"
+    } else {
+        command += " --outWigStrand Unstranded"
     }
-
-    if (mateBit > 0) {
-        command += "samtools view -h -@ ${task.cpus} ${bam}"
-        command += " | awk -v MateBit=${mateBit} '${awkCommand}'"
-        command += " | samtools view -@ ${task.cpus} -Sb -"
-        command += " > tmp.bam\n"
-        command += "mv -f tmp.bam ${bam}\n"
-    }
-
-    strand.each( {
-        command += "genomeCoverageBed "
-        command += (it.key != '' ? "-strand ${it.key} ".toString() : ''.toString())
-        command += "-split -bg -ibam ${bam} > ${id}${it.value}.bedgraph\n"
-        command += "bedGraphToBigWig ${id}${it.value}.bedgraph ${genomefai} ${id}${it.value}.bw\n"
-
-        views << "${it.value[1..-1].capitalize()}${view}"
+    //command += " --outFileNamePrefix ./Signal/ --outWigReferencesPrefix ${wigRefPrefix}\n"
+    command += " --outFileNamePrefix ./Signal/\n"
+    
+    bedGraphs.each( { bg ->
+        strand.eachWithIndex( { str, istr ->
+            istr+=1
+            command += "bedGraphToBigWig Signal/Signal${bg}.str${istr}.out.bg ${genomefai} ${id}${bg}${str.value}.bw\n"
+            views << "${str.value[1..-1].capitalize()}${view}"
+        } )
     } )
 
     return command
