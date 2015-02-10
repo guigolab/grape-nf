@@ -412,7 +412,7 @@ process bigwig {
     
     def command = ''
     command += "mkdir Signal\n"
-    command += "STAR --runMode inputAlignmentsFromBAM --inputBAMfile ${bam} --outWigType bedGraph"
+    command += "STAR --runThreadN ${task.cpus} --runMode inputAlignmentsFromBAM --inputBAMfile ${bam} --outWigType bedGraph"
     if (readStrand != 'NONE') {
         strand = ['strand+': '.plusRaw','strand-': '.minusRaw'] 
         command += " --outWigStrand Stranded"
