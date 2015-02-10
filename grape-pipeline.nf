@@ -26,11 +26,12 @@ params.steps = 'mapping,bigwig,contig,quantification'
 params.maxMismatches = 4
 params.maxMultimaps = 10
 params.bamStats = false
-params.countElements = [] 
+//params.countElements = [] 
 //params.fluxMem = '3G'
-params.fluxProfile = false 
+//params.fluxProfile = false 
 if (params.chunkSize) params.chunkSize = params.chunkSize as int
-if (params.sjOverHang) params.sjOverHang = params.sjOverHang as int else params.sjOverHang = 50
+if (params.sjOverHang) params.sjOverHang = params.sjOverHang as int else params.sjOverHang = 100
+if (!(params.wigRefPrefix)) params.wigRefPrefix = 'chr'
 
 // get list of steps from comma-separated strings
 pipelineSteps = params.steps.split(',').collect { it.trim() }
@@ -57,21 +58,21 @@ if (params.help) {
 //    log.info '    --paired-end                        Specify whether the data is paired-end. Default: "auto".'
     log.info '    --error-strategy ERROR_STRATEGY     Specify how an error condition is managed by the pipeline processes. Possible values: ignore, retry'
     log.info '                                        Default: the entire pipeline  terminates if a process returns an error status.'
-    log.info '    --max-read-length READ_LENGTH       The maximum read length (used to compute the transcriptomes). Default: "auto".'
+//    log.info '    --max-read-length READ_LENGTH       The maximum read length (used to compute the transcriptomes). Default: "auto".'
     log.info '    --max-mismatches THRESHOLD          Set maps with more than THRESHOLD error events to unmapped. Default "4".'
     log.info '    --max-multimaps THRESHOLD           Set multi-maps with more than THRESHOLD mappings to unmapped. Default "10".'
-    log.info '    --filter-intron-length THRESHOLD    Filter multimaps preferring ones with intron length > THRESHOLD'
-    log.info '    --filter-block-length THRESHOLD     Filter multimaps preferring ones with block length > THRESHOLD'
-    log.info '    --filter-level LEVEL                Reduce multimaps using the specified uniqueness level.'
+//    log.info '    --filter-intron-length THRESHOLD    Filter multimaps preferring ones with intron length > THRESHOLD'
+//    log.info '    --filter-block-length THRESHOLD     Filter multimaps preferring ones with block length > THRESHOLD'
+//    log.info '    --filter-level LEVEL                Reduce multimaps using the specified uniqueness level.'
 //    log.info '    --read-strand READ_STRAND           Directionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default "auto".'
     log.info '    --rg-platform PLATFORM              Platform/technology used to produce the reads for the BAM @RG tag.'
     log.info '    --rg-library LIBRARY                Sequencing library name for the BAM @RG tag.'
     log.info '    --rg-center-name CENTER_NAME        Name of sequencing center that produced the reads for the BAM @RG tag.'
     log.info '    --rg-desc DESCRIPTION               Description for the BAM @RG tag.'
 //    log.info '    --flux-mem MEMORY                   Specify the amount of ram the Flux Capacitor can use. Default: "3G".'
-    log.info '    --flux-profile                      Specify whether the Flux Capacitor profile file should be written. Default: "false".'
-    log.info '    --count-elements ELEMENTS           A comma separated list of elements to be counted by the Flux Capacitor.'
-    log.info '                                        Possible values: INTRONS, SPLICE_JUNCTIONS. Default: "none".'
+//    log.info '    --flux-profile                      Specify whether the Flux Capacitor profile file should be written. Default: "false".'
+//    log.info '    --count-elements ELEMENTS           A comma separated list of elements to be counted by the Flux Capacitor.'
+//    log.info '                                        Possible values: INTRONS, SPLICE_JUNCTIONS. Default: "none".'
 //    log.info '    --loglevel LOGLEVEL                 Log level (error, warn, info, debug). Default "info".'
     exit 1
 }
@@ -102,7 +103,7 @@ if ('mapping' in pipelineSteps) {
     log.info "------------------"
     log.info "Max mismatches                  : ${params.maxMismatches}"
     log.info "Max multimaps                   : ${params.maxMultimaps}"
-    log.info "Max read length                 : ${params.maxReadLength != null ? params.maxReadLength : 'auto'}"
+//    log.info "Max read length                 : ${params.maxReadLength != null ? params.maxReadLength : 'auto'}"
 //    log.info "Read strandedness               : ${params.readStrand != null ? params.readStrand : 'auto'}"
 //    log.info "Paired-end                      : ${params.pairedEnd != null ? params.pairedEnd : 'auto'}"
     log.info "Produce BAM stats               : ${params.bamStats}"
@@ -112,14 +113,20 @@ if ('mapping' in pipelineSteps) {
     if ( params.rgDesc ) log.info "@RG Descritpiton                : ${params.rgDesc}" 
     log.info ""
 }
-if ('quantification' in pipelineSteps) {
-    log.info "Flux Capacitor parameters"
-    log.info "-------------------------"
-    log.info "Additional quantified elements  : ${params.countElements.size()==0 ? 'NONE' : params.countElements.join(" ")}"
-//    log.info "Memory                          : ${params.fluxMem}"
-    log.info "Create profile file             : ${params.fluxProfile}"
+if ('bigwig' in pipelineSteps) {
+    log.info "Bigwig parameters"
+    log.info "-----------------"
+    log.info "References prefix               : ${params.wigRefPrefix != null ? params.wigRefPrefix : 'all'}"
     log.info ""
 }
+//if ('quantification' in pipelineSteps) {
+//    log.info "Quantification parameters"
+//    log.info "-------------------------"
+//    log.info "Additional quantified elements  : ${params.countElements.size()==0 ? 'NONE' : params.countElements.join(" ")}"
+//    log.info "Memory                          : ${params.fluxMem}"
+//    log.info "Create profile file             : ${params.fluxProfile}"
+//    log.info ""
+//}
 
 genomes=params.genome.split(',').collect { file(it) }
 annos=params.annotation.split(',').collect { file(it) }
@@ -412,13 +419,18 @@ process bigwig {
     } else {
         command += " --outWigStrand Unstranded"
     }
-    //command += " --outFileNamePrefix ./Signal/ --outWigReferencesPrefix ${wigRefPrefix}\n"
-    command += " --outFileNamePrefix ./Signal/\n"
+    command += " --outFileNamePrefix ./Signal/ --outWigReferencesPrefix ${params.wigRefPrefix}\n"
     
     bedGraphs.each( { bg ->
         strand.eachWithIndex( { str, istr ->
             istr+=1
-            command += "bedGraphToBigWig Signal/Signal${bg}.str${istr}.out.bg ${genomefai} ${id}${bg}${str.value}.bw\n"
+            command += "bedGraphToBigWig Signal/Signal${bg}.str${istr}.out.bg"
+            if ( params.wigRefPrefix ) {
+                command += " <(grep -P '^${params.wigRefPrefix}' ${genomefai})"
+            } else {
+                command += " ${genomefai}"
+            }
+            command += " ${id}${bg}${str.value}.bw\n"
             views << "${str.value[1..-1].capitalize()}${view}"
         } )
     } )
