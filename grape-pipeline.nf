@@ -249,7 +249,7 @@ if ('mapping' in pipelineSteps) {
         return command
     }
      
-    (GenomeIdx1, GenomeIdx2, GenomeIdx3) = GenomeIdx.into(3)
+    (GenomeIdx1, GenomeIdx2) = GenomeIdx.into(2)
     
     process t_index {
     
