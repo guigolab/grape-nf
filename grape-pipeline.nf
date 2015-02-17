@@ -522,7 +522,7 @@ process quantification {
 
     command += "cat <( samtools view -H ${bam} )  <( samtools view -@ ${task.cpus} ${bam}"
     if (pairedEnd) command += " | paste -d ' ' - -"
-    command += " | sort -S ${(task.memory.toBytes()*0.7) as long} -T ./"
+    command += " | sort -S ${(task.memory.toBytes()/task.cpus) as long} -T ./"
     if (pairedEnd) command += " | tr ' ' '\\n'"
     command += " ) | samtools view -@ ${task.cpus} -bS - > tmp.bam"
     command += "&& mv tmp.bam ${bam}\n"
