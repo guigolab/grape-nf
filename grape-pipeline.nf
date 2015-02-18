@@ -378,7 +378,7 @@ process inferExp {
     command += "set -o pipefail\n"
     command += "gtfToGenePred ${annotation} -allErrors -ignoreGroupsWithoutExons ${genePred} 2> ${genePred}.err\n"
     command += "genePredToBed ${genePred} ${bed12}\n" 
-    command += "${baseDir}/bin/infer_experiment.py -i ${bam} -r ${bed12} 2> infer_experiment.log | tr -d '\\n'"
+    command += "grape_infer_experiment.py -i ${bam} -r ${bed12} 2> infer_experiment.log | tr -d '\\n'"
 }
 
 
