@@ -522,10 +522,10 @@ process quantification {
 
     command += "cat <( samtools view -H ${bam} )  <( samtools view -@ ${task.cpus} ${bam}"
     if (pairedEnd) command += " | paste -d ' ' - -"
-    command += " | sort -S ${(task.memory.toBytes()/task.cpus) as long} -T ./"
+    command += " | sort -T ."
     if (pairedEnd) command += " | tr ' ' '\\n'"
     command += " ) | samtools view -@ ${task.cpus} -bS - > tmp.bam"
-    command += "&& mv tmp.bam ${bam}\n"
+    command += " && mv tmp.bam ${bam}\n"
 
     command += "rsem-calculate-expression --bam --estimate-rspd  --calc-ci --no-bam-output --seed 12345"
     command += " -p ${task.cpus} --ci-memory ${task.memory.toMega()}" 
