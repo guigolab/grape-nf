@@ -306,8 +306,10 @@ if ('mapping' in pipelineSteps) {
         command += "STAR --runThreadN ${task.cpus} --genomeDir ${genomeDir} --readFilesIn ${reads} --outSAMunmapped Within --outFilterType BySJout --outSAMattributes NH HI AS NM MD"
         command += " --outFilterMultimapNmax ${params.maxMultimaps}   --outFilterMismatchNmax 999 --outFilterMismatchNoverReadLmax 0.0${params.maxMismatches}"
         command += " --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000 --alignSJoverhangMin 8   --alignSJDBoverhangMin 1 --readFilesCommand pigz -p${task.cpus} -dc"
-        command += " --outSAMtype BAM SortedByCoordinate --quantMode TranscriptomeSAM --outSAMstrandField intronMotif"
+        command += " --outSAMtype BAM SortedByCoordinate --quantMode TranscriptomeSAM"
         command += " --outSAMattrRGline ${readGroup.join(' ')}"
+        if ( params.cufflinks )
+            command += " --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical"
         command += " && mv Aligned.sortedByCoord.out.bam ${id}${prefix}.bam"
         command += " && mv Aligned.toTranscriptome.out.bam ${id}${prefix}.toTranscriptome.bam"
         command += " && samtools index ${id}${prefix}.bam"
