@@ -351,10 +351,17 @@ if (merge) {
     }
     
     bam = singleBam
+    .map {
+        [it[0], it[0], it[1], it[2], it[3], it[4]]
+    }  
     .mix(mergedBam)
     .map { 
         it.flatten() 
     }
+}
+
+if (!('mapping' in pipelineSteps)) {
+    bam << Channel.STOP
 }
 
 (bam1, bam2) = bam
