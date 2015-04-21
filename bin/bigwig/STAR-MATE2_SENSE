@@ -1,0 +1,23 @@
+#!/bin/bash -eu
+mkdir Signal
+STAR --runThreadN ${cpus} \
+     --runMode inputAlignmentsFromBAM \
+     --inputBAMfile ${bam} \
+     --outWigType bedGraph \
+     --outWigStrand Stranded \
+     --outFileNamePrefix ./Signal/ \
+     --outWigReferencesPrefix ${wigRefPrefix}
+
+bedGraphToBigWig Signal/Signal.UniqueMultiple.str1.out.bg \
+                 <(grep -P '^${wigRefPrefix}' ${genomeFai}) \
+                 ${id}.UniqueMultiple.plusRaw.bw 
+bedGraphToBigWig Signal/Signal.UniqueMultiple.str2.out.bg \
+                 <(grep -P '^${wigRefPrefix}' ${genomeFai}) \
+                 ${id}.UniqueMultiple.minusRaw.bw 
+
+bedGraphToBigWig Signal/Signal.Unique.str1.out.bg \
+                 <(grep -P '^${wigRefPrefix}' ${genomeFai}) \
+                 ${id}.Unique.plusRaw.bw
+bedGraphToBigWig Signal/Signal.Unique.str2.out.bg \
+                 <(grep -P '^${wigRefPrefix}' ${genomeFai}) \
+                 ${id}.Unique.minusRaw.bw

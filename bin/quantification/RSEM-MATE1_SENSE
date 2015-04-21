@@ -1,0 +1,18 @@
+#!/bin/bash -eu
+cat <( samtools view -H ${bam} )  \
+    <( samtools view -@ ${cpus} ${bam} | paste -d ' ' - - | sort -T . | tr ' ' '\\n') | \
+samtools view -@ ${cpus} -bS - > tmp.bam && mv tmp.bam ${bam}
+
+rsem-calculate-expression --bam \
+                          --estimate-rspd  \
+                          --calc-ci \
+                          --no-bam-output \
+                          --seed 12345 \
+                          -p ${cpus} \
+                          --ci-memory ${memory} \
+                          --paired-end \
+                          --forward-prob 1 \
+                          ${bam} \
+                          ${txDir}/RSEMref \
+                          Quant && \
+rsem-plot-model Quant Quant.pdf

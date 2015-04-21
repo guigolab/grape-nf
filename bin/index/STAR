@@ -1,0 +1,8 @@
+#!/bin/bash -eu
+mkdir genomeDir
+STAR --runThreadN ${cpus} \
+		 --runMode genomeGenerate \
+		 --genomeDir genomeDir \
+		 --genomeFastaFiles ${genome} \
+		 --sjdbGTFfile ${annotation} \
+		 --sjdbOverhang ${sjOverHang}

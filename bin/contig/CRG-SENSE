@@ -1,0 +1,9 @@
+#!/bin/bash -eu
+bamtools filter -tag NH:1 -in ${bam} -out tmp.bam && mv -f tmp.bam ${bam}
+genomeCoverageBed -strand + -split -bg -ibam ${bam} > ${id}.plusRaw.bedgraph
+genomeCoverageBed -strand - -split -bg -ibam ${bam} > ${id}.minusRaw.bedgraph
+
+contigsNew.py --chrFile ${genomefai} \
+              --fileP ${id}.plusRaw.bedgraph \
+              --fileM ${id}.minusRaw.bedgraph | \
+awk '{s=""; for(i=1; i<=NF; i++){s=(s)($i)("\t")} print s}' > ${id}_contigs.bed"

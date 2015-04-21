@@ -1,14 +1,14 @@
 #!/bin/env nextflow 
 /*
- * Copyright (c) 2014, Centre for Genomic Regulation (CRG)
+ * Copyright (c) 2015, Centre for Genomic Regulation (CRG)
  * Emilio Palumbo, Alessandra Breschi and Sarah Djebali.
  *
- * This file is part of the Blueprint RNAseq pipeline.
+ * This file is part of the GRAPE RNAseq pipeline.
  *
- * The Blueprint RNAseq pipeline is a free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * The GRAPE RNAseq pipeline is a free software: you can redistribute it 
+ * and/or modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -20,18 +20,9 @@
  */
 
 //Set default values for params
-
 params.steps = 'mapping,bigwig,contig,quantification'
-//params.tmpDir = (System.env.TMPDIR != null ? true : false)
 params.maxMismatches = 4
 params.maxMultimaps = 10
-params.bamStats = false
-//params.countElements = [] 
-//params.fluxMem = '3G'
-//params.fluxProfile = false 
-if (params.chunkSize) params.chunkSize = params.chunkSize as int
-if (params.sjOverHang) params.sjOverHang = params.sjOverHang as int else params.sjOverHang = 100
-if (!(params.wigRefPrefix)) params.wigRefPrefix = 'chr'
 
 // get list of steps from comma-separated strings
 pipelineSteps = params.steps.split(',').collect { it.trim() }
@@ -52,31 +43,23 @@ if (params.help) {
     log.info '    --genome GENOME_FILE                Reference genome file(s).'
     log.info '    --annotation ANNOTAION_FILE         Reference gene annotation file(s).'
     log.info '    --steps STEP[,STEP]...              The steps to be executed within the pipeline run. Possible values: "mapping", "bigwig", "contig", "quantification". Default: all'
-//    log.info '    --tmp-dir                           Specify the temporary folder to be used as a scratch area.'
-//    log.info '                                        Default: "$TMPDIR" if the environment variable is defined, "-" otherwise.'
 //    log.info '    --chunk-size CHUNK_SIZE             The number of records to be put in each chunk when splitting the input. Default: no split'
-//    log.info '    --paired-end                        Specify whether the data is paired-end. Default: "auto".'
     log.info '    --error-strategy ERROR_STRATEGY     Specify how an error condition is managed by the pipeline processes. Possible values: ignore, retry'
     log.info '                                        Default: the entire pipeline  terminates if a process returns an error status.'
-//    log.info '    --max-read-length READ_LENGTH       The maximum read length (used to compute the transcriptomes). Default: "auto".'
     log.info '    --max-mismatches THRESHOLD          Set maps with more than THRESHOLD error events to unmapped. Default "4".'
     log.info '    --max-multimaps THRESHOLD           Set multi-maps with more than THRESHOLD mappings to unmapped. Default "10".'
-//    log.info '    --filter-intron-length THRESHOLD    Filter multimaps preferring ones with intron length > THRESHOLD'
-//    log.info '    --filter-block-length THRESHOLD     Filter multimaps preferring ones with block length > THRESHOLD'
-//    log.info '    --filter-level LEVEL                Reduce multimaps using the specified uniqueness level.'
-//    log.info '    --read-strand READ_STRAND           Directionality of the reads (MATE1_SENSE, MATE2_SENSE, NONE). Default "auto".'
+    log.info ''
+    log.info 'SAM read group options:'
     log.info '    --rg-platform PLATFORM              Platform/technology used to produce the reads for the BAM @RG tag.'
     log.info '    --rg-library LIBRARY                Sequencing library name for the BAM @RG tag.'
     log.info '    --rg-center-name CENTER_NAME        Name of sequencing center that produced the reads for the BAM @RG tag.'
     log.info '    --rg-desc DESCRIPTION               Description for the BAM @RG tag.'
-//    log.info '    --flux-mem MEMORY                   Specify the amount of ram the Flux Capacitor can use. Default: "3G".'
-//    log.info '    --flux-profile                      Specify whether the Flux Capacitor profile file should be written. Default: "false".'
-//    log.info '    --count-elements ELEMENTS           A comma separated list of elements to be counted by the Flux Capacitor.'
-//    log.info '                                        Possible values: INTRONS, SPLICE_JUNCTIONS. Default: "none".'
 //    log.info '    --loglevel LOGLEVEL                 Log level (error, warn, info, debug). Default "info".'
+    log.info ''
     exit 1
 }
 
+// check mandatory options
 if (!params.genome) {
     exit 1, "Genome file not specified"
 }
@@ -96,16 +79,13 @@ log.info "Annotation                      : ${params.annotation}"
 log.info "Pipeline steps                  : ${pipelineSteps.join(" ")}"
 //log.info "Input chunk size                : ${params.chunkSize != null ? params.chunkSize : 'no split'}"
 log.info "Error strategy                  : ${params.errorStrategy != null ? params.errorStrategy : 'default'}"
-//log.info "Use temporary folder      : ${params.tmpDir}"
 log.info ""
+
 if ('mapping' in pipelineSteps) {
     log.info "Mapping parameters"
     log.info "------------------"
     log.info "Max mismatches                  : ${params.maxMismatches}"
     log.info "Max multimaps                   : ${params.maxMultimaps}"
-//    log.info "Max read length                 : ${params.maxReadLength != null ? params.maxReadLength : 'auto'}"
-//    log.info "Read strandedness               : ${params.readStrand != null ? params.readStrand : 'auto'}"
-//    log.info "Paired-end                      : ${params.pairedEnd != null ? params.pairedEnd : 'auto'}"
     log.info "Produce BAM stats               : ${params.bamStats}"
     if ( params.rgPlatform ) log.info "Sequencing platform             : ${params.rgPlatform}"  
     if ( params.rgLibrary ) log.info "Sequencing library              : ${params.rgLibrary}"  
@@ -119,6 +99,7 @@ if ('bigwig' in pipelineSteps) {
     log.info "References prefix               : ${params.wigRefPrefix != null ? params.wigRefPrefix : 'all'}"
     log.info ""
 }
+
 //if ('quantification' in pipelineSteps) {
 //    log.info "Quantification parameters"
 //    log.info "-------------------------"
@@ -210,6 +191,7 @@ pref = "_m${params.maxMismatches}_n${params.maxMultimaps}"
 
 if ('contig' in pipelineSteps || 'bigwig' in pipelineSteps) {
     process fastaIndex {
+
         input:
         set species, file(genome) from Genomes1
         set species, file(annotation) from Annotations1
@@ -218,11 +200,8 @@ if ('contig' in pipelineSteps || 'bigwig' in pipelineSteps) {
         set species, file("${genome}.fai") into FaiIdx
     
         script:
-        def command = ""
-        
-        command += "samtools faidx ${genome}"
-        
-        return command
+        file(task.command)
+
     }
 } else {
     FaiIdx = Channel.just(Channel.STOP)
@@ -241,12 +220,11 @@ if ('mapping' in pipelineSteps) {
         set species, file("genomeDir") into GenomeIdx
     
         script:
-        def command = ""
-       
-        command += "mkdir genomeDir\n"
-        command += "STAR --runThreadN ${task.cpus} --runMode genomeGenerate --genomeDir genomeDir --genomeFastaFiles ${genome} --sjdbGTFfile ${annotation} --sjdbOverhang ${params.sjOverHang}" 
-        
-        return command
+        cpus = task.cpus
+        sjOverHang = params.sjOverHang
+
+        file(task.command)
+
     }
      
     (GenomeIdx1, GenomeIdx2) = GenomeIdx.into(2)
@@ -256,17 +234,13 @@ if ('mapping' in pipelineSteps) {
         input:
         set species, file(genome) from Genomes3
         set species, file(annotation) from Annotations2
-    
+
         output:
         set species, file('txDir') into TranscriptIdx
     
         script:
-        def command = ""
-   
-        command += "mkdir txDir\n"
-        command += "rsem-prepare-reference --no-polyA --gtf ${annotation} ${genome} txDir/RSEMref"
-    
-        return command
+        file(task.command)
+
     }
 
     process mapping {
@@ -283,11 +257,14 @@ if ('mapping' in pipelineSteps) {
         type = 'bam'
         view = 'Alignments'
         prefix = pref
+        cpus = task.cpus
+        maxMultimaps = params.maxMultimaps
+        maxMismatches = params.maxMismatches
         
         // prepare BAM @RG tag information
         // def date = new Date().format("yyyy-MM-dd'T'HH:mmZ", TimeZone.getTimeZone("UTC"))
-        def date = ""
-        def readGroup = []
+        date = ""
+        readGroup = []
         readGroup << "ID:${id}" 
         readGroup << "PU:${id}" 
         readGroup << "SM:${sample}" 
@@ -296,25 +273,13 @@ if ('mapping' in pipelineSteps) {
         if ( params.rgLibrary ) readGroup << "LB:${params.rgLibrary}"
         if ( params.rgCenterName ) readGroup << "CN:${params.rgCenterName}"
         if ( params.rgDesc ) readGroup << "DS:${params.rgDesc}"
-
-        def command = ""
         
         fqs = reads.toString().split(" ")
         pairedEnd = false
         if (fqs.size() == 2) pairedEnd = true 
+
+        file(task.command)
    
-        command += "STAR --runThreadN ${task.cpus} --genomeDir ${genomeDir} --readFilesIn ${reads} --outSAMunmapped Within --outFilterType BySJout --outSAMattributes NH HI AS NM MD"
-        command += " --outFilterMultimapNmax ${params.maxMultimaps}   --outFilterMismatchNmax 999 --outFilterMismatchNoverReadLmax 0.0${params.maxMismatches}"
-        command += " --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000 --alignSJoverhangMin 8   --alignSJDBoverhangMin 1 --readFilesCommand pigz -p${task.cpus} -dc"
-        command += " --outSAMtype BAM SortedByCoordinate --quantMode TranscriptomeSAM"
-        command += " --outSAMattrRGline ${readGroup.join(' ')}"
-        if ( params.cufflinks )
-            command += " --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical"
-        command += " && mv Aligned.sortedByCoord.out.bam ${id}${prefix}.bam"
-        command += " && mv Aligned.toTranscriptome.out.bam ${id}${prefix}.toTranscriptome.bam"
-        command += " && samtools index ${id}${prefix}.bam"
-        
-        return command
     }
 
 }
@@ -343,11 +308,11 @@ if (merge) {
         set id, id, type, view, "${id}${prefix}.bam", pairedEnd into mergedBam
     
         script:
-        def command = ""
+        cpus = task.cpus
         prefix = pref
-    
-        command += "(samtools view -H ${bam} | grep -v \"@RG\";for f in ${bam};do samtools view -H \$f | grep \"@RG\";done) > header.txt\n"
-        command += "samtools merge -@ ${task.cpus} -h header.txt ${id}${prefix}.bam ${bam}"
+
+        file(task.command)
+
     }
     
     bam = singleBam
@@ -379,15 +344,11 @@ process inferExp {
     set id, stdout into bamStrand
 
     script:
-    def command = ""
     prefix = pref
-    def genePred = "${annotation.name.split('\\.', 2)[0]}.genePred"
-    def bed12 = "${annotation.name.split('\\.', 2)[0]}.bed"
+    genePred = "${annotation.name.split('\\.', 2)[0]}.genePred"
+    bed12 = "${annotation.name.split('\\.', 2)[0]}.bed"
 
-    command += "set -o pipefail\n"
-    command += "gtfToGenePred ${annotation} -allErrors -ignoreGroupsWithoutExons ${genePred} 2> ${genePred}.err\n"
-    command += "genePredToBed ${genePred} ${bed12}\n" 
-    command += "grape_infer_experiment.py -i ${bam} -r ${bed12} 2> infer_experiment.log | tr -d '\\n'"
+    file(task.command)
 }
 
 
@@ -413,38 +374,11 @@ process bigwig {
     set id, type, views, file('*.bw') into bigwig
 
     script:
-    views = []
-    view = 'Signal'
     type = "bigwig"
-    strand = ['unstranded': '.raw']
-    bedGraphs = ['.Unique', '.UniqueMultiple']
+    wigRefPrefix = params.wigRefPrefix ?: ""
+    views = task.views
     
-    def command = ''
-    command += "mkdir Signal\n"
-    command += "STAR --runThreadN ${task.cpus} --runMode inputAlignmentsFromBAM --inputBAMfile ${bam} --outWigType bedGraph"
-    if (readStrand != 'NONE') {
-        strand = ['strand+': '.plusRaw','strand-': '.minusRaw'] 
-        command += " --outWigStrand Stranded"
-    } else {
-        command += " --outWigStrand Unstranded"
-    }
-    command += " --outFileNamePrefix ./Signal/ --outWigReferencesPrefix ${params.wigRefPrefix}\n"
-    
-    bedGraphs.each( { bg ->
-        strand.eachWithIndex( { str, istr ->
-            istr+=1
-            command += "bedGraphToBigWig Signal/Signal${bg}.str${istr}.out.bg"
-            if ( params.wigRefPrefix ) {
-                command += " <(grep -P '^${params.wigRefPrefix}' ${genomefai})"
-            } else {
-                command += " ${genomefai}"
-            }
-            command += " ${id}${bg}${str.value}.bw\n"
-            views << "${str.value[1..-1].capitalize()}${view}"
-        } )
-    } )
-
-    return command
+    file(task.command)
 
 }
 
@@ -469,46 +403,8 @@ process contig {
     script:
     type = 'bed'
     view = 'Contigs'
-    def command = "" 
-    strand = ['': '']
-    mateBit = 0
-    awkCommand = 'BEGIN {OFS=\"\\t\"} {if (\$1!~/^@/ && and(\$2,MateBit)>0) {\$2=xor(\$2,0x10)}; print}'
-    if (readStrand != 'NONE') {
-        strand = ['+': '.plusRaw','-': '.minusRaw']
-        if (pairedEnd) mateBit = (readStrand =~ /MATE2/ ? 64 : 128)
-    }
 
-    if (mateBit > 0) {
-        command += "samtools view -h -@ ${task.cpus} ${bam}"
-        command += " | awk -v MateBit=${mateBit} '${awkCommand}'"
-        command += " | samtools view -@ ${task.cpus} -Sb -"
-        command += " > tmp.bam\n"
-        command += "mv -f tmp.bam ${bam}\n"
-    }
-
-    command += "bamtools filter -tag NH:1 -in ${bam} -out tmp.bam\n"
-    command += "mv -f tmp.bam ${bam}\n"
-
-    strand.each( {
-        command += "genomeCoverageBed "
-        command += (it.key != '' ? "-strand ${it.key} ".toString() : ''.toString())
-        command += "-split -bg -ibam ${bam} > ${id}${it.value}.bedgraph\n"
-    } )
-
-    if (strand.size() == 2) {
-        command += "contigsNew.py --chrFile ${genomefai}"
-        strand.each( {
-            command += " --file${it.value.substring(1,2).toUpperCase()} ${id}${it.value}.bedgraph"
-        } )
-        command += " | awk '{s=\"\"; for(i=1; i<=NF; i++){s=(s)(\$i)(\"\\t\")} print s}'"
-        command += " > ${id}_contigs.bed"
-    } else {
-        command += "bamToBed -i ${bam} | sort -k1,1 -k2,2n"
-        command += " | mergeBed"
-        command += " > ${id}_contigs.bed"
-    }
-
-    return command
+    file(task.command)
 
 }
 
@@ -526,26 +422,8 @@ process quantification {
     type = "gtf"
     viewTx = "Transcript${txDir.name.replace('.gtf','').capitalize()}"
     viewGn = "Gene${txDir.name.replace('.gtf','').capitalize()}"
-    prefix = pref
-    def command = ""
-
-    command += "cat <( samtools view -H ${bam} )  <( samtools view -@ ${task.cpus} ${bam}"
-    if (pairedEnd) command += " | paste -d ' ' - -"
-    command += " | sort -T ."
-    if (pairedEnd) command += " | tr ' ' '\\n'"
-    command += " ) | samtools view -@ ${task.cpus} -bS - > tmp.bam"
-    command += " && mv tmp.bam ${bam}\n"
-
-    command += "rsem-calculate-expression --bam --estimate-rspd  --calc-ci --no-bam-output --seed 12345"
-    command += " -p ${task.cpus} --ci-memory ${task.memory.toMega()}" 
-
-    if (pairedEnd) command += " --paired-end"
-    if (readStrand != "NONE") command += " --forward-prob 0"
-
-    command += " ${bam} ${txDir}/RSEMref Quant"
-    command += " && rsem-plot-model Quant Quant.pdf"
-
-    return command
+    
+    file(task.command)
 }
 
 out.mix(bigwig, contig, isoforms, genes).collectFile(name: "pipeline.db", newLine: true) {
