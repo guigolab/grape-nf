@@ -220,7 +220,6 @@ if ('mapping' in pipelineSteps) {
         set species, file("genomeDir") into GenomeIdx
     
         script:
-        cpus = task.cpus
         sjOverHang = params.sjOverHang
 
         file(task.command)
@@ -257,7 +256,6 @@ if ('mapping' in pipelineSteps) {
         type = 'bam'
         view = 'Alignments'
         prefix = pref
-        cpus = task.cpus
         maxMultimaps = params.maxMultimaps
         maxMismatches = params.maxMismatches
         
@@ -273,7 +271,8 @@ if ('mapping' in pipelineSteps) {
         if ( params.rgLibrary ) readGroup << "LB:${params.rgLibrary}"
         if ( params.rgCenterName ) readGroup << "CN:${params.rgCenterName}"
         if ( params.rgDesc ) readGroup << "DS:${params.rgDesc}"
-        
+        readGroup = readGroup.join(" ")
+
         fqs = reads.toString().split(" ")
         pairedEnd = false
         if (fqs.size() == 2) pairedEnd = true 
@@ -308,7 +307,6 @@ if (merge) {
         set id, id, type, view, "${id}${prefix}.bam", pairedEnd into mergedBam
     
         script:
-        cpus = task.cpus
         prefix = pref
 
         file(task.command)
@@ -368,7 +366,7 @@ process bigwig {
     
     input:
     set id, type, view, file(bam), pairedEnd, readStrand from bam1
-    set species, file(genomefai) from FaiIdx1.first()
+    set species, file(genomeFai) from FaiIdx1.first()
     
     output:
     set id, type, views, file('*.bw') into bigwig
@@ -395,7 +393,7 @@ process contig {
 
     input:
     set id, type, view, file(bam), pairedEnd, readStrand from bam2
-    set species, file(genomefai) from FaiIdx2.first()
+    set species, file(genomeFai) from FaiIdx2.first()
 
     output:
     set id, type, view, file('*_contigs.bed') into contig
@@ -422,6 +420,7 @@ process quantification {
     type = "gtf"
     viewTx = "Transcript${txDir.name.replace('.gtf','').capitalize()}"
     viewGn = "Gene${txDir.name.replace('.gtf','').capitalize()}"
+    memory = task.memory.toMega()
     
     file(task.command)
 }
