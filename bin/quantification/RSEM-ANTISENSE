@@ -13,5 +13,5 @@ rsem-calculate-expression --bam \
                           --forward-prob 0 \
                           ${bam} \
                           ${txDir}/RSEMref \
-                          Quant && \
+                          Quant
 rsem-plot-model Quant Quant.pdf
