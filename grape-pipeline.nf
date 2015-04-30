@@ -69,7 +69,7 @@ if (!params.annotation) {
 }
 
 log.info ""
-log.info "B L U E P R I N T ~ RNA Pipeline"
+log.info "G R A P E ~ RNA-seq Pipeline"
 log.info ""
 log.info "General parameters"
 log.info "------------------"
@@ -210,6 +210,7 @@ if ('contig' in pipelineSteps || 'bigwig' in pipelineSteps) {
 (FaiIdx1, FaiIdx2) = FaiIdx.into(2)
  
 if ('mapping' in pipelineSteps) {
+
     process index {
     
         input:
@@ -227,20 +228,6 @@ if ('mapping' in pipelineSteps) {
     }
      
     (GenomeIdx1, GenomeIdx2) = GenomeIdx.into(2)
-    
-    process t_index {
-    
-        input:
-        set species, file(genome) from Genomes3
-        set species, file(annotation) from Annotations2
-
-        output:
-        set species, file('txDir') into TranscriptIdx
-    
-        script:
-        file(task.command)
-
-    }
 
     process mapping {
     
@@ -250,7 +237,7 @@ if ('mapping' in pipelineSteps) {
         set species, file(genomeDir) from GenomeIdx2.first()
     
         output:
-        set id, sample, type, view, file("${id}${prefix}.bam"), pairedEnd into bam
+        set id, sample, type, view, file("*.bam"), pairedEnd into bam
     
         script:
         type = 'bam'
@@ -281,20 +268,43 @@ if ('mapping' in pipelineSteps) {
    
     }
 
+} else {
+    GenomeIdx = Channel.just(Channel.STOP)
 }
 
+if ('quantification' in pipelineSteps) {
+    
+    process t_index {
+    
+        input:
+        set species, file(genome) from Genomes3
+        set species, file(annotation) from Annotations2
+
+        output:
+        set species, file('txDir') into TranscriptIdx
+    
+        script:
+        file(task.command)
+
+    }
+
+} else {
+    TranscriptIdx = Channel.just(Channel.STOP)
+}
+
+    
 if (merge) {
 
     singleBam = Channel.create()
     groupedBam = Channel.create()
    
-    bam.groupBy() {
-        id, sample, type, view, path, pairedEnd -> sample
+    bam.flatMap  { id, sample, type, view, path, pairedEnd ->
+        [path].flatten().collect { f ->
+            [id, sample, type, (f.name =~ /toTranscriptome/ ? 'Transcriptome' : 'Genome') + view, f, pairedEnd]
+        }
     }
-    .flatMap()
-    .map {
-        [it.value.size() > 1 ? it.key : it.value[0][0], it.value[0][2], it.value[0][3], it.value.collect { id, sample, type, view, path, pairedEnd -> path }, it.value[0][5]]
-    }.choice(singleBam, groupedBam) {
+    .groupTuple(by: [0,1])
+    .choice(singleBam, groupedBam) {
         it[3].size() > 1 ? 1 : 0
     }
     
