@@ -268,6 +268,12 @@ if ('mapping' in pipelineSteps) {
    
     }
 
+    bam = bam.flatMap  { id, sample, type, view, path, pairedEnd ->
+        [path].flatten().collect { f ->
+            [id, sample, type, (f.name =~ /toTranscriptome/ ? 'Transcriptome' : 'Genome') + view, f, pairedEnd]
+        }
+    }
+
 } else {
     GenomeIdx = Channel.just(Channel.STOP)
 }
@@ -298,12 +304,7 @@ if (merge) {
     singleBam = Channel.create()
     groupedBam = Channel.create()
    
-    bam.flatMap  { id, sample, type, view, path, pairedEnd ->
-        [path].flatten().collect { f ->
-            [id, sample, type, (f.name =~ /toTranscriptome/ ? 'Transcriptome' : 'Genome') + view, f, pairedEnd]
-        }
-    }
-    .groupTuple(by: [0,1])
+    bam.groupTuple(by: [0,1])
     .choice(singleBam, groupedBam) {
         it[3].size() > 1 ? 1 : 0
     }
