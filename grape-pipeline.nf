@@ -319,6 +319,8 @@ if (merge) {
     
         script:
         prefix = pref
+        id = id.sort().join(':')
+        outfile = "${sample}${prefix}_to${view.replace('Alignments','')}.bam"
 
         template(task.command)
 
