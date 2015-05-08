@@ -7,5 +7,5 @@
 ) > header.txt && \
 samtools merge -@ ${cpus} \
 							 -h header.txt \
-							 ${id}${prefix}.bam \
+							 ${outfile} \
 							 ${bam}
