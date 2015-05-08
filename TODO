@@ -1,4 +1,5 @@
 TODO list
 ---------
 
-- steps modularity
+- create template scripts for GEM-FLUX pipeline
+- create Docker images for STAR-RSEM
