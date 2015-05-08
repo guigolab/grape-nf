@@ -200,7 +200,7 @@ if ('contig' in pipelineSteps || 'bigwig' in pipelineSteps) {
         set species, file("${genome}.fai") into FaiIdx
     
         script:
-        file(task.command)
+        template(task.command)
 
     }
 } else {
@@ -223,7 +223,7 @@ if ('mapping' in pipelineSteps) {
         script:
         sjOverHang = params.sjOverHang
 
-        file(task.command)
+        template(task.command)
 
     }
      
@@ -264,7 +264,7 @@ if ('mapping' in pipelineSteps) {
         pairedEnd = false
         if (fqs.size() == 2) pairedEnd = true 
 
-        file(task.command)
+        template(task.command)
    
     }
 
@@ -290,7 +290,7 @@ if ('quantification' in pipelineSteps) {
         set species, file('txDir') into TranscriptIdx
     
         script:
-        file(task.command)
+        template(task.command)
 
     }
 
@@ -304,30 +304,27 @@ if (merge) {
     singleBam = Channel.create()
     groupedBam = Channel.create()
    
-    bam.groupTuple(by: [0,1])
+    bam.groupTuple(by: [1, 2, 3, 5]) // group by sample, type, view, pairedEnd (to get unique values for keys)
     .choice(singleBam, groupedBam) {
-        it[3].size() > 1 ? 1 : 0
+      it[4].size() > 1 ? 1 : 0
     }
     
     process mergeBam {
         
         input:
-        set id, type, view, file(bam), pairedEnd from groupedBam
+        set id, sample, type, view, file(bam), pairedEnd from groupedBam
     
         output:
-        set id, id, type, view, "${id}${prefix}.bam", pairedEnd into mergedBam
+        set id, sample, type, view, "${id}${prefix}${view}.bam", pairedEnd into mergedBam
     
         script:
         prefix = pref
 
-        file(task.command)
+        template(task.command)
 
     }
     
     bam = singleBam
-    .map {
-        [it[0], it[0], it[1], it[2], it[3], it[4]]
-    }  
     .mix(mergedBam)
     .map { 
         it.flatten() 
@@ -339,14 +336,11 @@ if (!('mapping' in pipelineSteps)) {
 }
 
 (bam1, bam2) = bam
-.map {
-    [ it[0], it[2], it[3], it[4], it[5] ]
-}
 .into(2)
 
 process inferExp {
     input:
-    set id, type, view, file(bam), pairedEnd from bam1
+    set id, sample, type, view, file(bam), pairedEnd from bam1
     set species, file(annotation) from Annotations4.first()
 
     output:
@@ -357,7 +351,7 @@ process inferExp {
     genePred = "${annotation.name.split('\\.', 2)[0]}.genePred"
     bed12 = "${annotation.name.split('\\.', 2)[0]}.bed"
 
-    file(task.command)
+    template(task.command)
 }
 
 
@@ -376,7 +370,7 @@ if (!('quantification' in pipelineSteps)) bam3 = Channel.just(Channel.STOP)
 process bigwig {
     
     input:
-    set id, type, view, file(bam), pairedEnd, readStrand from bam1
+    set id, sample, type, view, file(bam), pairedEnd, readStrand from bam1
     set species, file(genomeFai) from FaiIdx1.first()
     
     output:
@@ -387,7 +381,7 @@ process bigwig {
     wigRefPrefix = params.wigRefPrefix ?: ""
     views = task.views
     
-    file(task.command)
+    template(task.command)
 
 }
 
@@ -403,7 +397,7 @@ bigwig = bigwig.reduce([:]) { files, tuple ->
 process contig {
 
     input:
-    set id, type, view, file(bam), pairedEnd, readStrand from bam2
+    set id, sample, type, view, file(bam), pairedEnd, readStrand from bam2
     set species, file(genomeFai) from FaiIdx2.first()
 
     output:
@@ -413,14 +407,14 @@ process contig {
     type = 'bed'
     view = 'Contigs'
 
-    file(task.command)
+    template(task.command)
 
 }
 
 process quantification {
 
     input:    
-    set id, type, view, file(bam), file(bai), pairedEnd, readStrand from bam3.map { [it[0],it[1],it[2],file("${it[3].toAbsolutePath().toString().replace('.bam','.toTranscriptome.bam')}"),file("${it[3].toAbsolutePath()}.bai"),it[4],it[5]] }
+    set id, sample, type, view, file(bam), file(bai), pairedEnd, readStrand from bam3.map { [it[0],it[1],it[2],file("${it[3].toAbsolutePath().toString().replace('.bam','.toTranscriptome.bam')}"),file("${it[3].toAbsolutePath()}.bai"),it[4],it[5]] }
     set species, file(txDir) from TranscriptIdx.first()
 
     output:
@@ -433,7 +427,7 @@ process quantification {
     viewGn = "Gene${txDir.name.replace('.gtf','').capitalize()}"
     memory = task.memory.toMega()
     
-    file(task.command)
+    template(task.command)
 }
 
 out.mix(bigwig, contig, isoforms, genes).collectFile(name: "pipeline.db", newLine: true) {
