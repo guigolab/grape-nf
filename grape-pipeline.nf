@@ -197,7 +197,7 @@ if ('contig' in pipelineSteps || 'bigwig' in pipelineSteps) {
         set species, file(annotation) from Annotations1
     
         output:
-        set species, file("${genome}.fai") into FaiIdx
+        set species, file { "${genome}.fai" } into FaiIdx
     
         script:
         template(task.command)
