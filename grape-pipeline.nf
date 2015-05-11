@@ -361,7 +361,10 @@ allBams = bamStrand.cross(bam2)
     bam -> bam[1].flatten() + [bam[0][1]] 
 }
 
-(bam1, bam2, bam3, out) = allBams.filter { it[3] =~ /Genome/ } .into(4)
+(allBams1, allBams2, out) = allBams.into(3)
+
+(bigwigBams, contigBams) = allBams1.filter { it[3] =~ /Genome/ }.into(3)
+quantificationBams = allBams2.filter { it[3] =~ /${config.process.$quantification.type}/ }
 
 if (!('bigwig' in pipelineSteps)) bam1 = Channel.just(Channel.STOP)
 if (!('contig' in pipelineSteps)) bam2 = Channel.just(Channel.STOP)
@@ -370,11 +373,11 @@ if (!('quantification' in pipelineSteps)) bam3 = Channel.just(Channel.STOP)
 process bigwig {
     
     input:
-    set id, sample, type, view, file(bam), pairedEnd, readStrand from bam1
+    set id, sample, type, view, file(bam), pairedEnd, readStrand from bigwigBams
     set species, file(genomeFai) from FaiIdx1.first()
     
     output:
-    set id, type, views, file('*.bw') into bigwig
+    set id, sample, type, views, file('*.bw'), pairedEnd, readStrand into bigwig
 
     script:
     type = "bigwig"
@@ -386,10 +389,10 @@ process bigwig {
 }
 
 bigwig = bigwig.reduce([:]) { files, tuple ->
-    (id, type, view, path) = tuple     
+    (id, sample, type, view, path, pairedEnd, readStrand) = tuple     
     if (!files) files = []
     paths = path.toString().replaceAll(/[\[\],]/,"").split(" ")
-    (1..paths.size()).each { files << [id, type, view[it-1], paths[it-1]] }
+    (1..paths.size()).each { files << [id, sample, type, view[it-1], paths[it-1], pairedEnd, readStrand] }
     return files
 }
 .flatMap()
@@ -397,11 +400,11 @@ bigwig = bigwig.reduce([:]) { files, tuple ->
 process contig {
 
     input:
-    set id, sample, type, view, file(bam), pairedEnd, readStrand from bam2
+    set id, sample, type, view, file(bam), pairedEnd, readStrand from contigBams
     set species, file(genomeFai) from FaiIdx2.first()
 
     output:
-    set id, type, view, file('*_contigs.bed') into contig
+    set id, sample, type, view, file('*_contigs.bed'), pairedEnd, readStrand into contig
 
     script:
     type = 'bed'
@@ -413,13 +416,13 @@ process contig {
 
 process quantification {
 
-    input:    
-    set id, sample, type, view, file(bam), pairedEnd, readStrand from bam3.filter { it[3] =~ /Transcriptome/ } 
+    input:
+    set id, sample, type, view, file(bam), pairedEnd, readStrand from quantificationBams
     set species, file(txDir) from TranscriptIdx.first()
 
     output:
-    set id, type, viewTx, file("Quant.genes.results") into isoforms
-    set id, type, viewGn, file("Quant.isoforms.results") into genes
+    set id, sample, type, viewTx, file("Quant.genes.results"), pairedEnd, readStrand into isoforms
+    set id, sample, type, viewGn, file("Quant.isoforms.results"), pairedEnd, readStrand into genes
 
     script:
     type = "gtf"
@@ -428,10 +431,12 @@ process quantification {
     memory = task.memory.toMega()
     
     template(task.command)
+
 }
 
-out.mix(bigwig, contig, isoforms, genes).collectFile(name: "pipeline.db", newLine: true) {
-    [it[3], it[0], it[1], it[2]].join("\t")
+out.mix(bigwig, contig, isoforms, genes)
+.collectFile(name: "pipeline.db", newLine: true) { id, sample, type, view, file, pairedEnd, readStrand ->
+    [sample, id, file, type, view, pairedEnd ? 'Paired-End' : 'Single-End', readStrand].join("\t")
 }
 .subscribe {
     def msg = "Output files db -> ${it}"
