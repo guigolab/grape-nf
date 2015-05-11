@@ -342,7 +342,7 @@ if (!('mapping' in pipelineSteps)) {
 
 process inferExp {
     input:
-    set id, sample, type, view, file(bam), pairedEnd from bam1
+    set id, sample, type, view, file(bam), pairedEnd from bam1.filter { it[3] =~ /Genome/ }
     set species, file(annotation) from Annotations4.first()
 
     output:
@@ -356,14 +356,12 @@ process inferExp {
     template(task.command)
 }
 
-
-allBams = bam2.mix(bamStrand)
-.groupBy()
-.flatMap {
-    bam -> bam.collect { [ it.value[0], it.value[1][-1] ].flatten() } 
+allBams = bamStrand.cross(bam2)
+.map {
+    bam -> bam[1].flatten() + [bam[0][1]] 
 }
 
-(bam1, bam2, bam3, out) = allBams.into(4)
+(bam1, bam2, bam3, out) = allBams.filter { it[3] =~ /Genome/ } .into(4)
 
 if (!('bigwig' in pipelineSteps)) bam1 = Channel.just(Channel.STOP)
 if (!('contig' in pipelineSteps)) bam2 = Channel.just(Channel.STOP)
@@ -416,7 +414,7 @@ process contig {
 process quantification {
 
     input:    
-    set id, sample, type, view, file(bam), file(bai), pairedEnd, readStrand from bam3.map { [it[0],it[1],it[2],file("${it[3].toAbsolutePath().toString().replace('.bam','.toTranscriptome.bam')}"),file("${it[3].toAbsolutePath()}.bai"),it[4],it[5]] }
+    set id, sample, type, view, file(bam), pairedEnd, readStrand from bam3.filter { it[3] =~ /Transcriptome/ } 
     set species, file(txDir) from TranscriptIdx.first()
 
     output:
