@@ -16,13 +16,14 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 //Set default values for params
 params.steps = 'mapping,bigwig,contig,quantification'
 params.maxMismatches = 4
 params.maxMultimaps = 10
+params.readLength = 150
 
 // get list of steps from comma-separated strings
 pipelineSteps = params.steps.split(',').collect { it.trim() }
@@ -222,6 +223,7 @@ if ('mapping' in pipelineSteps) {
     
         script:
         sjOverHang = params.sjOverHang
+        readLength = params.readLength
 
         template(task.command)
 

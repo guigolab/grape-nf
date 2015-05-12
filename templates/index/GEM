@@ -1,0 +1,10 @@
+#!/bin/bash -eu
+mkdir genomeDir
+gemtools index -i ${genome} \
+							 -t ${cpus} \
+							 -o genomeDir/genome_index.gem
+gemtools t-index -i genomeDir/genome_index.gem \
+								 -a ${annotation} \
+								 -t ${cpus} \
+								 -o genomeDir/transcript_index
+								 -m ${readLength}
