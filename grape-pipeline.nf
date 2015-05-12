@@ -252,14 +252,14 @@ if ('mapping' in pipelineSteps) {
         // def date = new Date().format("yyyy-MM-dd'T'HH:mmZ", TimeZone.getTimeZone("UTC"))
         date = ""
         readGroupList = []
-        readGroupList << "ID${task.rgTagSep}${id}" 
-        readGroupList << "PU${task.rgTagSep}${id}" 
-        readGroupList << "SM${task.rgTagSep}${sample}" 
-        if ( date ) readGroupList << "DT${task.rgTagSep}${date}"
-        if ( params.rgPlatform ) readGroupList << "PL${task.rgTagSep}${params.rgPlatform}"
-        if ( params.rgLibrary ) readGroupList << "LB${task.rgTagSep}${params.rgLibrary}"
-        if ( params.rgCenterName ) readGroupList << "CN${task.rgTagSep}${params.rgCenterName}"
-        if ( params.rgDesc ) readGroupList << "DS${task.rgTagSep}${params.rgDesc}"
+        readGroupList << ["ID", "${id}"]
+        readGroupList << ["PU", "${id}"]
+        readGroupList << ["SM", "${sample}"]
+        if ( date ) readGroupList << ["DT", "${date}"]
+        if ( params.rgPlatform ) readGroupList << ["PL", "${params.rgPlatform}"]
+        if ( params.rgLibrary ) readGroupList << ["LB", "${params.rgLibrary}"]
+        if ( params.rgCenterName ) readGroupList << ["CN", "${params.rgCenterName}"]
+        if ( params.rgDesc ) readGroupList << ["DS", "${params.rgDesc}"]
         readGroup = task.readGroup
 
         fqs = reads.toString().split(" ")
