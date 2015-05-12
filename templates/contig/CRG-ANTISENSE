@@ -1,6 +1,6 @@
 #!/bin/bash -eu
 samtools view -h -@ ${cpus} ${bam} | \
-awk 'BEGIN {OFS="\\t"} {if (\$1!~/^@/ {\$2=xor(\$2,0x10)}; print}' | \
+awk 'BEGIN {OFS="\\t"} {if (\$1!~/^@/) {\$2=xor(\$2,0x10)}; print}' | \
 samtools view -@ ${cpus} -Sb - > tmp.bam
 mv -f tmp.bam ${bam}
 
