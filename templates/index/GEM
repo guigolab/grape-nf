@@ -7,5 +7,5 @@ gemtools index -i ${genome} \
 gemtools t-index -i genomeDir/genome_index.gem \
 								 -a ${annotation} \
 								 -t ${cpus} \
-								 -o genomeDir/transcript_index
+								 -o genomeDir/transcript_index \
 								 -m ${readLength}
