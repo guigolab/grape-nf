@@ -1,0 +1,25 @@
+#!/bin/bash -eu      
+gemtools rna-pipeline -i ${genomeDir}/genome_index.gem \
+                      -a ${annotation} \
+                      -r ${genomeDir}/transcript_index.junctions.gem \
+                      -k ${genomeDir}/transcript_index.junctions.keys \
+                      -f ${reads} \
+                      --filter-max-multi-maps ${maxMultimaps} \
+                      --filter-max-error-events ${maxMismatches} \
+                      --no-bam \
+                      -t ${cpus} \
+                      -q ${qualityOffset} \
+                      -n ${id}
+pigz -p ${cpus} -dc ${id}.filtered.map.gz \
+| gem-2-sam -T ${cpus} \
+          -I ${genomeDir}/genome_index.gem \
+          -q offset-${qualityOffset} \
+          -l \
+          --read-group ${readGroup} \
+          --expect-paired-end-reads \
+| samtools view -@ ${cpus} -Sb - \
+| samtools sort -@ ${cpus} \
+                -m ${memory} \
+                - \
+                ${id}${prefix}
+samtools index ${id}${prefix}.bam

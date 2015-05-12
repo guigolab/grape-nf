@@ -263,8 +263,8 @@ if ('mapping' in pipelineSteps) {
         readGroup = readGroup.join(" ")
 
         fqs = reads.toString().split(" ")
-        pairedEnd = false
-        if (fqs.size() == 2) pairedEnd = true 
+        pairedEnd = (fqs.size() == 2)
+        memory = task.memory.toBytes()/(2*task.cpus)
 
         template(task.command)
    
