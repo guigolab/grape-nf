@@ -1,5 +1,6 @@
 #!/bin/bash -eu
 mkdir genomeDir
+sed -i 's/ .*//' ${genome}
 gemtools index -i ${genome} \
 							 -t ${cpus} \
 							 -o genomeDir/genome_index.gem
