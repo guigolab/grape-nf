@@ -1,5 +1,5 @@
 #!/bin/bash -eu
-set -o pipelfail 
+set -o pipefail 
 gemtools rna-pipeline -i ${genomeDir}/genome_index.gem \
                       -a ${annotation} \
                       -r ${genomeDir}/transcript_index.junctions.gem \
