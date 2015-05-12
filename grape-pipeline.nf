@@ -251,16 +251,16 @@ if ('mapping' in pipelineSteps) {
         // prepare BAM @RG tag information
         // def date = new Date().format("yyyy-MM-dd'T'HH:mmZ", TimeZone.getTimeZone("UTC"))
         date = ""
-        readGroup = []
-        readGroup << "ID${task.rgTagSep}${id}" 
-        readGroup << "PU${task.rgTagSep}${id}" 
-        readGroup << "SM${task.rgTagSep}${sample}" 
-        if ( date ) readGroup << "DT${task.rgTagSep}${date}"
-        if ( params.rgPlatform ) readGroup << "PL${task.rgTagSep}${params.rgPlatform}"
-        if ( params.rgLibrary ) readGroup << "LB${task.rgTagSep}${params.rgLibrary}"
-        if ( params.rgCenterName ) readGroup << "CN${task.rgTagSep}${params.rgCenterName}"
-        if ( params.rgDesc ) readGroup << "DS${task.rgTagSep}${params.rgDesc}"
-        readGroup = readGroup.join(task.rgListSep)
+        readGroupList = []
+        readGroupList << "ID${task.rgTagSep}${id}" 
+        readGroupList << "PU${task.rgTagSep}${id}" 
+        readGroupList << "SM${task.rgTagSep}${sample}" 
+        if ( date ) readGroupList << "DT${task.rgTagSep}${date}"
+        if ( params.rgPlatform ) readGroupList << "PL${task.rgTagSep}${params.rgPlatform}"
+        if ( params.rgLibrary ) readGroupList << "LB${task.rgTagSep}${params.rgLibrary}"
+        if ( params.rgCenterName ) readGroupList << "CN${task.rgTagSep}${params.rgCenterName}"
+        if ( params.rgDesc ) readGroupList << "DS${task.rgTagSep}${params.rgDesc}"
+        readGroup = task.readGroup
 
         fqs = reads.toString().split(" ")
         pairedEnd = (fqs.size() == 2)
