@@ -252,15 +252,15 @@ if ('mapping' in pipelineSteps) {
         // def date = new Date().format("yyyy-MM-dd'T'HH:mmZ", TimeZone.getTimeZone("UTC"))
         date = ""
         readGroup = []
-        readGroup << "ID:${id}" 
-        readGroup << "PU:${id}" 
-        readGroup << "SM:${sample}" 
-        if ( date ) readGroup << "DT:${date}"
-        if ( params.rgPlatform ) readGroup << "PL:${params.rgPlatform}"
-        if ( params.rgLibrary ) readGroup << "LB:${params.rgLibrary}"
-        if ( params.rgCenterName ) readGroup << "CN:${params.rgCenterName}"
-        if ( params.rgDesc ) readGroup << "DS:${params.rgDesc}"
-        readGroup = readGroup.join(" ")
+        readGroup << "ID${task.rgTagSep}${id}" 
+        readGroup << "PU${task.rgTagSep}${id}" 
+        readGroup << "SM${task.rgTagSep}${sample}" 
+        if ( date ) readGroup << "DT${task.rgTagSep}${date}"
+        if ( params.rgPlatform ) readGroup << "PL${task.rgTagSep}${params.rgPlatform}"
+        if ( params.rgLibrary ) readGroup << "LB${task.rgTagSep}${params.rgLibrary}"
+        if ( params.rgCenterName ) readGroup << "CN${task.rgTagSep}${params.rgCenterName}"
+        if ( params.rgDesc ) readGroup << "DS${task.rgTagSep}${params.rgDesc}"
+        readGroup = readGroup.join(task.rgListSep)
 
         fqs = reads.toString().split(" ")
         pairedEnd = (fqs.size() == 2)
