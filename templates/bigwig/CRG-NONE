@@ -1,4 +1,4 @@
 #!/bin/bash -eu
 bamtools filter -tag NH:1 -in ${bam} -out tmp.bam && mv -f tmp.bam ${bam}
 genomeCoverageBed -split -bg -ibam ${bam} > ${id}.raw.bedgraph
-bedGraphToBigWig ${id}.raw.bedgraph ${genomefai} ${id}.raw.bw
+bedGraphToBigWig ${id}.raw.bedgraph ${genomeFai} ${id}.raw.bw
