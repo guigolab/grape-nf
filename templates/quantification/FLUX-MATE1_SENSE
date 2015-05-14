@@ -1,0 +1,10 @@
+#!/bin/bash -eu
+samtools index ${bam}
+#export FLUX_MEM=${memory}
+flux-capacitor -i ${bam} \
+               -a ${annotation} \
+               -o ${id}${prefix}.gtf \
+               -m PAIRED_STRANDED \
+               --read-strand MATE1_SENSE
+TrtoGn_RPKM.sh -a ${annotation} \
+               -i ${id}${prefix}.gtf
