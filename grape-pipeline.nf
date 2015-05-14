@@ -282,7 +282,7 @@ if ('mapping' in pipelineSteps) {
     GenomeIdx = Channel.just(Channel.STOP)
 }
 
-if ('quantification' in pipelineSteps) {
+if ('quantification' in pipelineSteps && config.process.$quantification.type == "Transcriptome") {
     
     process t_index {
     
