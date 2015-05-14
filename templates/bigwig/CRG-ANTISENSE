@@ -1,0 +1,11 @@
+#!/bin/bash -eu
+samtools view -h -@ ${cpus} ${bam} | \
+awk 'BEGIN {OFS="\\t"} {if (\$1!~/^@/) {\$2=xor(\$2,0x10)}; print}' | \
+samtools view -@ ${cpus} -Sb - > tmp.bam
+mv -f tmp.bam ${bam}
+
+bamtools filter -tag NH:1 -in ${bam} -out tmp.bam && mv -f tmp.bam ${bam}
+genomeCoverageBed -strand + -split -bg -ibam ${bam} > ${id}.plusRaw.bedgraph
+genomeCoverageBed -strand - -split -bg -ibam ${bam} > ${id}.minusRaw.bedgraph
+bedGraphToBigWig ${id}.plusRaw.bedgraph ${genomefai} ${id}.plusRaw.bw
+bedGraphToBigWig ${id}.minusRaw.bedgraph ${genomefai} ${id}.minusRaw.bw
