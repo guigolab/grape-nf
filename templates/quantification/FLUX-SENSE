@@ -8,3 +8,4 @@ flux-capacitor -i ${bam} \
                --read-strand SENSE
 TrtoGn_RPKM.sh -a ${quantRef} \
                -i ${id}${prefix}.isoforms.gtf
+               -o ${id}${prefix}.genes.gff
