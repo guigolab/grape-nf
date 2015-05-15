@@ -429,6 +429,7 @@ process quantification {
     set id, sample, type, viewGn, file("*genes*"), pairedEnd, readStrand into genes
 
     script:
+    prefix = pref
     type = task.fileType
     viewTx = "Transcript${txDir.name.replace('.gtf','').capitalize()}"
     viewGn = "Gene${txDir.name.replace('.gtf','').capitalize()}"
