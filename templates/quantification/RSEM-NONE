@@ -13,5 +13,5 @@ rsem-calculate-expression --bam \
                           --paired-end \
                           ${bam} \
                           ${txDir}/RSEMref \
-                          Quant
-rsem-plot-model Quant Quant.pdf
+                          ${id}${prefix}
+rsem-plot-model ${id}${prefix} ${id}${prefix}.pdf

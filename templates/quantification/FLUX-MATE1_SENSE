@@ -3,8 +3,8 @@ samtools index ${bam}
 #export FLUX_MEM=${memory}
 flux-capacitor -i ${bam} \
                -a ${annotation} \
-               -o ${id}${prefix}.gtf \
+               -o ${id}${prefix}.isoforms.gtf \
                -m PAIRED_STRANDED \
                --read-strand MATE1_SENSE
 TrtoGn_RPKM.sh -a ${annotation} \
-               -i ${id}${prefix}.gtf
+               -i ${id}${prefix}.isoforms.gtf
