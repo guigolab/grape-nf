@@ -2,9 +2,9 @@
 samtools index ${bam}
 #export FLUX_MEM=${memory}
 flux-capacitor -i ${bam} \
-               -a ${annotation} \
+               -a ${quantRef} \
                -o ${id}${prefix}.isoforms.gtf \
                -m SINGLE_STRANDED \
                --read-strand ANTISENSE
-TrtoGn_RPKM.sh -a ${annotation} \
+TrtoGn_RPKM.sh -a ${quantRef} \
                -i ${id}${prefix}.isoforms.gtf

@@ -12,6 +12,6 @@ rsem-calculate-expression --bam \
                           --ci-memory ${memory} \
                           --paired-end \
                           ${bam} \
-                          ${txDir}/RSEMref \
+                          ${quantRef}/RSEMref \
                           ${id}${prefix}
 rsem-plot-model ${id}${prefix} ${id}${prefix}.pdf

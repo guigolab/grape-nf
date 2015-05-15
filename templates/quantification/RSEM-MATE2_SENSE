@@ -13,6 +13,6 @@ rsem-calculate-expression --bam \
                           --paired-end \
                           --forward-prob 0 \
                           ${bam} \
-                          ${txDir}/RSEMref \
+                          ${quantRef}/RSEMref \
                           ${id}${prefix}
 rsem-plot-model ${id}${prefix} ${id}${prefix}.pdf

@@ -3,11 +3,11 @@ samtools index ${bam}
 #export FLUX_MEM=${memory}
 flux-capacitor --profile \
                -i ${bam} \ 
-               -a ${annotation} \
+               -a ${quantRef} \
                --profile-file ${id}${prefix}_profile.json
 flux-capacitor -i ${bam} \ 
-               -a ${annotation} \
+               -a ${quantRef} \
                --profile-file ${id}${prefix}_profile.json \
                -o ${id}${prefix}.isoforms.gtf
-TrtoGn_RPKM.sh -a ${annotation} \
+TrtoGn_RPKM.sh -a ${quantRef} \
                -i ${id}${prefix}.isoforms.gtf
