@@ -14,5 +14,5 @@ flux-capacitor -i ${bam} \
                -m SINGLE_STRANDED \
                --read-strand ANTISENSE
 TrtoGn_RPKM.sh -a ${quantRef} \
-               -i ${id}${prefix}.isoforms.gtf
+               -i ${id}${prefix}.isoforms.gtf \
                -o ${id}${prefix}.genes.gff

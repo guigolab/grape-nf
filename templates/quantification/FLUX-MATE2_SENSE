@@ -7,5 +7,5 @@ flux-capacitor -i ${bam} \
                -m PAIRED_STRANDED \
                --read-strand MATE2_SENSE
 TrtoGn_RPKM.sh -a ${quantRef} \
-               -i ${id}${prefix}.isoforms.gtf
+               -i ${id}${prefix}.isoforms.gtf \
                -o ${id}${prefix}.genes.gff

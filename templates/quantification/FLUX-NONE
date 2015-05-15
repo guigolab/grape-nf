@@ -5,5 +5,5 @@ flux-capacitor -i ${bam} \
                -a ${quantRef} \
                -o ${id}${prefix}.isoforms.gtf
 TrtoGn_RPKM.sh -a ${quantRef} \
-               -i ${id}${prefix}.isoforms.gtf
+               -i ${id}${prefix}.isoforms.gtf \
                -o ${id}${prefix}.genes.gff

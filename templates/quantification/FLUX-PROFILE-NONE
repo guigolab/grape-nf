@@ -10,6 +10,6 @@ flux-capacitor -i ${bam} \
                --profile-file ${id}${prefix}_profile.json \
                -o ${id}${prefix}.isoforms.gtf
 TrtoGn_RPKM.sh -a ${quantRef} \
-               -i ${id}${prefix}.isoforms.gtf
+               -i ${id}${prefix}.isoforms.gtf \
                -o ${id}${prefix}.genes.gff
                
