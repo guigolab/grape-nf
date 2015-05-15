@@ -112,7 +112,19 @@ $3=="gene"{
 END{for(g in line){print line[g]"; transcript_ids \""trlist[g]"\";"}}' $annot | $gff2gff > $withtrlist
 
 echo "I am making the gene file with rpkm and number of reads" >&2
-awk -v fileRef=$tr 'BEGIN{while (getline < fileRef >0){k=9; while(k<=(NF-1)){split($10,a,"\""); if($k=="RPKM"){split($(k+1),b,";"); rpkm[a[2]]=b[1];} if($k=="reads"){split($(k+1),b,";"); reads[a[2]]=b[1];} k+=2}}} {split($12,a,"\""); split(a[2],b,","); s1=0; k=1; while(b[k]!=""){s1+=rpkm[b[k]]; k++} s2=0; k=1; while(b[k]!=""){s2+=reads[b[k]]; k++} print $0, "RPKM", s1"\;", "reads", s2"\;"}' $output/$withtrlist | $gff2gff | sort -k1,1 -k4,4n > $output
+awk -v fileRef=$tr 'BEGIN{while (getline < fileRef >0){
+  k=9; while(k<=(NF-1)){
+      split($10,a,"\""); 
+      if($k=="RPKM"){split($(k+1),b,";"); rpkm[a[2]]=b[1];} 
+      if($k=="reads"){split($(k+1),b,";"); reads[a[2]]=b[1];} k+=2}
+    }
+  } {
+    split($12,a,"\""); split(a[2],b,","); s1=0; k=1; while(b[k]!=""){
+      s1+=rpkm[b[k]]; k++
+    } s2=0; k=1; while(b[k]!=""){
+      s2+=reads[b[k]]; k++
+    } print $0, "RPKM", s1"\;", "reads", s2"\;"
+  }' $output/$withtrlist | $gff2gff | sort -k1,1 -k4,4n > $output
 
 echo "I am removing unuseful files" >&2
 rm $withtrlist
