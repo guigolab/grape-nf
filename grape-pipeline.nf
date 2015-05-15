@@ -386,7 +386,7 @@ process bigwig {
     script:
     type = "bigwig"
     wigRefPrefix = params.wigRefPrefix ?: ""
-    views = task.views.sort()
+    views = task.views
     
     template(task.command)
 
