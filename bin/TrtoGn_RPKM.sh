@@ -97,7 +97,7 @@ fi
 
 annotbase=`basename $annot`
 trbase=`basename $tr`
-withtrlist=${trbase}.${annotbase%.gtf}.gene.withtrlist.gff
+withtrlist=${trbase}.${annotbase%.gtf}.genes.gff
 
 echo "I am making the file of genes with associated transcripts from the annotation" >&2
 awk 'BEGIN{OFS=FS="\t"}$3=="transcript"{
