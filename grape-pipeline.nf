@@ -291,7 +291,7 @@ if ('quantification' in pipelineSteps && config.process.$quantification.type == 
         set species, file(annotation) from Annotations2
 
         output:
-        set species, file('txDir') into TranscriptIdx
+        set species, file('txDir') into QuantificationRef
     
         script:
         template(task.command)
@@ -299,7 +299,7 @@ if ('quantification' in pipelineSteps && config.process.$quantification.type == 
     }
 
 } else {
-    TranscriptIdx = Channel.just(Channel.STOP)
+    QuantificationRef = Annotations2
 }
 
     
@@ -422,7 +422,7 @@ process quantification {
 
     input:
     set id, sample, type, view, file(bam), pairedEnd, readStrand from quantificationBams
-    set species, file(txDir) from TranscriptIdx.first()
+    set species, file(quantRef) from QuantificationRef.first()
 
     output:
     set id, sample, type, viewTx, file("*isoforms*"), pairedEnd, readStrand into isoforms
@@ -431,8 +431,8 @@ process quantification {
     script:
     prefix = pref
     type = task.fileType
-    viewTx = "Transcript${txDir.name.replace('.gtf','').capitalize()}"
-    viewGn = "Gene${txDir.name.replace('.gtf','').capitalize()}"
+    viewTx = "Transcript${quantRef.name.replace('.gtf','').capitalize()}"
+    viewGn = "Gene${quantRef.name.replace('.gtf','').capitalize()}"
     memory = task.memory.toMega()
     
     template(task.command)
