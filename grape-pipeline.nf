@@ -425,11 +425,11 @@ process quantification {
     set species, file(txDir) from TranscriptIdx.first()
 
     output:
-    set id, sample, type, viewTx, file("Quant.genes.results"), pairedEnd, readStrand into isoforms
-    set id, sample, type, viewGn, file("Quant.isoforms.results"), pairedEnd, readStrand into genes
+    set id, sample, type, viewTx, file("*isoforms*"), pairedEnd, readStrand into isoforms
+    set id, sample, type, viewGn, file("*genes*"), pairedEnd, readStrand into genes
 
     script:
-    type = "gtf"
+    type = task.fileType
     viewTx = "Transcript${txDir.name.replace('.gtf','').capitalize()}"
     viewGn = "Gene${txDir.name.replace('.gtf','').capitalize()}"
     memory = task.memory.toMega()
