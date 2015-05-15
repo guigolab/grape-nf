@@ -35,7 +35,7 @@ function usage {
     echo "" >&2
     echo "Options:"
     echo "" >&2
-    printf "\t-o|--output\t\t the output folder. Default: current folder\n"
+    printf "\t-o|--output\t\t the output folder and filename. Default: ./<input_basename>_gene_with_rpkm.gff\n"
     echo "" >&2
     exit 1
 }
@@ -97,7 +97,8 @@ fi
 
 annotbase=`basename $annot`
 trbase=`basename $tr`
-withtrlist=${trbase}.${annotbase%.gtf}.genes.gff
+withtrlist=${trbase}.${annotbase%.gtf}.withtrlist.gff
+[ output == '.' ] && output=${trbase%.gtf}\_gene_with_rpkm.gff
 
 echo "I am making the file of genes with associated transcripts from the annotation" >&2
 awk 'BEGIN{OFS=FS="\t"}$3=="transcript"{
@@ -111,7 +112,7 @@ $3=="gene"{
 END{for(g in line){print line[g]"; transcript_ids \""trlist[g]"\";"}}' $annot | $gff2gff > $output/$withtrlist
 
 echo "I am making the gene file with rpkm and number of reads" >&2
-awk -v fileRef=$tr 'BEGIN{while (getline < fileRef >0){k=9; while(k<=(NF-1)){split($10,a,"\""); if($k=="RPKM"){split($(k+1),b,";"); rpkm[a[2]]=b[1];} if($k=="reads"){split($(k+1),b,";"); reads[a[2]]=b[1];} k+=2}}} {split($12,a,"\""); split(a[2],b,","); s1=0; k=1; while(b[k]!=""){s1+=rpkm[b[k]]; k++} s2=0; k=1; while(b[k]!=""){s2+=reads[b[k]]; k++} print $0, "RPKM", s1"\;", "reads", s2"\;"}' $output/$withtrlist | $gff2gff | sort -k1,1 -k4,4n > $output/${trbase%.gtf}\_gene_with_rpkm.gff
+awk -v fileRef=$tr 'BEGIN{while (getline < fileRef >0){k=9; while(k<=(NF-1)){split($10,a,"\""); if($k=="RPKM"){split($(k+1),b,";"); rpkm[a[2]]=b[1];} if($k=="reads"){split($(k+1),b,";"); reads[a[2]]=b[1];} k+=2}}} {split($12,a,"\""); split(a[2],b,","); s1=0; k=1; while(b[k]!=""){s1+=rpkm[b[k]]; k++} s2=0; k=1; while(b[k]!=""){s2+=reads[b[k]]; k++} print $0, "RPKM", s1"\;", "reads", s2"\;"}' $output/$withtrlist | $gff2gff | sort -k1,1 -k4,4n > $output/$outgff
 
 echo "I am removing unuseful files" >&2
 rm $output/$withtrlist
