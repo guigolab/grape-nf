@@ -1,7 +1,7 @@
 #!/bin/bash -eu
 mkdir genomeDir
-sed -i 's/ .*//' ${genome}
-gemtools index -i ${genome} \
+sed 's/ .*//' ${genome} > genome_processed.fa
+gemtools index -i genome_processed.fa \
 							 -t ${cpus} \
 							 -o genomeDir/genome_index.gem
 gemtools t-index -i genomeDir/genome_index.gem \
@@ -9,3 +9,4 @@ gemtools t-index -i genomeDir/genome_index.gem \
 								 -t ${cpus} \
 								 -o genomeDir/transcript_index \
 								 -m ${readLength}
+rm genome_processed.fa
