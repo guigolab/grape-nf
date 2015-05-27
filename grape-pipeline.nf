@@ -341,8 +341,7 @@ if (!('mapping' in pipelineSteps)) {
     bam << Channel.STOP
 }
 
-(bam1, bam2) = bam
-.into(2)
+(bam1, bam2) = bam.into(2)
 
 process inferExp {
     input:
@@ -370,9 +369,9 @@ allBams = bamStrand.cross(bam2)
 (bigwigBams, contigBams) = allBams1.filter { it[3] =~ /Genome/ }.into(3)
 quantificationBams = allBams2.filter { it[3] =~ /${config.process.$quantification.type}/ }
 
-if (!('bigwig' in pipelineSteps)) bam1 = Channel.just(Channel.STOP)
-if (!('contig' in pipelineSteps)) bam2 = Channel.just(Channel.STOP)
-if (!('quantification' in pipelineSteps)) bam3 = Channel.just(Channel.STOP)
+if (!('bigwig' in pipelineSteps)) bigwigBams = Channel.just(Channel.STOP)
+if (!('contig' in pipelineSteps)) contigBams = Channel.just(Channel.STOP)
+if (!('quantification' in pipelineSteps)) quantificationBams = Channel.just(Channel.STOP)
 
 process bigwig {
     
