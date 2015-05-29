@@ -392,7 +392,7 @@ process bigwig {
 }
 
 bigwig = bigwig.reduce([:]) { files, tuple ->
-    (id, sample, type, view, path, pairedEnd, readStrand) = tuple     
+    def (id, sample, type, view, path, pairedEnd, readStrand) = tuple     
     if (!files) files = []
     paths = path.toString().replaceAll(/[\[\],]/,"").split(" ").sort()
     (1..paths.size()).each { files << [id, sample, type, view[it-1], paths[it-1], pairedEnd, readStrand] }
