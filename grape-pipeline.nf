@@ -47,7 +47,6 @@ if (params.help) {
     log.info '    --annotation ANNOTAION_FILE         Reference gene annotation file(s).'
     log.info '    --steps STEP[,STEP]...              The steps to be executed within the pipeline run. Possible values: "mapping", "bigwig", "contig", "quantification". Default: all'
 //    log.info '    --chunk-size CHUNK_SIZE             The number of records to be put in each chunk when splitting the input. Default: no split'
-    log.info '    --error-strategy ERROR_STRATEGY     Specify how an error condition is managed by the pipeline processes. Possible values: ignore, retry'
     log.info '                                        Default: the entire pipeline  terminates if a process returns an error status.'
     log.info '    --max-mismatches THRESHOLD          Set maps with more than THRESHOLD error events to unmapped. Default "4".'
     log.info '    --max-multimaps THRESHOLD           Set multi-maps with more than THRESHOLD mappings to unmapped. Default "10".'
@@ -81,14 +80,14 @@ log.info "Genome                          : ${params.genome}"
 log.info "Annotation                      : ${params.annotation}"
 log.info "Pipeline steps                  : ${pipelineSteps.join(" ")}"
 //log.info "Input chunk size                : ${params.chunkSize != null ? params.chunkSize : 'no split'}"
-log.info "Error strategy                  : ${params.errorStrategy != null ? params.errorStrategy : 'default'}"
+log.info "Error strategy                  : ${config.process.errorStrategy}"
 log.info ""
 
 if ('mapping' in pipelineSteps) {
     log.info "Mapping parameters"
     log.info "------------------"
     log.info "Max mismatches                  : ${params.maxMismatches}"
-    log.info "Max multimaps                   : ${params.maxMultimaps}"
+    log.info "Max multimaps                   : ${params.maxMultimaps}" 
     log.info "Produce BAM stats               : ${params.bamStats}"
     if ( params.rgPlatform ) log.info "Sequencing platform             : ${params.rgPlatform}"  
     if ( params.rgLibrary ) log.info "Sequencing library              : ${params.rgLibrary}"  
