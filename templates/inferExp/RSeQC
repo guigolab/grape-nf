@@ -3,4 +3,4 @@ set -o pipefail
 
 gtfToGenePred ${annotation} -allErrors -ignoreGroupsWithoutExons ${genePred} 2> ${genePred}.err
 genePredToBed ${genePred} ${bed12}
-grape_infer_experiment.py -i ${bam} -r ${bed12} 2> infer_experiment.log | tr -d '\\n'
+grape_infer_experiment.py -i ${bam} -r ${bed12} | tr -d '\\n'
