@@ -27,6 +27,12 @@ params.wigRefPrefix = 'chr'
 params.maxMultimaps = 10
 params.maxMismatches = 4
 
+// Some configuration info
+quantificationMode = config.process.$quantification.mode
+useDocker = config.docker.enabled
+errorStrategy = config.process.errorStrategy
+
+
 // get list of steps from comma-separated strings
 pipelineSteps = params.steps.split(',').collect { it.trim() }
 
@@ -79,8 +85,9 @@ log.info "Index file                      : ${params.index}"
 log.info "Genome                          : ${params.genome}"
 log.info "Annotation                      : ${params.annotation}"
 log.info "Pipeline steps                  : ${pipelineSteps.join(" ")}"
-//log.info "Input chunk size                : ${params.chunkSize != null ? params.chunkSize : 'no split'}"
-log.info "Error strategy                  : ${config.process.errorStrategy}"
+//log.info "Input chunk size                : ${params?.chunkSize ?: 'no split'}"
+log.info "Use Docker                      : ${useDocker}"
+log.info "Error strategy                  : ${errorStrategy}"
 log.info ""
 
 if ('mapping' in pipelineSteps) {
@@ -88,7 +95,7 @@ if ('mapping' in pipelineSteps) {
     log.info "------------------"
     log.info "Max mismatches                  : ${params.maxMismatches}"
     log.info "Max multimaps                   : ${params.maxMultimaps}" 
-    log.info "Produce BAM stats               : ${params.bamStats}"
+    //log.info "Produce BAM stats               : ${params.bamStats}"
     if ( params.rgPlatform ) log.info "Sequencing platform             : ${params.rgPlatform}"  
     if ( params.rgLibrary ) log.info "Sequencing library              : ${params.rgLibrary}"  
     if ( params.rgCenterName ) log.info "Sequencing center               : ${params.rgCenterName}" 
@@ -98,22 +105,19 @@ if ('mapping' in pipelineSteps) {
 if ('bigwig' in pipelineSteps) {
     log.info "Bigwig parameters"
     log.info "-----------------"
-    log.info "References prefix               : ${params.wigRefPrefix != null ? params.wigRefPrefix : 'all'}"
+    log.info "References prefix               : ${params?.wigRefPrefix ?: 'all'}"
     log.info ""
 }
 
-//if ('quantification' in pipelineSteps) {
-//    log.info "Quantification parameters"
-//    log.info "-------------------------"
-//    log.info "Additional quantified elements  : ${params.countElements.size()==0 ? 'NONE' : params.countElements.join(" ")}"
-//    log.info "Memory                          : ${params.fluxMem}"
-//    log.info "Create profile file             : ${params.fluxProfile}"
-//    log.info ""
-//}
+if ('quantification' in pipelineSteps) {
+    log.info "Quantification parameters"
+    log.info "-------------------------"
+    log.info "Mode                            : ${quantificationMode}"
+    log.info ""
+}
 
 genomes = params.genome.split(',').collect { file(it) }
 annos = params.annotation.split(',').collect { file(it) }
-quantificationMode = config.process.$quantification.mode
 
 index = params.index ? file(params.index) : System.in
 input_files = Channel.create()
