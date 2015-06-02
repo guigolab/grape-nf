@@ -5,3 +5,4 @@ TODO list
 - use single pipeline.db file
 - integrate Kallisto
 - add preprocessing steps for input (fastq) and references (genome, annotation)
+- tune mapping steps for different quantification modes: only produce required bams
