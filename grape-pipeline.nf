@@ -112,8 +112,9 @@ if ('bigwig' in pipelineSteps) {
 //    log.info ""
 //}
 
-genomes=params.genome.split(',').collect { file(it) }
-annos=params.annotation.split(',').collect { file(it) }
+genomes = params.genome.split(',').collect { file(it) }
+annos = params.annotation.split(',').collect { file(it) }
+quantificationMode = config.process.$quantification.mode
 
 index = params.index ? file(params.index) : System.in
 input_files = Channel.create()
@@ -282,7 +283,7 @@ if ('mapping' in pipelineSteps) {
     GenomeIdx = Channel.just(Channel.STOP)
 }
 
-if ('quantification' in pipelineSteps && config.process.$quantification.type == "Transcriptome") {
+if ('quantification' in pipelineSteps && quantificationMode != "Genome") {
     
     process t_index {
     
@@ -367,7 +368,7 @@ allBams = bamStrand.cross(bam2)
 (allBams1, allBams2, out) = allBams.into(3)
 
 (bigwigBams, contigBams) = allBams1.filter { it[3] =~ /Genome/ }.into(3)
-quantificationBams = allBams2.filter { it[3] =~ /${config.process.$quantification.type}/ }
+quantificationBams = allBams2.filter { it[3] =~ /${quantificationMode}/ }
 
 if (!('bigwig' in pipelineSteps)) bigwigBams = Channel.just(Channel.STOP)
 if (!('contig' in pipelineSteps)) contigBams = Channel.just(Channel.STOP)
