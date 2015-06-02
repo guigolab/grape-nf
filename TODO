@@ -1,8 +1,7 @@
 TODO list
 ---------
 
-- create template scripts for GEM-FLUX pipeline
-- create Docker images for STAR-RSEM	
 - add pipeline to CI server (circle)
 - use single pipeline.db file
-- use nextfow profiles and includeConfig
+- integrate Kallisto
+- add preprocessing steps for input (fastq) and references (genome, annotation)
