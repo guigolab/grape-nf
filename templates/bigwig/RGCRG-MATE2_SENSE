@@ -3,9 +3,8 @@ samtools view -h -@ ${cpus} ${bam} | \
 awk 'BEGIN {OFS="\\t"} {if (\$1!~/^@/ && and(\$2,64)>0) {\$2=xor(\$2,0x10)}; print}' | \
 samtools view -@ ${cpus} -Sb - > tmp.bam
 
-bamtools filter -tag NH:1 -in tmp.bam -out tmp_unique.bam && rm tmp.bam
-genomeCoverageBed -strand + -split -bg -ibam tmp_unique.bam > ${id}.plusRaw.bedgraph
-genomeCoverageBed -strand - -split -bg -ibam tmp_unique.bam > ${id}.minusRaw.bedgraph
-rm tmp_unique.bam
+genomeCoverageBed -strand + -split -bg -ibam tmp.bam > ${id}.plusRaw.bedgraph
+genomeCoverageBed -strand - -split -bg -ibam tmp.bam > ${id}.minusRaw.bedgraph
+rm tmp.bam
 bedGraphToBigWig ${id}.plusRaw.bedgraph ${genomeFai} ${id}.plusRaw.bw
 bedGraphToBigWig ${id}.minusRaw.bedgraph ${genomeFai} ${id}.minusRaw.bw

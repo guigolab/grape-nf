@@ -1,5 +1,3 @@
 #!/bin/bash -eu
-bamtools filter -tag NH:1 -in ${bam} -out tmp_unique.bam
-genomeCoverageBed -split -bg -ibam tmp_unique.bam > ${id}.raw.bedgraph
-rm tmp_unique.bam
+genomeCoverageBed -split -bg -ibam ${bam} > ${id}.raw.bedgraph
 bedGraphToBigWig ${id}.raw.bedgraph ${genomeFai} ${id}.raw.bw
