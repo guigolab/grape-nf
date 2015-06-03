@@ -7,9 +7,9 @@ before_install:
   - curl -sSL https://get.docker.com/ | sh
   - env | grep DOCKER
   - curl -fsSL get.nextflow.io | bash
-  - nextflow info
 
-install: true
+install:
+  - nextflow info
 
 script:
   - ./compare.sh gemflux -c shippable.cfg
