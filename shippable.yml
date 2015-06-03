@@ -8,8 +8,8 @@ before_install:
   - env | grep DOCKER
   - curl -fsSL get.nextflow.io | bash
 
-install:
-  - nextflow info
+install: true
 
 script:
+  - nextflow info
   - ./compare.sh gemflux -c shippable.cfg
