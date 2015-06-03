@@ -124,7 +124,7 @@ awk -v fileRef=$tr 'BEGIN{while (getline < fileRef >0){
     } s2=0; k=1; while(b[k]!=""){
       s2+=reads[b[k]]; k++
     } print $0, "RPKM", s1"\;", "reads", s2"\;"
-  }' $output/$withtrlist | $gff2gff | sort -k1,1 -k4,4n > $output
+  }' $withtrlist | $gff2gff | sort -k1,1 -k4,4n > $output
 
 echo "I am removing unuseful files" >&2
 rm $withtrlist
