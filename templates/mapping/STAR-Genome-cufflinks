@@ -16,6 +16,7 @@ STAR --runThreadN ${cpus} \
      --readFilesCommand pigz -p${cpus} -dc \
      --outSAMtype BAM SortedByCoordinate \
      --outSAMattrRGline ${readGroup} \
+     --limitBAMsortRAM ${totalMemory} \
      --outSAMstrandField intronMotif \
      --outFilterIntronMotifs RemoveNoncanonical
 mv Aligned.sortedByCoord.out.bam ${id}${prefix}.bam

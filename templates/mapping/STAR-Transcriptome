@@ -16,7 +16,8 @@ STAR --runThreadN ${cpus} \
      --readFilesCommand pigz -p${cpus} -dc \
      --outSAMtype BAM SortedByCoordinate \
      --quantMode TranscriptomeSAM \
-     --outSAMattrRGline ${readGroup}
+     --outSAMattrRGline ${readGroup} \
+     --limitBAMsortRAM ${totalMemory}
 mv Aligned.sortedByCoord.out.bam ${id}${prefix}.bam 
 mv Aligned.toTranscriptome.out.bam ${id}${prefix}.toTranscriptome.bam
 samtools index ${id}${prefix}.bam

@@ -17,6 +17,7 @@ STAR --runThreadN ${cpus} \
      --outSAMtype BAM SortedByCoordinate \
      --quantMode TranscriptomeSAM \
      --outSAMattrRGline ${readGroup} \
+     --limitBAMsortRAM ${totalMemory} \
      --outSAMstrandField intronMotif \
      --outFilterIntronMotifs RemoveNoncanonical
 mv Aligned.sortedByCoord.out.bam ${id}${prefix}.bam

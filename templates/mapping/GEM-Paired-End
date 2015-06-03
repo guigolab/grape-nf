@@ -20,7 +20,7 @@ pigz -p ${cpus} -dc ${id}.filtered.map.gz \
           --expect-paired-end-reads \
 | samtools view -@ ${cpus} -Sb - \
 | samtools sort -@ ${cpus} \
-                -m ${memory} \
+                -m ${threadMemory} \
                 - \
                 ${id}${prefix}
 samtools index ${id}${prefix}.bam

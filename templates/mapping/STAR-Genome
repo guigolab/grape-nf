@@ -15,6 +15,7 @@ STAR --runThreadN ${cpus} \
      --alignSJDBoverhangMin 1 \
      --readFilesCommand pigz -p${cpus} -dc \
      --outSAMtype BAM SortedByCoordinate \
-     --outSAMattrRGline ${readGroup}
+     --outSAMattrRGline ${readGroup} \
+     --limitBAMsortRAM ${totalMemory}
 mv Aligned.sortedByCoord.out.bam ${id}${prefix}.bam
 samtools index ${id}${prefix}.bam
