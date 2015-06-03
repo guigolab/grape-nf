@@ -1,4 +1,4 @@
-before_install:
+install:
     - curl -fsSL get.nextflow.io | bash
     - export PATH=$PWD:$PATH
 script:
