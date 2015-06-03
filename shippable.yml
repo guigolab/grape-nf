@@ -5,5 +5,4 @@ install:
   - curl -fsSL get.nextflow.io | bash
   - nextflow info
 script:
-  - docker images
-  - ./compare.sh gemflux
+  - ./compare.sh gemflux -c shippable.cfg
