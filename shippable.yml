@@ -1,7 +1,7 @@
 # Build Environment
 build_environment: Ubuntu 14.04
 install:
-	- wget -qO- https://get.docker.com/ | bash
+	- wget -fsSL https://get.docker.com/ | sh
 	- export PATH=$PWD:$PATH
   - export NXF_VER=0.14.0-SNAPSHOT
   - curl -fsSL get.nextflow.io | bash
