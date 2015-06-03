@@ -270,7 +270,8 @@ if ('mapping' in pipelineSteps) {
 
         fqs = reads.toString().split(" ")
         pairedEnd = (fqs.size() == 2)
-        memory = task.memory.toBytes()/(2*task.cpus)
+        sortMemory = task.memory.toBytes()
+        threadMemory = task.memory.toBytes()/(2*task.cpus)
 
         template(task.command)
    
