@@ -19,7 +19,7 @@ NORMAL="\033[0m"
 profile=${1} && shift
 [ -z $profile ] && profile="gemflux"
 
-nxf_opts="-process.executor=local -process.errorStrategy=fail ${@}"
+nxf_opts="-process.executor=local -process.errorStrategy=terminate ${@}"
 
 echo -e "==$YELLOW Running pipeline with $BLUE<${profile}>$YELLOW profile$NORMAL"
 nextflow run grape-pipeline.nf -profile $profile --index test-index.txt --genome data/genome.fa --annotation data/annotation.gtf ${nxf_opts} | tee test.log
