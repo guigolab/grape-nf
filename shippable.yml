@@ -1,4 +1,4 @@
-base_image: shippableimages/ubuntu1404_base
+build_image: shippableimages/ubuntu1404_base
 
 env:
   - PATH=$PWD:$PATH NXF_VER=0.14.0-SNAPSHOT
