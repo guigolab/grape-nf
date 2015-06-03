@@ -1,15 +1,14 @@
 build_image: shippableimages/ubuntu1404_base
 
-env:
-  - PATH=$PWD:$PATH NXF_VER=0.14.0-SNAPSHOT
-
 before_install:
+  - export PATH=$PWD:$PATH 
+  - export NXF_VER=0.14.0-SNAPSHOT
   - curl -sSL https://get.docker.com/ | sh
   - env | grep DOCKER
   - curl -fsSL get.nextflow.io | bash
+  - nextflow info
 
 install: true
 
 script:
-  - nextflow info
   - ./compare.sh gemflux -c shippable.cfg
