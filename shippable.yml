@@ -1,8 +1,7 @@
 base_image: shippableimages/ubuntu1404_base
 
 env:
-  - PATH=$PWD:$PATH
-  - NXF_VER=0.14.0-SNAPSHOT
+  - PATH=$PWD:$PATH NXF_VER=0.14.0-SNAPSHOT
 
 before_install:
   - curl -sSL https://get.docker.com/ | sh
