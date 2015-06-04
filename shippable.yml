@@ -3,6 +3,7 @@ before_install:
   - export PATH=$PWD:$PATH 
   - export NXF_VER=0.14.0-SNAPSHOT
   - env | grep DOCKER
+  - apt-get -y install openjdk-7-jre-headless
   - curl -fsSL get.nextflow.io | bash
   - nextflow info
 
