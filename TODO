@@ -1,6 +1,7 @@
 TODO list
 ---------
 
+- move to github
 - add pipeline to CI server (circle)
 - use single pipeline.db file
 - integrate Kallisto
