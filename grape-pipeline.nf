@@ -211,7 +211,7 @@ if ('contig' in pipelineSteps || 'bigwig' in pipelineSteps) {
 
     }
 } else {
-    FaiIdx = Channel.just(Channel.STOP)
+    FaiIdx = Channel.empty()
 }
 
 (FaiIdx1, FaiIdx2) = FaiIdx.into(2)
@@ -284,7 +284,7 @@ if ('mapping' in pipelineSteps) {
     }
 
 } else {
-    GenomeIdx = Channel.just(Channel.STOP)
+    GenomeIdx = Channel.empty()
 }
 
 if ('quantification' in pipelineSteps && quantificationMode != "Genome") {
@@ -374,9 +374,9 @@ allBams = bamStrand.cross(bam2)
 (bigwigBams, contigBams) = allBams1.filter { it[3] =~ /Genome/ }.into(3)
 quantificationBams = allBams2.filter { it[3] =~ /${quantificationMode}/ }
 
-if (!('bigwig' in pipelineSteps)) bigwigBams = Channel.just(Channel.STOP)
-if (!('contig' in pipelineSteps)) contigBams = Channel.just(Channel.STOP)
-if (!('quantification' in pipelineSteps)) quantificationBams = Channel.just(Channel.STOP)
+if (!('bigwig' in pipelineSteps)) bigwigBams = Channel.empty()
+if (!('contig' in pipelineSteps)) contigBams = Channel.empty()
+if (!('quantification' in pipelineSteps)) quantificationBams = Channel.empty()
 
 process bigwig {
     
