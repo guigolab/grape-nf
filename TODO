@@ -4,6 +4,6 @@ TODO list
 - move to github
 - add pipeline to CI server (circle)
 - use single pipeline.db file
-- integrate Kallisto
+- integrate Kallisto, Sailfish and maybe other mappers
 - add preprocessing steps for input (fastq) and references (genome, annotation)
 - tune mapping steps for different quantification modes: only produce required bams
