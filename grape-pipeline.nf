@@ -324,7 +324,7 @@ if (merge) {
         set id, sample, type, view, file(bam), pairedEnd from groupedBam
     
         output:
-        set id, sample, type, view, outfile, pairedEnd into mergedBam
+        set id, sample, type, view, file(outfile), pairedEnd into mergedBam
     
         script:
         prefix = pref
