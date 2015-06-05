@@ -385,7 +385,7 @@ process bigwig {
     set species, file(genomeFai) from FaiIdx1.first()
     
     output:
-    set id, sample, type, views, file('*.bw'), pairedEnd, readStrand into bigwig
+    set id, sample, type, views, file('*.bw'), pairedEnd, readStrand into bigwigOut
 
     script:
     type = "bigwig"
@@ -396,7 +396,7 @@ process bigwig {
 
 }
 
-bigwig = bigwig.reduce([:]) { files, tuple ->
+bigwig = bigwigOut.reduce([:]) { files, tuple ->
     def (id, sample, type, view, path, pairedEnd, readStrand) = tuple     
     if (!files) files = []
     paths = path.toString().replaceAll(/[\[\],]/,"").split(" ").sort()
