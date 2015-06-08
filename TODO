@@ -1,7 +1,6 @@
 TODO list
 ---------
 
-- support module config for the CRG
 - move to github
 - add pipeline to CI server (circle)
 - use single pipeline.db file
