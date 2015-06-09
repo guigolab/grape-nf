@@ -204,6 +204,23 @@ The string bewtween square brackets represents the prefix of the relative path t
     $ find work/b5 -name '0e02e9*' -exec ls -a {} \+
     .  ..  .command.begin  .command.env  .command.out  .command.run  .command.sh  .command.val  .exitcode  genome_index.gem  genome_index.log  hg38_AXM.fa
 
+
+Pipeline profiles
+=================
+The Grape pipeline can be run using different configuration profiles. The profiles essentially allow the user to run the analyses using different tools. The following profiles are available at present:
+
+============  ===================================================================================================
+``gemflux``   uses the GEMtools for mapping pipeline and the Flux Capacitor for isoform expression quantification
+``starrsem``  uses the STAR for mapping and bigwig and the RSEM program for isoform expression quantification
+``starflux``  uses the STAR for mapping and the Flux Capacitor for isoform expression quantification
+============  ===================================================================================================
+
+The ``gemflux`` profile is used as the default profile if no profile is specified. To specify a profile you can use the `-profiles` Nextflow `option <http://www.nextflow.io/docs/latest/config.html#config-profiles>`_. For example, to use STAR and RSEM just run the following command:
+
+.. code-block:: bash
+
+    $ nextflow -bg run grape -profile starrsem --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume 2>&1 > pipeline.log
+
 .. Links
 .. _Nextflow: http://nextflow.io
 .. _Nextflow documentation: http://www.nextflow.io/docs/latest/index.html
