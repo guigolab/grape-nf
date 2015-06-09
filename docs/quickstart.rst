@@ -183,7 +183,9 @@ Nextflow runs all processes in an isolated directory under the pipeline working 
 
 ================  ======================================================================================
 ``.command.env``  the process environment
-``.command.out``  the process output (merge ``stderr`` into ``stdout`` if not redirected)
+``.command.out``  the process standard output
+``.command.err``  the process standard error
+``.command.log``  when run on a compute cluster, the process log output from the job execution
 ``.command.run``  the script submitted to the cluster (also contains the header with cluster directives)
 ``.command.sh``   the actual command
 ``.exitcode``     the exit code of the command
