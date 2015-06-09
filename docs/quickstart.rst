@@ -2,45 +2,64 @@
 Getting started
 ===============
 
-The pipeline uses Nextflow_ for the execution and can be run in a simple way using the sharing features offered by it. Please check `Nextflow documentation`_ for more information.
+The pipeline uses Nextflow_ for its execution and can be installed and run in a very simple way. Using Nextflow sharing features allows us to automatically download the pipeline from a git repository and run it on the local environment. Please check `Nextflow documentation`_ for more information.
 
 
 Installing Nextflow
 ===================
-This step will install nextflow for your user. It is only needed once. These are the commands:
+You can install nextflow with the following commands:
 
 .. code-block:: bash
 
     $ curl -fsSL get.nextflow.io | bash
     $ mv nextflow <folder in your path>
+
+Check the installed version:
+
+.. code-block:: bash
+
     $ nextflow info
-    Version: 0.12.0 build 2580
-    Modified: 05-01-2015 15:07 UTC (16:07 CEST)
+    Version: 0.14.0 build 2988
+    Modified: 04-06-2015 13:45 UTC (15:45 CEST)
     System: Linux 2.6.32-504.1.3.el6.x86_64
     Runtime: Groovy 2.3.9 on Java HotSpot(TM) 64-Bit Server VM 1.7.0_60-b19
     Encoding: UTF-8 (UTF-8)
 
-Pipeline command
-================
-Once you have Nextflow installed you can run the GRAPE pipeline command.The first time you do it Nextflow will automatically download the pipeline from the Bitbucket git repository:
+.. note:: Nextflow installation is only required once. You might need to :ref:`nf-update`, though. 
+
+.. _nf-update:
+
+Upgrade Nextflow version
+------------------------
+The pipeline requires Nextflow version 0.14.0 or nigher. Make sure you have the right version by running `nextflow info`. In case you have an older version you can upgrade as follows:
 
 .. code-block:: bash
 
-    $ nextflow run -hub bitbucket emi80/grape ...
+    $ nextflow -self-update
 
-It is also possible to download the pipeline in advance and the run it:
+
+Setting up the pipeline
+=======================
+The GRAPE pipeline will be automatically downloaded if not found on the local system. The command is the following:
 
 .. code-block:: bash
 
-    $ nextflow pull -hub bitbucket emi80/grape
-    # use the following command every time you want to run the pipeline
-    $ nextflow run emi80/grape ...
+    $ nextflow run rglab/grape ...
+
+The command above will not update the pipeline if already present. In order to always run the latest version it is possible to download the pipeline in advance and then run it:
+
+.. code-block:: bash
+
+    $ nextflow pull rglab/grape
+    $ nextflow run grape ...
+
+.. note:: Downloading the pipeline in advance also allows us to run the pipeline without specifying the repository `owner` (have a look at `Nextflow documentation <http://www.nextflow.io/docs/latest/sharing.html>`_).
 
 
-Running your first pipeline
-===========================
+Running the pipeline
+====================
 
-.. note:: To run the pipeline at the CRG cluster you need to add the option ``-r crg`` to the command line. In this way a Nextflow config file specific for the CRG cluster will be used. For example: ``nextflow run emi80/grape -r crg ...``.
+.. note:: To run the pipeline at the CRG cluster you will need to use a specific Nextflow config file for it. 
 
 Creating a working directory
 ----------------------------
@@ -49,8 +68,7 @@ Move to the folder where you want to create the base directory for the pipeline 
 
 .. code-block:: bash
 
-    $ mkdir <pipeline name> && cd <pipeline name>
-
+    $ mkdir -p <pipeline name> && cd <pipeline name>
 
 Reference files
 ---------------
@@ -61,25 +79,23 @@ Only genome FASTA file and annotation file are required. Reference files can be 
 
     $ mkdir refs
     $ ln -s <path to the genome file> refs
-    $ ln -s <path to the annoation file> refs
-
-.. note:: The genome and the annotation needs to be sorted by **genomic position**.
-
+    $ ln -s <path to the annotation file> refs
 
 Getting the help
 ----------------
-To get the pipeline usage string and list of options use the following command:
+You can get the pipeline help by using the following command:
 
 .. code-block:: bash
 
-    $ nextflow run emi80/grape --help
-    N E X T F L O W  ~  version 0.12.0    
+    $ nextflow run grape --help
+    N E X T F L O W  ~  version 0.14.0
+    Launching 'rglab/grape' - revision: 21c5e84cf8 [master]
 
     G R A P E ~ RNA-seq Pipeline
     ----------------------------
     Run the GRAPE RNA-seq pipeline on a set of data.
 
-    Usage:
+    Usage: 
         grape-pipeline.nf -i INDEX_FILE -g GENOME_FILE -a ANNOTATION_FILE [OPTION]...
 
     Options:
@@ -90,25 +106,19 @@ To get the pipeline usage string and list of options use the following command:
         --steps STEP[,STEP]...              The steps to be executed within the pipeline run. Possible values: "mapping", "bigwig", "contig", "quantification". Default: all
         --error-strategy ERROR_STRATEGY     Specify how an error condition is managed by the pipeline processes. Possible values: ignore, retry
                                             Default: the entire pipeline  terminates if a process returns an error status.
-        --max-read-length READ_LENGTH       The maximum read length (used to compute the transcriptomes). Default: "auto".
         --max-mismatches THRESHOLD          Set maps with more than THRESHOLD error events to unmapped. Default "4".
         --max-multimaps THRESHOLD           Set multi-maps with more than THRESHOLD mappings to unmapped. Default "10".
-        --filter-intron-length THRESHOLD    Filter multimaps preferring ones with intron length > THRESHOLD
-        --filter-block-length THRESHOLD     Filter multimaps preferring ones with block length > THRESHOLD
-        --filter-level LEVEL                Reduce multimaps using the specified uniqueness level.
+
+    SAM read group options:
         --rg-platform PLATFORM              Platform/technology used to produce the reads for the BAM @RG tag.
         --rg-library LIBRARY                Sequencing library name for the BAM @RG tag.
         --rg-center-name CENTER_NAME        Name of sequencing center that produced the reads for the BAM @RG tag.
         --rg-desc DESCRIPTION               Description for the BAM @RG tag.
-        --flux-profile                      Specify whether the Flux Capacitor profile file shoudl be written. Default: "false".
-        --count-elements ELEMENTS           A comma separated list of elements to be counted by the Flux Capacitor.
-                                            Possible values: INTRONS, SPLICE_JUNCTIONS. Default: "none".
-
 
 Input format
 ------------
 
-The pipeline needs a tab separated file as one of the inputs. This files should contain information about the FASTQ files to be processed. The columns needed in order are:
+The pipeline needs a tab separated file as an input. This file should contain information about the FASTQ files to be processed. The columns needed in order are:
 
 ==========  ====================================================================================================
 ``sample``  the sample identifier, used to merge bam files in case multiple runs for the same sample are present
@@ -133,7 +143,7 @@ Also bam files can be specified in the index, with or without fastqs::
    sample1  test1   data/test1_2.fastq.gz   fastq   FastqRd2
    sample2  test2   data/test2.bam  bam     Alignment
 
-In this case the bam file will skip the mapping process and  wiil be sent to the subsequent processes.
+In this case the bam file will skip the mapping process and will be sent to the subsequent processes.
 
 .. note:: Bam and fastq files should not refer to the same sample unless you want to merge them!
 
@@ -141,31 +151,31 @@ In this case the bam file will skip the mapping process and  wiil be sent to the
 Run the pipeline
 ----------------
 
-Here is a simple example of the command to run the pipeline:
+Here is a simple example of how you can run the pipeline:
 
 .. code-block:: bash
 
-    $ nextflow -bg run grape-pipeline.nf --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume 2>&1 > pipeline.log
+    $ nextflow -bg run grape --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume 2>&1 > pipeline.log
 
-By default the pipeline execution will stop as far as one of the processes fails. To change this behaviour you can use the ``--error-strategy`` option. For example to ignore errors and keep processing use ``--errror-strategy ignore``.
+By default the pipeline execution will stop as far as one of the processes fails. To change this behaviour you can use the `errorStrategy directive <http://www.nextflow.io/docs/latest/process.html#errorstrategy>`_ of Nextflow processes. You can also specify it on command line. For example, to ignore errors and keep processing you can use ``-process.errorStrategy=ignore``.
 
-It is possible to run only some of the pipeline steps using the option ``--steps``. For example the following command will only run the ``mappping`` and ``quantification`` steps:
+It is also possible to run a subset of pipeline steps using the option ``--steps``. For example, the following command will only run the ``mappping`` and ``quantification`` steps:
 
 .. code-block:: bash
 
-   $ nextflow -bg run grape-pipeline.nf --steps mapping,quantification --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume 2>&1 > pipeline.log
+   $ nextflow -bg run grape --steps mapping,quantification --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume 2>&1 > pipeline.log
 
 
 Stop the pipeline
 -----------------
 
-To stop a running pipeline just run the following command:
+To stop a running pipeline just run the following command from within the pipeline base directory:
 
 .. code-block:: bash
 
     $ kill $(cat .nextflow.pid)
 
-.. note:: If you run multiple pipelines within the same folder (e.g. for different genders), the file ``.nextflow.pid`` will contain only the pid of the last Nextflow pipeline (*while all pipelines will still be running*). In that case you will need to manually look for the pid and kill the corresponding process. Since this approach can be quite confusing it is strongly discouraged for the moment. The problem has been reported and it is likely to be fixed in a next release.
+.. note:: If you run multiple pipelines within the same folder (e.g. for different genders), please use the `NXF_PID_FILE <http://www.nextflow.io/docs/latest/config.html#environment-variables>`_ environment variable.
 
 Job monitoring
 ---------------
