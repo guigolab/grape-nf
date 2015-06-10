@@ -44,13 +44,13 @@ The GRAPE pipeline will be automatically downloaded if not found on the local sy
 
 .. code-block:: bash
 
-    $ nextflow run rglab/grape ...
+    $ nextflow run emi80/grape ...
 
 The command above will not update the pipeline if already present. In order to always run the latest version it is possible to download the pipeline in advance and then run it:
 
 .. code-block:: bash
 
-    $ nextflow pull rglab/grape
+    $ nextflow pull emi80/grape
     $ nextflow run grape ...
 
 .. note:: Downloading the pipeline in advance also allows us to run the pipeline without specifying the repository `owner` (have a look at `Nextflow documentation <http://www.nextflow.io/docs/latest/sharing.html>`_).
@@ -89,7 +89,7 @@ You can get the pipeline help by using the following command:
 
     $ nextflow run grape --help
     N E X T F L O W  ~  version 0.14.0
-    Launching 'rglab/grape' - revision: 21c5e84cf8 [master]
+    Launching 'emi80/grape' - revision: 21c5e84cf8 [master]
 
     G R A P E ~ RNA-seq Pipeline
     ----------------------------
