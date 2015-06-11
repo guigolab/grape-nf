@@ -1,9 +1,10 @@
 TODO list
 ---------
 
+- fix issue with merge flag not being correctly set
+- use pipeline.db file and write on it asynchronously to allow for `tail -f`
 - move to github
 - add pipeline to CI server (circle)
-- use single pipeline.db file
 - integrate Kallisto, Sailfish and maybe other mappers
 - add preprocessing steps for input (fastq) and references (genome, annotation)
 - tune mapping steps for different quantification modes: only produce required bams
