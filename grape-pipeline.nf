@@ -27,11 +27,18 @@ params.wigRefPrefix = 'chr'
 params.maxMultimaps = 10
 params.maxMismatches = 4
 
-// Some configuration info
+// Some configuration variables
+mappingTool = config.process.$mapping.tool
+bigwigTool = config.process.$bigwig.tool
+quantificationTool = config.process.$quantification.tool
 quantificationMode = config.process.$quantification.mode
 useDocker = config.docker.enabled
 errorStrategy = config.process.errorStrategy
+dbFile = 'pipeline.db'
 
+// Clear pipeline.db file
+pdb = file(dbFile)
+pdb.write('')
 
 // get list of steps from comma-separated strings
 pipelineSteps = params.steps.split(',').collect { it.trim() }
@@ -93,6 +100,7 @@ log.info ""
 if ('mapping' in pipelineSteps) {
     log.info "Mapping parameters"
     log.info "------------------"
+    log.info "Tool                            : ${mappingTool}"
     log.info "Max mismatches                  : ${params.maxMismatches}"
     log.info "Max multimaps                   : ${params.maxMultimaps}" 
     //log.info "Produce BAM stats               : ${params.bamStats}"
@@ -105,6 +113,7 @@ if ('mapping' in pipelineSteps) {
 if ('bigwig' in pipelineSteps) {
     log.info "Bigwig parameters"
     log.info "-----------------"
+    log.info "Tool                            : ${bigwigTool}"
     log.info "References prefix               : ${params?.wigRefPrefix ?: 'all'}"
     log.info ""
 }
@@ -112,6 +121,7 @@ if ('bigwig' in pipelineSteps) {
 if ('quantification' in pipelineSteps) {
     log.info "Quantification parameters"
     log.info "-------------------------"
+    log.info "Tool                            : ${quantificationTool}"
     log.info "Mode                            : ${quantificationMode}"
     log.info ""
 }
@@ -180,6 +190,12 @@ input_bams.map {
 .subscribe onNext: {
     bam << it
 }, onComplete: {}
+
+def msg = "Output files db"
+log.info "=" * msg.size() 
+log.info msg + " -> ${baseDir}/${dbFile}"
+log.info "=" * msg.size() 
+log.info ""
 
 Genomes = Channel.create()
 Annotations = Channel.create()
@@ -444,15 +460,12 @@ process quantification {
 }
 
 out.mix(bigwig, contig, isoforms, genes)
-.collectFile(name: "pipeline.db", newLine: true) { id, sample, type, view, file, pairedEnd, readStrand ->
+.collectFile(name: "pipeline.db", storeDir: baseDir, newLine: true) { id, sample, type, view, file, pairedEnd, readStrand ->
     [sample, id, file, type, view, pairedEnd ? 'Paired-End' : 'Single-End', readStrand].join("\t")
 }
 .subscribe {
-    def msg = "Output files db -> ${it}"
     log.info ""
-    log.info "-" * msg.size()
+    log.info "-----------------------"
     log.info "Pipeline run completed."
-    log.info ""
-    log.info msg
-    log.info "-" * msg.size()
+    log.info "-----------------------"
 }
