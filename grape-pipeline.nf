@@ -193,7 +193,7 @@ input_bams.map {
 
 def msg = "Output files db"
 log.info "=" * msg.size() 
-log.info msg + " -> ${baseDir}/${dbFile}"
+log.info msg + " -> ${pdb}"
 log.info "=" * msg.size() 
 log.info ""
 
