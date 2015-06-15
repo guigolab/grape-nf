@@ -37,7 +37,7 @@ errorStrategy = config.process.errorStrategy
 dbFile = 'pipeline.db'
 
 // Clear pipeline.db file
-pdb = file(dbFile)
+pdb = file("./${dbFile}")
 pdb.write('')
 
 // get list of steps from comma-separated strings
@@ -460,7 +460,7 @@ process quantification {
 }
 
 out.mix(bigwig, contig, isoforms, genes)
-.collectFile(name: "pipeline.db", storeDir: baseDir, newLine: true) { id, sample, type, view, file, pairedEnd, readStrand ->
+.collectFile(name: "pipeline.db", storeDir: file('.'), newLine: true) { id, sample, type, view, file, pairedEnd, readStrand ->
     [sample, id, file, type, view, pairedEnd ? 'Paired-End' : 'Single-End', readStrand].join("\t")
 }
 .subscribe {
