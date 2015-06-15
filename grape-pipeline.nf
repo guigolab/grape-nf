@@ -37,7 +37,7 @@ errorStrategy = config.process.errorStrategy
 dbFile = 'pipeline.db'
 
 // Clear pipeline.db file
-pdb = file("./${dbFile}")
+pdb = file(dbFile)
 pdb.write('')
 
 // get list of steps from comma-separated strings
