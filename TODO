@@ -8,3 +8,5 @@ TODO list
 - integrate Kallisto, Sailfish and maybe other mappers
 - add preprocessing steps for input (fastq) and references (genome, annotation)
 - tune mapping steps for different quantification modes: only produce required bams
+- allow for custom options in templates
+- fix step file names, use merge field
