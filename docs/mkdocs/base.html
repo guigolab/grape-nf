@@ -45,10 +45,8 @@
 
         <div class="container">
             {% block content %}
-                {% if current_page and not current_page.is_homepage %}
-                    <div class="col-md-3">{% include "toc.html" %}</div>
-                {% endif %}
-                <div {% if current_page and current_page.is_homepage %} class="col-md-10 col-md-offset-1"{% else %} class="col-md-9"{% endif %} role="main">{% include "content.html" %}</div>
+                <div class="col-md-3">{% include "toc.html" %}</div>
+                <div class="col-md-9" role="main">{% include "content.html" %}</div>
             {% endblock %}
         </div>
 
