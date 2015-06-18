@@ -12,8 +12,8 @@ copyright: >
 
 pages:
 - Home: index.md
-- User guide:
-    - Getting started: quickstart.md
+#- User guide:
+#    - Getting started: quickstart.md
 
 markdown_extensions:
     - smarty
