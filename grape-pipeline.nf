@@ -26,6 +26,8 @@ params.sjOverHang = 100
 params.wigRefPrefix = 'chr'
 params.maxMultimaps = 10
 params.maxMismatches = 4
+params.dbFile = 'pipeline.db'
+
 
 // Some configuration variables
 mappingTool = config.process.$mapping.tool
@@ -34,10 +36,10 @@ quantificationTool = config.process.$quantification.tool
 quantificationMode = config.process.$quantification.mode
 useDocker = config.docker.enabled
 errorStrategy = config.process.errorStrategy
-dbFile = 'pipeline.db'
+
 
 // Clear pipeline.db file
-pdb = file(dbFile)
+pdb = file(params.dbFile)
 pdb.write('')
 
 // get list of steps from comma-separated strings
@@ -460,7 +462,7 @@ process quantification {
 }
 
 out.mix(bigwig, contig, isoforms, genes)
-.collectFile(name: "pipeline.db", storeDir: file('.'), newLine: true) { id, sample, type, view, file, pairedEnd, readStrand ->
+.collectFile(name: pdb.name, storeDir: pdb.parent, newLine: true) { id, sample, type, view, file, pairedEnd, readStrand ->
     [sample, id, file, type, view, pairedEnd ? 'Paired-End' : 'Single-End', readStrand].join("\t")
 }
 .subscribe {
