@@ -1,7 +1,5 @@
 #!/bin/bash -eu
-cat <( samtools view -H ${bam} )  \
-    <( samtools view -@ ${cpus} ${bam} | sort -T . ) | \
-samtools view -@ ${cpus} -bS - > tmp_query_sorted.bam
+samtools sort -@ ${cpus} -ni -O bam -T . -o tmp_query_sorted.bam ${bam}
 
 rsem-calculate-expression --bam \
                           --estimate-rspd  \
