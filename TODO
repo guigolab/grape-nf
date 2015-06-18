@@ -1,5 +1,4 @@
-TODO list
----------
+# Things to do
 
 - fix RSEM single-end/paired-end for unstranded data
 - allow for custom arguments in tool templates
