@@ -1,0 +1,11 @@
+{% if meta.source %}
+<div class="source-links">
+{% for filename in meta.source %}
+<a class="github" href="{{ repo_url }}/docs/{{ filename }}">
+	<span class="label label-info">{{ filename }}</span>
+</a>
+{% endfor %}
+</div>
+{% endif %}
+
+{{ content }}
