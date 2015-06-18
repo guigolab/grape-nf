@@ -1,7 +1,12 @@
 TODO list
 ---------
 
+- fix RSEM single-end/paired-end for unstranded data
+- allow for custom arguments in tool templates
+- more flexible tool configuration
+- update RSEM version
 - fix issue with merge flag not being correctly set
+- replace unix sort with samtools in RSEM templates
 - use pipeline.db file and write on it asynchronously to allow for `tail -f`
 - move to github
 - add pipeline to CI server (circle)
