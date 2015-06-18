@@ -1,7 +1,5 @@
 # Things to do
 
-* fix RSEM single-end/paired-end for unstranded data
-* replace unix sort with samtools in RSEM templates
 * update RSEM version
 * fix issue with merge flag not being correctly set
 * allow for custom arguments in tool templates
