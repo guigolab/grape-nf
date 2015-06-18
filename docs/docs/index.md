@@ -7,7 +7,7 @@ Date:    June 15, 2015
 
 Grape provides an extensive pipeline for RNA-Seq analyses. It allows the creation of an automated and integrated workflow to manage and analyse RNA-Seq data.
 
-It uses [Nextflow] for the execution layer and can be installed and run in a very simple way. Using Nextflow sharing features the pipeline is automatically downloaded from a git repository and run on the local environment. Please check [Nextflow documentation] for more information.
+It uses [Nextflow] as the execution backend and can be installed and run in a very simple way. Using Nextflow sharing features the pipeline is automatically downloaded from a git repository and run on the local environment. Please check [Nextflow documentation] for more information.
 
 ## Installing Nextflow
 
