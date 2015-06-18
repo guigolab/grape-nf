@@ -11,6 +11,7 @@ rsem-calculate-expression --bam \
                           -p ${cpus} \
                           --ci-memory ${memory} \
                           --paired-end \
+                          --forward-prob 1 \
                           tmp_query_sorted.bam \
                           ${quantRef}/RSEMref \
                           ${id}${prefix}

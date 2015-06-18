@@ -10,9 +10,9 @@ rsem-calculate-expression --bam \
                           --seed 12345 \
                           -p ${cpus} \
                           --ci-memory ${memory} \
-                          --forward-prob 1 \
+                          --forward-prob 0 \
                           tmp_query_sorted.bam \
                           ${quantRef}/RSEMref \
                           ${id}${prefix}
-rm tmp_query_sorted.bam                          
+rm tmp_query_sorted.bam
 rsem-plot-model ${id}${prefix} ${id}${prefix}.pdf

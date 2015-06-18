@@ -1,0 +1,17 @@
+#!/bin/bash -eu
+cat <( samtools view -H ${bam} )  \
+    <( samtools view -@ ${cpus} ${bam} | paste -d ' ' - - | sort -T . | tr ' ' '\\n') | \
+samtools view -@ ${cpus} -bS - > tmp_query_sorted.bam
+
+rsem-calculate-expression --bam \
+                          --estimate-rspd  \
+                          --calc-ci \
+                          --no-bam-output \
+                          --seed 12345 \
+                          -p ${cpus} \
+                          --ci-memory ${memory} \
+                          tmp_query_sorted.bam \
+                          ${quantRef}/RSEMref \
+                          ${id}${prefix}
+rm tmp_query_sorted.bam                          
+rsem-plot-model ${id}${prefix} ${id}${prefix}.pdf
