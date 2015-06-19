@@ -265,7 +265,7 @@ if ('mapping' in pipelineSteps) {
         script:
         type = 'bam'
         view = 'Alignments'
-        prefix = pref
+        prefix = "${id}${pref}"
         maxMultimaps = params.maxMultimaps
         maxMismatches = params.maxMismatches
         
@@ -368,6 +368,7 @@ if (!('mapping' in pipelineSteps)) {
 
 (bam1, bam2) = bam.into(2)
 
+
 process inferExp {
     input:
     set id, sample, type, view, file(bam), pairedEnd from bam1.filter { it[3] =~ /Genome/ }
@@ -377,9 +378,7 @@ process inferExp {
     set id, stdout into bamStrand
 
     script:
-    prefix = pref
-    genePred = "${annotation.name.split('\\.', 2)[0]}.genePred"
-    bed12 = "${annotation.name.split('\\.', 2)[0]}.bed"
+    prefix = "${annotation.name.split('\\.', 2)[0]}"
 
     template(task.command)
 }
@@ -409,6 +408,7 @@ process bigwig {
 
     script:
     type = "bigwig"
+    prefix = "${sample}"
     wigRefPrefix = params.wigRefPrefix ?: ""
     views = task.views
     
@@ -432,11 +432,12 @@ process contig {
     set species, file(genomeFai) from FaiIdx2.first()
 
     output:
-    set id, sample, type, view, file('*_contigs.bed'), pairedEnd, readStrand into contig
+    set id, sample, type, view, file('*.bed'), pairedEnd, readStrand into contig
 
     script:
     type = 'bed'
     view = 'Contigs'
+    prefix = "${sample}.contigs"
 
     template(task.command)
 
@@ -453,10 +454,11 @@ process quantification {
     set id, sample, type, viewGn, file("*genes*"), pairedEnd, readStrand into genes
 
     script:
-    prefix = pref
+    prefix = "${sample}"
+    refPrefix = quantRef.name.replace('.gtf','').capitalize()
     type = task.fileType
-    viewTx = "Transcript${quantRef.name.replace('.gtf','').capitalize()}"
-    viewGn = "Gene${quantRef.name.replace('.gtf','').capitalize()}"
+    viewTx = "Transcript${refPrefix}"
+    viewGn = "Gene${refPrefix}"
     memory = task.memory.toMega()
     
     template(task.command)
