@@ -18,6 +18,6 @@ STAR --runThreadN ${cpus} \
      --quantMode TranscriptomeSAM \
      --outSAMattrRGline ${readGroup} \
      --limitBAMsortRAM ${totalMemory}
-mv Aligned.sortedByCoord.out.bam ${id}${prefix}.bam 
-mv Aligned.toTranscriptome.out.bam ${id}${prefix}.toTranscriptome.bam
-samtools index ${id}${prefix}.bam
+mv Aligned.sortedByCoord.out.bam ${prefix}.bam 
+mv Aligned.toTranscriptome.out.bam ${prefix}.toTranscriptome.bam
+samtools index ${prefix}.bam

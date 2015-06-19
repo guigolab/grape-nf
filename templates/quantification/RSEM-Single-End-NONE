@@ -10,6 +10,6 @@ rsem-calculate-expression --bam \
                           --ci-memory ${memory} \
                           tmp_query_sorted.bam \
                           ${quantRef}/RSEMref \
-                          ${id}${prefix}
+                          ${prefix}
 rm tmp_query_sorted.bam                          
-rsem-plot-model ${id}${prefix} ${id}${prefix}.pdf
+rsem-plot-model ${prefix} ${prefix}.pdf

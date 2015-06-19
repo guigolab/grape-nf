@@ -4,15 +4,15 @@ samtools index ${bam}
 flux-capacitor --profile \
                -i ${bam} \ 
                -a ${quantRef} \
-               --profile-file ${id}${prefix}_profile.json \
+               --profile-file ${prefix}_profile.json \
                -m PAIRED_STRANDED \
                --read-strand MATE1_SENSE
 flux-capacitor -i ${bam} \ 
                -a ${quantRef} \
-               --profile-file ${id}${prefix}_profile.json \
-               -o ${id}${prefix}.isoforms.gtf \
+               --profile-file ${prefix}_profile.json \
+               -o ${prefix}.isoforms.gtf \
                -m PAIRED_STRANDED \
                --read-strand MATE1_SENSE
 TrtoGn_RPKM.sh -a ${quantRef} \
-               -i ${id}${prefix}.isoforms.gtf \
-               -o ${id}${prefix}.genes.gff
+               -i ${prefix}.isoforms.gtf \
+               -o ${prefix}.genes.gff

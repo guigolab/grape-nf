@@ -17,5 +17,5 @@ STAR --runThreadN ${cpus} \
      --outSAMtype BAM SortedByCoordinate \
      --outSAMattrRGline ${readGroup} \
      --limitBAMsortRAM ${totalMemory}
-mv Aligned.sortedByCoord.out.bam ${id}${prefix}.bam
-samtools index ${id}${prefix}.bam
+mv Aligned.sortedByCoord.out.bam ${prefix}.bam
+samtools index ${prefix}.bam

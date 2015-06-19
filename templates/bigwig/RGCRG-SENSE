@@ -1,5 +1,5 @@
 #!/bin/bash -eu
-genomeCoverageBed -strand + -split -bg -ibam ${bam} > ${id}.plusRaw.bedgraph
-genomeCoverageBed -strand - -split -bg -ibam ${bam} > ${id}.minusRaw.bedgraph
-bedGraphToBigWig ${id}.plusRaw.bedgraph ${genomeFai} ${id}.plusRaw.bw
-bedGraphToBigWig ${id}.minusRaw.bedgraph ${genomeFai} ${id}.minusRaw.bw
+genomeCoverageBed -strand + -split -bg -ibam ${bam} > ${prefix}.plusRaw.bedgraph
+genomeCoverageBed -strand - -split -bg -ibam ${bam} > ${prefix}.minusRaw.bedgraph
+bedGraphToBigWig ${prefix}.plusRaw.bedgraph ${genomeFai} ${prefix}.plusRaw.bw
+bedGraphToBigWig ${prefix}.minusRaw.bedgraph ${genomeFai} ${prefix}.minusRaw.bw

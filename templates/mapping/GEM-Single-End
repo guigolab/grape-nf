@@ -11,8 +11,8 @@ gemtools rna-pipeline -i ${genomeDir}/genome_index.gem \
                       --no-bam \
                       -t ${cpus} \
                       -q ${qualityOffset} \
-                      -n ${id} 
-pigz -p ${cpus} -dc ${id}.filtered.map.gz \
+                      -n ${prefix}
+pigz -p ${cpus} -dc ${prefix}.filtered.map.gz \
 | gem-2-sam -T ${cpus} \
           -I ${genomeDir}/genome_index.gem \
           -q offset-${qualityOffset} \
@@ -24,5 +24,5 @@ pigz -p ${cpus} -dc ${id}.filtered.map.gz \
 | samtools sort -@ ${cpus} \
                 -m ${threadMemory} \
                 - \
-                ${id}${prefix}
-samtools index ${id}${prefix}.bam
+                ${prefix}
+samtools index ${prefix}.bam

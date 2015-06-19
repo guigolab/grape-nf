@@ -19,5 +19,5 @@ STAR --runThreadN ${cpus} \
      --limitBAMsortRAM ${totalMemory} \
      --outSAMstrandField intronMotif \
      --outFilterIntronMotifs RemoveNoncanonical
-mv Aligned.sortedByCoord.out.bam ${id}${prefix}.bam
-samtools index ${id}${prefix}.bam
+mv Aligned.sortedByCoord.out.bam ${prefix}.bam
+samtools index ${prefix}.bam

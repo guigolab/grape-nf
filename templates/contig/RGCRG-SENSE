@@ -1,10 +1,10 @@
 #!/bin/bash -eu
 bamtools filter -tag NH:1 -in ${bam} -out tmp_unique.bam
-genomeCoverageBed -strand + -split -bg -ibam tmp_unique.bam > ${id}.plusRaw.bedgraph
-genomeCoverageBed -strand - -split -bg -ibam tmp_unique.bam > ${id}.minusRaw.bedgraph
+genomeCoverageBed -strand + -split -bg -ibam tmp_unique.bam > ${prefix}.plusRaw.bedgraph
+genomeCoverageBed -strand - -split -bg -ibam tmp_unique.bam > ${prefix}.minusRaw.bedgraph
 rm tmp_unique.bam
 
 contigsNew.py --chrFile ${genomeFai} \
-              --fileP ${id}.plusRaw.bedgraph \
-              --fileM ${id}.minusRaw.bedgraph | \
-awk '{s=""; for(i=1; i<=NF; i++){s=(s)(\$i)("\\t")} print s}' > ${id}_contigs.bed
+              --fileP ${prefix}.plusRaw.bedgraph \
+              --fileM ${prefix}.minusRaw.bedgraph | \
+awk '{s=""; for(i=1; i<=NF; i++){s=(s)(\$i)("\\t")} print s}' > ${prefix}.bed
