@@ -136,7 +136,6 @@ input_files = Channel.create()
 input_chunks = Channel.create()
 
 data = ['samples': [], 'ids': []]
-merge = false
 input = Channel
     .from(index.readLines())
     .map {
@@ -144,7 +143,6 @@ input = Channel
     }
 
 if (params.chunkSize) {
-    merge = true
     input = input.splitFastq(by: params.chunkSize, file: true, elem: 2)
 }
 
@@ -161,12 +159,11 @@ input.subscribe onNext: {
     onComplete: { 
         ids=data['ids'].unique().size()
         samples=data['samples'].unique().size()
-        if (ids != samples) merge=true
         log.info "Dataset information"
         log.info "-------------------"
         log.info "Number of sequenced samples     : ${samples}"
         log.info "Number of ${items}       : ${ids}" 
-        log.info "Merging                         : ${ merge ? 'by sample' : 'none' }"
+        log.info "Merging                         : ${ ids != samples ? 'by sample' : 'none' }"
         log.info ""
         input_chunks << Channel.STOP 
     }
@@ -325,39 +322,44 @@ if ('quantification' in pipelineSteps && quantificationMode != "Genome") {
     QuantificationRef = Annotations2
 }
 
-    
-if (merge) {
+// Merge or rename bam
+singleBam = Channel.create()
+groupedBam = Channel.create()
 
-    singleBam = Channel.create()
-    groupedBam = Channel.create()
-   
-    bam.groupTuple(by: [1, 2, 3, 5]) // group by sample, type, view, pairedEnd (to get unique values for keys)
-    .choice(singleBam, groupedBam) {
-      it[4].size() > 1 ? 1 : 0
-    }
-    
-    process mergeBam {
-        
-        input:
-        set id, sample, type, view, file(bam), pairedEnd from groupedBam
-    
-        output:
-        set id, sample, type, view, file(outfile), pairedEnd into mergedBam
-    
-        script:
-        prefix = pref
-        id = id.sort().join(':')
-        outfile = "${sample}${prefix}_to${view.replace('Alignments','')}.bam"
+bam.groupTuple(by: [1, 2, 3, 5]) // group by sample, type, view, pairedEnd (to get unique values for keys)
+.choice(singleBam, groupedBam) {
+  it[4].size() > 1 ? 1 : 0
+}
 
-        template(task.command)
-
-    }
+process mergeBam {
     
-    bam = singleBam
-    .mix(mergedBam)
-    .map { 
-        it.flatten() 
+    input:
+    set id, sample, type, view, file(bam), pairedEnd from groupedBam
+
+    output:
+    set id, sample, type, view, file(outfile), pairedEnd into mergedBam
+
+    script:
+    id = id.sort().join(':')
+    prefix = "${sample}${pref}_to${view.replace('Alignments','')}"
+
+    template(task.command)
+
+}
+
+
+bam = singleBam
+.map() { id, sample, type, view, bams, pairedEnd ->
+    bams = bams.collect { 
+        f = file(it)
+        f_new = file("${f.parent}/${sample}${pref}_to${view.replace('Alignments','')}.bam")
+        f.renameTo(f_new) ? f_new.toAbsolutePath() : f.toAbsolutePath()
     }
+    [id, sample, type, view, bams, pairedEnd]
+}
+.mix(mergedBam)
+.map { 
+    it.flatten() 
 }
 
 if (!('mapping' in pipelineSteps)) {
