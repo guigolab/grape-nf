@@ -108,35 +108,32 @@ def loadSignal(chrFile, fileP, fileM=None, gz=True):
     inp['u'] = [gzip.GzipFile(fileobj=f) if gz else f for f in fileP]
 
   files = defaultdict(list) #Generators loading signal for file (one chr at a time)
-  total = 0 #total library depth
+  signal = defaultdict(dict) #Dictionary containing the signal for all chromosomes and strands
   for strand in inp:
     for file in inp[strand]:
       logging.info("%s\t%s",strand,file.name)
       files[strand].append(load(file,chrLengths)) #Generator reading bedgraph 'file'
 
-  while 1: #Load. Loop until the first bedgraph input file ends
-    curChr = None
-    signal = defaultdict(list) #Signal from all files for one Chr, both strands
-    for strand in inp:
-      for file in files[strand]:
-        logging.debug("Loading next %s ",strand)
-        try:
-          chr, sig = file.next()
-        except StopIteration: #File ended, reraise stopIteration to quit loadSignal
-          raise
-        if not curChr: curChr = chr
-        if not chr == curChr:
-          logging.warn('Chromosomes mismatched: %s, %s', chr, curChr)
-          sys.exit('Next chr on all files should be the same')
-        signal[strand].append(sig)
-        total += sig.sum()
-    logging.debug("Loaded %s",curChr)
-    yield curChr, signal, total #Return signal from one Chr
-
+  for strand in inp:
+    for file in files[strand]:
+      logging.debug("Loading next %s ",strand)
+      for chr, sig in file:
+        if not chr in signal:
+          signal[chr] = defaultdict(list)
+        signal[chr][strand].append(sig)
+          
+  for chr in signal:
+    if len(signal[chr].keys()) != len(inp.keys()):
+      for strand in inp:
+        if not strand in signal[chr]:
+          signal[chr][strand].append(np.zeros(chrLengths[chr]))
+    total = sum([sig.sum() for strand in signal[chr] for sig in signal[chr][strand]])
+    yield chr, signal[chr], total
 
 def cmdopts():
   parser = argparse.ArgumentParser()
   parser.add_argument("--gz", action='store_true', help='Input files are gzipped')
+  parser.add_argument("--sortOut", action='store_true', help='Output sorted by chromosome, start, stop', default=False)
   parser.add_argument("--chrFile", type=argparse.FileType('r'), help='File with chromosome names\t length', required=True)
   parser.add_argument("--fileP", type=argparse.FileType('r'), nargs='+', help='+ strand or unstranded bedgraphs', required=True)
   parser.add_argument("--fileM", type=argparse.FileType('r'), nargs='*', help='- strand bedgraphs')
@@ -168,6 +165,8 @@ def main():
         id += 1
         if not stranded or contig.checkAntisense(opts.maxAnti):
           contigs.append(contig)
+  if opts.sortOut:
+    contigs = sorted(contigs, key=lambda c: (c.chr,c.start,c.stop))
   for contig in contigs:
     print(contig.chr,contig.start,contig.stop,contig.id,contig.bedscore(total),
         contig.strand,format(contig.bpkm(total),'.3g'),*(contig.scores+contig.antiscores))
