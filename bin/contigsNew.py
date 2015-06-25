@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 
-from __future__ import print_function, division
-import numpy as np
-import argparse
-from collections import defaultdict,namedtuple
-import gzip
-from math import log
 import sys
+import gzip
 import logging
+import argparse
+import numpy as np
+
+from math import log
+from collections import defaultdict,namedtuple
+
+from __future__ import print_function, division
 
 class Contig:
   """Hold contig information and compute simple scores"""
