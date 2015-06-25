@@ -88,13 +88,15 @@ def scoredContigs(scores, minSig, minCov, maxGap, minDepth, antiscores = []):
 
 def readChrFile(chrFile):
   """Load chrNames and chrLengths from tab-seperated text file"""
-  chrs = {}
+  chrDict = {}
+  chrs = []
   for l in chrFile:
     chr, length = l.rstrip().split()[:2]
-    chrs[chr] = int(length)
-  return chrs
+    chrDict[chr] = int(length)
+    chrs.append(chr)
+  return (chrDict, chrs)
 
-def loadSignal(chrLengths, fileP, fileM=None, gz=True):
+def loadSignal(chrs, chrLengths, fileP, fileM=None, gz=True):
   """Open bedgraph files"""
   logging.debug("+:%s\t-:%s",fileP,fileM)
   inp = {} #File streams for all bedgraph inputs
@@ -116,7 +118,7 @@ def loadSignal(chrLengths, fileP, fileM=None, gz=True):
   total = 0 # total coverage for the current chromosome
 
   def chr_before(chr, other_chr):
-    return chrLengths.keys().index(chr) < chrLengths.keys().index(other_chr)
+    return chrs.index(chr) < chrs.index(other_chr)
 
   def append_zero_signal(signal, chr):
     for strand in inp:
@@ -169,14 +171,14 @@ def cmdopts():
 def main():
   stranded = bool(opts.fileM)
   field_separator = opts.outSep.decode("unicode_escape")
-  chrLengths = readChrFile(opts.chrFile)
+  chrLengths, chrs = readChrFile(opts.chrFile)
 
   # print path to file with chromosome lengths 
   logging.debug(opts.chrFile)
 
   id = 1 #Contig id (name)
   contigs = []
-  for chr, signal, total in loadSignal(chrLengths, opts.fileP, opts.fileM, opts.gz):
+  for chr, signal, total in loadSignal(chrs, chrLengths, opts.fileP, opts.fileM, opts.gz):
     for strand in signal:
       sense = signal[strand]
       antisenseStrand = '-' if strand == '+' else '+'
@@ -189,7 +191,7 @@ def main():
         if not stranded or contig.checkAntisense(opts.maxAnti):
           contigs.append(contig)
   if opts.sortOut:
-    contigs = sorted(contigs, key=lambda c: (chrLengths.keys().index(c.chr), c.start, c.stop))
+    contigs = sorted(contigs, key=lambda c: (chrs.index(c.chr), c.start, c.stop))
   for contig in contigs:
     print(contig.chr,contig.start,contig.stop,contig.id,contig.bedscore(total),
         contig.strand,format(contig.bpkm(total),'.3g'),*(contig.scores+contig.antiscores), sep=field_separator)
