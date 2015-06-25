@@ -94,11 +94,9 @@ def readChrFile(chrFile):
     chrs[chr] = int(length)
   return chrs
 
-def loadSignal(chrFile, fileP, fileM=None, gz=True):
+def loadSignal(chrLengths, fileP, fileM=None, gz=True):
   """Open bedgraph files"""
-  logging.debug(chrFile)
   logging.debug("+:%s\t-:%s",fileP,fileM)
-  chrLengths = readChrFile(chrFile)
   inp = {} #File streams for all bedgraph inputs
   if fileM:
     if not len(fileP) == len(fileM): raise ValueError("Unequal number of + and - strand files")
@@ -108,32 +106,52 @@ def loadSignal(chrFile, fileP, fileM=None, gz=True):
     inp['u'] = [gzip.GzipFile(fileobj=f) if gz else f for f in fileP]
 
   files = defaultdict(list) #Generators loading signal for file (one chr at a time)
-  signal = defaultdict(dict) #Dictionary containing the signal for all chromosomes and strands
   for strand in inp:
     for file in inp[strand]:
       logging.info("%s\t%s",strand,file.name)
       files[strand].append(load(file,chrLengths)) #Generator reading bedgraph 'file'
 
-  for strand in inp:
-    for file in files[strand]:
-      logging.debug("Loading next %s ",strand)
-      for chr, sig in file:
-        if not chr in signal:
-          signal[chr] = defaultdict(list)
-        signal[chr][strand].append(sig)
-          
-  for chr in signal:
-    if len(signal[chr].keys()) != len(inp.keys()):
-      for strand in inp:
-        if not strand in signal[chr]:
-          signal[chr][strand].append(np.zeros(chrLengths[chr]))
-    total = sum([sig.sum() for strand in signal[chr] for sig in signal[chr][strand]])
-    yield chr, signal[chr], total
+  curChr = None # current chromosome
+  signal = defaultdict(list) #Dict for storing signal for the current chromosome
+  total = 0 # total coverage for the current chromosome
+
+  def chr_before(chr, other_chr):
+    return chrLengths.keys().index(chr) < chrLengths.keys().index(other_chr)
+
+  def append_zero_signal(signal, chr):
+    for strand in inp:
+      if not strand in signal:
+        signal[strand].append(np.zeros(chrLengths[chr]))
+
+  while 1:
+    for strand in inp:
+      for file in files[strand]:
+        logging.debug("Loading next %s ",strand)
+        for chr, sig in file:
+          if not curChr: curChr = chr
+          if chr_before(chr, curChr):
+            tmp_signal = defaultdict(list)
+            tmp_signal[strand].append(sig)
+            append_zero_signal(tmp_signal, chr)
+            yield chr, tmp_signal, sig.sum()
+          else:
+            if curChr != chr:
+              append_zero_signal(signal, curChr)
+              yield curChr, signal, total
+              curChr = chr
+              signal = defaultdict(list)
+              total = 0
+            signal[strand].append(sig)
+            total += sig.sum()
+    if signal:
+      yield curChr, signal, total
+    break
 
 def cmdopts():
   parser = argparse.ArgumentParser()
   parser.add_argument("--gz", action='store_true', help='Input files are gzipped')
   parser.add_argument("--sortOut", action='store_true', help='Output sorted by chromosome, start, stop', default=False)
+  parser.add_argument("--outSep", help='Output fields separator', default='\t')
   parser.add_argument("--chrFile", type=argparse.FileType('r'), help='File with chromosome names\t length', required=True)
   parser.add_argument("--fileP", type=argparse.FileType('r'), nargs='+', help='+ strand or unstranded bedgraphs', required=True)
   parser.add_argument("--fileM", type=argparse.FileType('r'), nargs='*', help='- strand bedgraphs')
@@ -150,10 +168,15 @@ def cmdopts():
 
 def main():
   stranded = bool(opts.fileM)
+  field_separator = opts.outSep.decode("unicode_escape")
+  chrLengths = readChrFile(opts.chrFile)
+
+  # print path to file with chromosome lengths 
+  logging.debug(opts.chrFile)
 
   id = 1 #Contig id (name)
   contigs = []
-  for chr, signal, total in loadSignal(opts.chrFile, opts.fileP, opts.fileM, opts.gz):
+  for chr, signal, total in loadSignal(chrLengths, opts.fileP, opts.fileM, opts.gz):
     for strand in signal:
       sense = signal[strand]
       antisenseStrand = '-' if strand == '+' else '+'
@@ -166,10 +189,10 @@ def main():
         if not stranded or contig.checkAntisense(opts.maxAnti):
           contigs.append(contig)
   if opts.sortOut:
-    contigs = sorted(contigs, key=lambda c: (c.chr,c.start,c.stop))
+    contigs = sorted(contigs, key=lambda c: (chrLengths.keys().index(c.chr), c.start, c.stop))
   for contig in contigs:
     print(contig.chr,contig.start,contig.stop,contig.id,contig.bedscore(total),
-        contig.strand,format(contig.bpkm(total),'.3g'),*(contig.scores+contig.antiscores))
+        contig.strand,format(contig.bpkm(total),'.3g'),*(contig.scores+contig.antiscores), sep=field_separator)
 
 if __name__ == '__main__':
   opts = cmdopts().parse_args()
