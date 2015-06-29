@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function, division
+
 import sys
 import gzip
 import logging
@@ -8,8 +10,6 @@ import numpy as np
 
 from math import log
 from collections import defaultdict,namedtuple
-
-from __future__ import print_function, division
 
 class Contig:
   """Hold contig information and compute simple scores"""
@@ -148,6 +148,7 @@ def loadSignal(chrs, chrLengths, fileP, fileM=None, gz=True):
             signal[strand].append(sig)
             total += sig.sum()
     if signal:
+      append_zero_signal(signal, chr)
       yield curChr, signal, total
     break
 
