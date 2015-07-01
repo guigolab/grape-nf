@@ -1,1 +1,0 @@
-zcat ~/projects/ERC/fly/bp.pipeline/dWL3.1/dWL3.1_4191_CGTACG_1.fastq.gz | paste - - - - | awk 'BEGIN{FS=OFS="\t";while(getline<"data/test-1.txt">0){a[$1]=1}}{split($1,b," "); label=b[1]; gsub(/^\@/,"",label);if(label in a){print}}' | head -1000 | tr '\t' '\n' | gzip -c > data/test1_1.fastq
