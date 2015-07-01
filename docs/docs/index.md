@@ -15,7 +15,7 @@ Nextflow can be installed with the following commands:
 
 ```shell
 curl -fsSL get.nextflow.io | bash
-mv nextflow &lt;folder in your path&gt;
+mv nextflow <folder in your path>
 ```
 
 Check the installed version:
@@ -81,7 +81,7 @@ process {
 Move to the folder where you want to create the base directory for the pipeline and run the following command:
 
 ```shell
-mkdir -p &lt;folder name&gt; && cd &lt;folder name&gt;
+mkdir -p <folder name> && cd <folder name>
 ```
 
 ### Reference files
@@ -90,8 +90,8 @@ Only genome FASTA file and annotation file are required. Reference files can be 
 
 ```shell
 mkdir refs
-ln -s &lt;path to the genome file&gt; refs
-ln -s &lt;path to the annotation file&gt; refs
+ln -s <path to the genome file> refs
+ln -s <path to the annotation file> refs
 ```
 
 ### Getting the help
