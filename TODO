@@ -1,6 +1,5 @@
 # Things to do
 
-* update RSEM version
 * allow for custom arguments in tool templates
 * more flexible tool configuration
 * add `docker pull` command as `beforeScript` to config
