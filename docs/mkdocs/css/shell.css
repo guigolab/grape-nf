@@ -1,0 +1,8 @@
+code::selection {
+    background-color: none; 
+    overflow: hidden; 
+}
+
+span.line::before {
+    content: "$ ";
+}

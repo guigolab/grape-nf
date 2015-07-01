@@ -21,3 +21,9 @@ markdown_extensions:
         permalink: 
     - sane_lists
     - admonition
+
+extra_javascript:
+  - js/shell.js
+
+extra_css:
+  - css/shell.css
