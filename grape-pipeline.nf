@@ -30,10 +30,10 @@ params.dbFile = 'pipeline.db'
 
 
 // Some configuration variables
-mappingTool = config.process.$mapping.tool
-bigwigTool = config.process.$bigwig.tool
-quantificationTool = config.process.$quantification.tool
-quantificationMode = config.process.$quantification.mode
+mappingTool = "${config.process.$mapping.tool} ${config.process.$mapping.version}"
+bigwigTool = "${config.process.$bigwig.tool} ${config.process.$bigwig.version}"
+quantificationTool = "${config.process.$quantification.tool} ${config.process.$quantification.version}"
+quantificationMode = "${config.process.$quantification.mode}"
 useDocker = config.docker.enabled
 errorStrategy = config.process.errorStrategy
 
