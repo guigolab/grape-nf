@@ -25,10 +25,10 @@ nextflow info
 ```
 
 ```
-Version: 0.14.0 build 2988
-Modified: 04-06-2015 13:45 UTC (15:45 CEST)
-System: Linux 2.6.32-504.1.3.el6.x86_64
-Runtime: Groovy 2.3.9 on Java HotSpot(TM) 64-Bit Server VM 1.7.0_60-b19
+Version: 0.14.2 build 2998
+Modified: 25-06-2015 09:29 UTC (11:29 CEST)
+System: Linux 2.6.32-504.8.1.el6.x86_64
+Runtime: Groovy 2.3.11 on Java HotSpot(TM) 64-Bit Server VM 1.7.0_60-b19
 Encoding: UTF-8 (UTF-8)
 ```
 
