@@ -55,7 +55,7 @@ The command above will not update the pipeline if it is already present in the s
 
 ```shell
 nextflow pull guigolab/grape-nf
-nextflow run grape ...
+nextflow run grape-nf ...
 ```
 
 !!! note
@@ -99,7 +99,7 @@ ln -s <path to the annotation file> refs
 You can get the pipeline help by using the following command:
 
 ```shell
-nextflow run grape --help
+nextflow run grape-nf --help
 ```
 
 ```
@@ -175,7 +175,7 @@ In this case the bam file will skip the mapping process and will be sent to the 
 Here is a simple example of how you can run the pipeline:
 
 ```shell
-nextflow -bg run grape --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume 2>&1 > pipeline.log
+nextflow -bg run grape-nf --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume 2>&1 > pipeline.log
 ```
 
 By default the pipeline execution will stop as far as one of the processes fails. To change this behaviour you can use the [errorStrategy directive](http://www.nextflow.io/docs/latest/process.html#errorstrategy) of Nextflow processes. You can also specify it on command line. For example, to ignore errors and keep processing you can use ``-process.errorStrategy=ignore``.
@@ -183,7 +183,7 @@ By default the pipeline execution will stop as far as one of the processes fails
 It is also possible to run a subset of pipeline steps using the option ``--steps``. For example, the following command will only run the ``mappping`` and ``quantification`` steps:
 
 ```shell
-nextflow -bg run grape --steps mapping,quantification --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume 2>&1 > pipeline.log
+nextflow -bg run grape-nf --steps mapping,quantification --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume 2>&1 > pipeline.log
 ```
 
 ### Stop the pipeline
@@ -242,7 +242,7 @@ The Grape pipeline can be run using different configuration profiles. The profil
 The ``gemflux`` profile is used as the default profile if no profile is specified. To specify a profile you can use the `-profiles` Nextflow [option](http://www.nextflow.io/docs/latest/config.html#config-profiles). For example, to use STAR and RSEM just run the following command:
 
 ```shell
-nextflow -bg run grape -profile starrsem --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume 2>&1 > pipeline.log
+nextflow -bg run grape-nf -profile starrsem --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume 2>&1 > pipeline.log
 ```
 
 <!-- Links -->
