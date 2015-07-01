@@ -10,5 +10,6 @@ rm tmp_unique.bam
 
 contigsNew.py --chrFile ${genomeFai} \
               --fileP ${prefix}.plusRaw.bedgraph \
-              --fileM ${prefix}.minusRaw.bedgraph | \
-awk '{s=""; for(i=1; i<=NF; i++){s=(s)(\$i)("\\t")} print s}' > ${prefix}.bed
+              --fileM ${prefix}.minusRaw.bedgraph \
+              --sortOut \
+							> ${prefix}.bed
