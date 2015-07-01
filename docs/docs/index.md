@@ -48,13 +48,13 @@ nextflow -self-update
 The pipeline will be automatically downloaded the first time if it is not found on the local system. To run the pipeline the following command is used:
 
 ```shell
-nextflow run guigolab/grape ...
+nextflow run guigolab/grape-nf ...
 ```
 
 The command above will not update the pipeline if it is already present in the system. In order to always run the latest version it is possible to download the pipeline in advance and then run it:
 
 ```shell
-nextflow pull guigolab/grape
+nextflow pull guigolab/grape-nf
 nextflow run grape ...
 ```
 
@@ -104,7 +104,7 @@ nextflow run grape --help
 
 ```
 N E X T F L O W  ~  version 0.14.0
-Launching 'guigolab/grape' - revision: 21c5e84cf8 [master]
+Launching 'guigolab/grape-nf' - revision: 21c5e84cf8 [master]
 
 G R A P E ~ RNA-seq Pipeline
 ----------------------------
