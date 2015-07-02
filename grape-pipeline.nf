@@ -407,7 +407,7 @@ process bigwig {
     set id, sample, type, views, file('*.bw'), pairedEnd, readStrand into bigwig
 
     script:
-    type = "bigwig"
+    type = "bigWig"
     prefix = "${sample}"
     wigRefPrefix = params.wigRefPrefix ?: ""
     views = task.views
