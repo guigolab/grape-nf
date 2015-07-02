@@ -1,6 +1,5 @@
 #!/bin/bash -eu
 mkdir txDir
-rsem-prepare-reference --no-polyA \
-											 --gtf ${annotation} \
+rsem-prepare-reference --gtf ${annotation} \
 											 ${genome} \
 											 txDir/RSEMref
