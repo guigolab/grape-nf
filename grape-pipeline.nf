@@ -131,7 +131,7 @@ if ('quantification' in pipelineSteps) {
 log.info "Execution information"
 log.info "---------------------"
 log.info "Engine                          : ${executor}"
-if (queue and executor != 'local')
+if (queue && executor != 'local')
     log.info "Queue(s)                        : ${queue}"
 log.info "Use Docker                      : ${useDocker}"
 log.info "Error strategy                  : ${errorStrategy}"
