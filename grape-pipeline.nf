@@ -36,6 +36,8 @@ quantificationTool = "${config.process.$quantification.tool} ${config.process.$q
 quantificationMode = "${config.process.$quantification.mode}"
 useDocker = config.docker.enabled
 errorStrategy = config.process.errorStrategy
+executor = config.process.executor ?: 'local' 
+queue = config.process.queue 
 
 
 // Clear pipeline.db file
@@ -95,8 +97,6 @@ log.info "Genome                          : ${params.genome}"
 log.info "Annotation                      : ${params.annotation}"
 log.info "Pipeline steps                  : ${pipelineSteps.join(" ")}"
 //log.info "Input chunk size                : ${params?.chunkSize ?: 'no split'}"
-log.info "Use Docker                      : ${useDocker}"
-log.info "Error strategy                  : ${errorStrategy}"
 log.info ""
 
 if ('mapping' in pipelineSteps) {
@@ -127,6 +127,15 @@ if ('quantification' in pipelineSteps) {
     log.info "Mode                            : ${quantificationMode}"
     log.info ""
 }
+
+log.info "Execution information"
+log.info "---------------------"
+log.info "Engine                          : ${executor}"
+if (queue)
+    log.info "Queue                           : ${queue}"
+log.info "Use Docker                      : ${useDocker}"
+log.info "Error strategy                  : ${errorStrategy}"
+log.info ""
 
 genomes = params.genome.split(',').collect { file(it) }
 annos = params.annotation.split(',').collect { file(it) }
