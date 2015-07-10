@@ -1,8 +1,8 @@
 # Things to do
 
 * add preprocessing steps for input (fastq) and references (genome, annotation)
-	- check chromosomes
-	- check mate ids
+  - check chromosomes
+  - check mate ids
 * allow for custom arguments in tool templates
 * more flexible tool configuration
 * add `docker pull` command as `beforeScript` to config
