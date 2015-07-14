@@ -346,7 +346,7 @@ process mergeBam {
     set id, sample, type, view, file(bam), pairedEnd from groupedBam
 
     output:
-    set id, sample, type, view, file(outfile), pairedEnd into mergedBam
+    set id, sample, type, view, file("${prefix}.bam"), pairedEnd into mergedBam
 
     script:
     id = id.sort().join(':')
