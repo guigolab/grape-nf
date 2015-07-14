@@ -81,7 +81,7 @@ process {
 Move to the folder where you want to create the base directory for the pipeline and run the following command:
 
 ```shell
-mkdir -p <folder name> && cd <folder name>
+mkdir -p &lt;folder name> && cd &lt;folder name>
 ```
 
 ### Reference files
@@ -90,8 +90,8 @@ Only genome FASTA file and annotation file are required. Reference files can be 
 
 ```shell
 mkdir refs
-ln -s <path to the genome file> refs
-ln -s <path to the annotation file> refs
+ln -s &lt;path to the genome file> refs
+ln -s &lt;path to the annotation file> refs
 ```
 
 ### Getting the help
