@@ -37,7 +37,7 @@ Encoding: UTF-8 (UTF-8)
 
 ### Upgrade Nextflow version
 
-The pipeline requires Nextflow version 0.14.0 or nigher. Make sure you have the right version by running `nextflow info`. In case you have an older version you can upgrade as follows:
+The pipeline requires Nextflow version 0.14.0 or higher. Make sure you have the right version by running `nextflow info`. In case you have an older version you can upgrade as follows:
 
 ```shell
 nextflow -self-update
@@ -81,7 +81,7 @@ process {
 Move to the folder where you want to create the base directory for the pipeline and run the following command:
 
 ```shell
-mkdir -p &lt;folder name> && cd &lt;folder name>
+mkdir -p <folder name> && cd <folder name>
 ```
 
 ### Reference files
@@ -90,8 +90,8 @@ Only genome FASTA file and annotation file are required. Reference files can be 
 
 ```shell
 mkdir refs
-ln -s &lt;path to the genome file> refs
-ln -s &lt;path to the annotation file> refs
+ln -s <path to the genome file> refs
+ln -s <path to the annotation file> refs
 ```
 
 ### Getting the help
@@ -201,17 +201,17 @@ kill $(cat .nextflow.pid)
 
 Nextflow runs all processes in an isolated directory under the pipeline working folder (by default ``./work``). Each process is configured and run by means of several files contained in the process folder. Among those files some can be worth noting:
 
-|
---- | ---
+file name | description 
+----------|-------------
 ``.command.env`` | the process environment
 ``.command.out`` | the process standard output
 ``.command.err`` | the process standard error
 ``.command.log`` | when run on a compute cluster, the process log output from the job execution
 ``.command.run`` | the script submitted to the cluster (also contains the header with cluster directives)
-``.command.sh``  | the actual command
-``.exitcode``    | the exit code of the command
+``.command.sh``  | the actual executed command
+``.exitcode``    | the exit status of the command
 
-A process can then be easily monitored by inspecting the process folder. Each process is uniquely represented by a hash string nternally computed by Nextflow using comands and inputs. To inspect a process folder just look for Nextflow submission messages in the pipeline log file, which look like the following:
+A process can then be easily monitored by inspecting the process folder. Each process is uniquely represented by a hash string internally computed by Nextflow using the command string and its inputs. To inspect a process folder just look for Nextflow submission messages in the pipeline log file, which look like the following:
 
 ```
 ...
@@ -233,8 +233,8 @@ find work/b5 -name '0e02e9*' -exec ls -a {} \+
 
 The Grape pipeline can be run using different configuration profiles. The profiles essentially allow the user to run the analyses using different tools. The following profiles are available at present:
 
-|
---- | ---
+profile | description 
+--------|-------------
 ``gemflux``  | uses the GEMtools for mapping pipeline and the Flux Capacitor for isoform expression quantification
 ``starrsem`` | uses the STAR for mapping and bigwig and the RSEM program for isoform expression quantification
 ``starflux`` | uses the STAR for mapping and the Flux Capacitor for isoform expression quantification
