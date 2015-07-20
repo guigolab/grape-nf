@@ -1,0 +1,10 @@
+machine:
+  java:
+    version: openjdk8
+  services:
+    - docker
+    
+test:
+  override:
+    - ./nextflow -download
+    - ./nextflow run . -with-docker
