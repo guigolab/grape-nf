@@ -1,0 +1,11 @@
+machine:
+  java:
+    version: oraclejdk8
+  services:
+    - docker
+    
+test:
+  override:
+    - curl -fsSL get.nextflow.io | bash && chmod +x nextflow
+    - ./nextflow -download
+    - ./nextflow run . -with-docker
