@@ -1,11 +1,11 @@
-#!/bin/env nextflow 
+#!/bin/env nextflow
 /*
  * Copyright (c) 2015, Centre for Genomic Regulation (CRG)
  * Emilio Palumbo, Alessandra Breschi and Sarah Djebali.
  *
  * This file is part of the GRAPE RNAseq pipeline.
  *
- * The GRAPE RNAseq pipeline is a free software: you can redistribute it 
+ * The GRAPE RNAseq pipeline is a free software: you can redistribute it
  * and/or modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
@@ -36,8 +36,8 @@ quantificationTool = "${config.process.$quantification.tool} ${config.process.$q
 quantificationMode = "${config.process.$quantification.mode}"
 useDocker = config.docker.enabled
 errorStrategy = config.process.errorStrategy
-executor = config.process.executor ?: 'local' 
-queue = config.process.queue 
+executor = config.process.executor ?: 'local'
+queue = config.process.queue
 
 
 // Clear pipeline.db file
@@ -105,12 +105,12 @@ if ('mapping' in pipelineSteps) {
     log.info "------------------"
     log.info "Tool                            : ${mappingTool}"
     log.info "Max mismatches                  : ${params.maxMismatches}"
-    log.info "Max multimaps                   : ${params.maxMultimaps}" 
+    log.info "Max multimaps                   : ${params.maxMultimaps}"
     //log.info "Produce BAM stats               : ${params.bamStats}"
-    if ( params.rgPlatform ) log.info "Sequencing platform             : ${params.rgPlatform}"  
-    if ( params.rgLibrary ) log.info "Sequencing library              : ${params.rgLibrary}"  
-    if ( params.rgCenterName ) log.info "Sequencing center               : ${params.rgCenterName}" 
-    if ( params.rgDesc ) log.info "@RG Descritpiton                : ${params.rgDesc}" 
+    if ( params.rgPlatform ) log.info "Sequencing platform             : ${params.rgPlatform}"
+    if ( params.rgLibrary ) log.info "Sequencing library              : ${params.rgLibrary}"
+    if ( params.rgCenterName ) log.info "Sequencing center               : ${params.rgCenterName}"
+    if ( params.rgDesc ) log.info "@RG Descritpiton                : ${params.rgDesc}"
     log.info ""
 }
 if ('bigwig' in pipelineSteps) {
@@ -156,26 +156,26 @@ if (params.chunkSize) {
     input = input.splitFastq(by: params.chunkSize, file: true, elem: 2)
 }
 
-input.subscribe onNext: { 
+input.subscribe onNext: {
         sample, id, path, type, view ->
         items = "sequencing runs"
         if( params.chunkSize ) {
             items = "chunks         "
             id = id+path.baseName.find(/\..+$/)
-        } 
+        }
         input_chunks << tuple(sample, id, path, type, view)
         data['samples'] << sample
-        data['ids'] << id }, 
-    onComplete: { 
+        data['ids'] << id },
+    onComplete: {
         ids=data['ids'].unique().size()
         samples=data['samples'].unique().size()
         log.info "Dataset information"
         log.info "-------------------"
         log.info "Number of sequenced samples     : ${samples}"
-        log.info "Number of ${items}       : ${ids}" 
+        log.info "Number of ${items}       : ${ids}"
         log.info "Merging                         : ${ ids != samples ? 'by sample' : 'none' }"
         log.info ""
-        input_chunks << Channel.STOP 
+        input_chunks << Channel.STOP
     }
 
 input_bams = Channel.create()
@@ -183,12 +183,12 @@ bam = Channel.create()
 
 input_chunks
     .groupBy {
-        sample, id, path, type, view -> id 
+        sample, id, path, type, view -> id
     }
     .flatMap ()
     .choice(input_files, input_bams) { it -> if ( it.value[0][3] == 'fastq' ) 0 else if ( it.value[0][3] == 'bam' ) 1}
-    
-input_files = input_files.map {        
+
+input_files = input_files.map {
     [it.key, it.value[0][0], it.value.collect { sample, id, path, type, view -> path }, fastq(it.value[0][2]).qualityScore()]
 }
 
@@ -201,9 +201,9 @@ input_bams.map {
 }, onComplete: {}
 
 def msg = "Output files db"
-log.info "=" * msg.size() 
+log.info "=" * msg.size()
 log.info msg + " -> ${pdb}"
-log.info "=" * msg.size() 
+log.info "=" * msg.size()
 log.info ""
 
 Genomes = Channel.create()
@@ -227,10 +227,10 @@ if ('contig' in pipelineSteps || 'bigwig' in pipelineSteps) {
         input:
         set species, file(genome) from Genomes1
         set species, file(annotation) from Annotations1
-    
+
         output:
         set species, file { "${genome}.fai" } into FaiIdx
-    
+
         script:
         template(task.command)
 
@@ -240,18 +240,18 @@ if ('contig' in pipelineSteps || 'bigwig' in pipelineSteps) {
 }
 
 (FaiIdx1, FaiIdx2) = FaiIdx.into(2)
- 
+
 if ('mapping' in pipelineSteps) {
 
     process index {
-    
+
         input:
         set species, file(genome) from Genomes2
         set species, file(annotation) from Annotations7
-    
+
         output:
         set species, file("genomeDir") into GenomeIdx
-    
+
         script:
         sjOverHang = params.sjOverHang
         readLength = params.readLength
@@ -259,26 +259,26 @@ if ('mapping' in pipelineSteps) {
         template(task.command)
 
     }
-     
+
     (GenomeIdx1, GenomeIdx2) = GenomeIdx.into(2)
 
     process mapping {
-    
+
         input:
         set id, sample, file(reads), qualityOffset from input_files
         set species, file(annotation) from Annotations3.first()
         set species, file(genomeDir) from GenomeIdx2.first()
-    
+
         output:
         set id, sample, type, view, file("*.bam"), pairedEnd into bam
-    
+
         script:
         type = 'bam'
         view = 'Alignments'
         prefix = "${id}${pref}"
         maxMultimaps = params.maxMultimaps
         maxMismatches = params.maxMismatches
-        
+
         // prepare BAM @RG tag information
         // def date = new Date().format("yyyy-MM-dd'T'HH:mmZ", TimeZone.getTimeZone("UTC"))
         date = ""
@@ -300,7 +300,7 @@ if ('mapping' in pipelineSteps) {
         task.sort = params.bamSort ?: task.sort
 
         template(task.command)
-   
+
     }
 
     bam = bam.flatMap  { id, sample, type, view, path, pairedEnd ->
@@ -314,16 +314,16 @@ if ('mapping' in pipelineSteps) {
 }
 
 if ('quantification' in pipelineSteps && quantificationMode != "Genome") {
-    
+
     process t_index {
-    
+
         input:
         set species, file(genome) from Genomes3
         set species, file(annotation) from Annotations2
 
         output:
         set species, file('txDir') into QuantificationRef
-    
+
         script:
         template(task.command)
 
@@ -343,7 +343,7 @@ bam.groupTuple(by: [1, 2, 3, 5]) // group by sample, type, view, pairedEnd (to g
 }
 
 process mergeBam {
-    
+
     input:
     set id, sample, type, view, file(bam), pairedEnd from groupedBam
 
@@ -388,7 +388,7 @@ process inferExp {
 
 allBams = bamStrand.cross(bam2)
 .map {
-    bam -> bam[1].flatten() + [bam[0][1]] 
+    bam -> bam[1].flatten() + [bam[0][1]]
 }
 
 (allBams1, allBams2, out) = allBams.into(3)
@@ -401,11 +401,11 @@ if (!('contig' in pipelineSteps)) contigBams = Channel.empty()
 if (!('quantification' in pipelineSteps)) quantificationBams = Channel.empty()
 
 process bigwig {
-    
+
     input:
     set id, sample, type, view, file(bam), pairedEnd, readStrand from bigwigBams
     set species, file(genomeFai) from FaiIdx1.first()
-    
+
     output:
     set id, sample, type, views, file('*.bw'), pairedEnd, readStrand into bigwig
 
@@ -414,13 +414,13 @@ process bigwig {
     prefix = "${sample}"
     wigRefPrefix = params.wigRefPrefix ?: ""
     views = task.views
-    
+
     template(task.command)
 
 }
 
 bigwig = bigwig.reduce([:]) { files, tuple ->
-    def (id, sample, type, view, path, pairedEnd, readStrand) = tuple     
+    def (id, sample, type, view, path, pairedEnd, readStrand) = tuple
     if (!files) files = []
     paths = path.toString().replaceAll(/[\[\],]/,"").split(" ").sort()
     (1..paths.size()).each { files << [id, sample, type, view[it-1], paths[it-1], pairedEnd, readStrand] }
@@ -463,7 +463,7 @@ process quantification {
     viewTx = "Transcript${refPrefix}"
     viewGn = "Gene${refPrefix}"
     memory = task.memory.toMega()
-    
+
     template(task.command)
 
 }
