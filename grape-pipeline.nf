@@ -297,6 +297,7 @@ if ('mapping' in pipelineSteps) {
         pairedEnd = (fqs.size() == 2)
         totalMemory = task.memory.toBytes()
         threadMemory = task.memory.toBytes()/(2*task.cpus)
+        task.sort = params.bamSort ?: task.sort
 
         template(task.command)
    
