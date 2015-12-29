@@ -10,14 +10,14 @@ STAR --runThreadN ${cpus} \
 
 bedGraphToBigWig Signal/Signal.UniqueMultiple.str1.out.bg \
                  <(grep '^${wigRefPrefix}' ${genomeFai}) \
-                 ${prefix}.UniqueMultiple.plusRaw.bw 
+                 ${prefix}.UniqueMultiple.minusRaw.bw 
 bedGraphToBigWig Signal/Signal.UniqueMultiple.str2.out.bg \
                  <(grep '^${wigRefPrefix}' ${genomeFai}) \
-                 ${prefix}.UniqueMultiple.minusRaw.bw 
+                 ${prefix}.UniqueMultiple.plusRaw.bw 
 
 bedGraphToBigWig Signal/Signal.Unique.str1.out.bg \
                  <(grep '^${wigRefPrefix}' ${genomeFai}) \
-                 ${prefix}.Unique.plusRaw.bw
+                 ${prefix}.Unique.minusRaw.bw
 bedGraphToBigWig Signal/Signal.Unique.str2.out.bg \
                  <(grep '^${wigRefPrefix}' ${genomeFai}) \
-                 ${prefix}.Unique.minusRaw.bw
+                 ${prefix}.Unique.plusRaw.bw
