@@ -359,17 +359,9 @@ process mergeBam {
 
 
 bam = singleBam
-.map() { id, sample, type, view, bams, pairedEnd ->
-    bams = bams.collect { 
-        f = file(it)
-        f_new = file("${f.parent}/${sample}${pref}_to${view.replace('Alignments','')}.bam")
-        f.renameTo(f_new) ? f_new.toAbsolutePath() : f.toAbsolutePath()
-    }
-    [id, sample, type, view, bams, pairedEnd]
-}
 .mix(mergedBam)
-.map { 
-    it.flatten() 
+.map {
+    it.flatten()
 }
 
 if (!('mapping' in pipelineSteps)) {
