@@ -1,4 +1,4 @@
-#!/bin/bash -eu        
+#!/bin/bash -eu
 STAR --runThreadN ${cpus} \
      --genomeDir ${genomeDir} \
      --readFilesIn ${reads} \
@@ -15,9 +15,11 @@ STAR --runThreadN ${cpus} \
      --alignSJDBoverhangMin 1 \
      --readFilesCommand pigz -p${cpus} -dc \
      --outSAMtype BAM SortedByCoordinate \
+     --quantMode TranscriptomeSAM \
      --outSAMattrRGline ${readGroup} \
      --limitBAMsortRAM ${totalMemory} \
      --outSAMstrandField intronMotif \
      --outFilterIntronMotifs RemoveNoncanonical
-mv Aligned.sortedByCoord.out.bam ${prefix}.bam
-samtools index ${prefix}.bam
+mv Aligned.sortedByCoord.out.bam ${prefix}_toGenome.bam
+mv Aligned.toTranscriptome.out.bam ${prefix}_toTranscriptome.bam
+samtools index ${prefix}_toGenome.bam

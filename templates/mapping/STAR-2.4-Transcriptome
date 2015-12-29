@@ -1,4 +1,4 @@
-#!/bin/bash -eu        
+#!/bin/bash -eu
 STAR --runThreadN ${cpus} \
      --genomeDir ${genomeDir} \
      --readFilesIn ${reads} \
@@ -18,6 +18,6 @@ STAR --runThreadN ${cpus} \
      --quantMode TranscriptomeSAM \
      --outSAMattrRGline ${readGroup} \
      --limitBAMsortRAM ${totalMemory}
-mv Aligned.sortedByCoord.out.bam ${prefix}.bam 
-mv Aligned.toTranscriptome.out.bam ${prefix}.toTranscriptome.bam
-samtools index ${prefix}.bam
+mv Aligned.sortedByCoord.out.bam ${prefix}_toGenome.bam
+mv Aligned.toTranscriptome.out.bam ${prefix}_toTranscriptome.bam
+samtools index ${prefix}_toGenome.bam
