@@ -55,7 +55,7 @@ if (params.help) {
     log.info 'Run the GRAPE RNA-seq pipeline on a set of data.'
     log.info ''
     log.info 'Usage: '
-    log.info '    grape-pipeline.nf -i INDEX_FILE -g GENOME_FILE -a ANNOTATION_FILE [OPTION]...'
+    log.info '    grape-pipeline.nf --index INDEX_FILE --genome GENOME_FILE --annotation ANNOTATION_FILE [OPTION]...'
     log.info ''
     log.info 'Options:'
     log.info '    --help                              Show this message and exit.'
