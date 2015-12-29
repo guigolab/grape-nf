@@ -180,7 +180,7 @@ nextflow -bg run grape-nf --index input-files.tsv --genome refs/hg38.AXYM.fa --a
 
 By default the pipeline execution will stop as far as one of the processes fails. To change this behaviour you can use the [errorStrategy directive](http://www.nextflow.io/docs/latest/process.html#errorstrategy) of Nextflow processes. You can also specify it on command line. For example, to ignore errors and keep processing you can use ``-process.errorStrategy=ignore``.
 
-It is also possible to run a subset of pipeline steps using the option ``--steps``. For example, the following command will only run the ``mappping`` and ``quantification`` steps:
+It is also possible to run a subset of pipeline steps using the option ``--steps``. For example, the following command will only run the ``mapping`` and ``quantification`` steps:
 
 ```shell
 nextflow -bg run grape-nf --steps mapping,quantification --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume 2>&1 > pipeline.log
