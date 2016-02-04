@@ -20,7 +20,7 @@ STAR --runThreadN ${cpus} \
      --outSAMattrRGline ${readGroup} \
      --outSAMstrandField intronMotif \
      --outFilterIntronMotifs RemoveNoncanonical \
-| samtools sort -@ ${cpus} \
+| samtools sort -@ ${halfCpus} \
                 -m ${threadMemory} \
                 - \
                 ${prefix}_toGenome

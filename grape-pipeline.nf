@@ -298,6 +298,7 @@ if ('mapping' in pipelineSteps) {
         totalMemory = task.memory.toBytes()
         threadMemory = task.memory.toBytes()/(2*task.cpus)
         task.sort = params.bamSort ?: task.sort
+        halfCpus = task.cpus / 2
 
         template(task.command)
 

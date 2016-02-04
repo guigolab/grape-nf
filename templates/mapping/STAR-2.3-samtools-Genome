@@ -17,7 +17,7 @@ STAR --runThreadN ${cpus} \
      --outSAMtype BAM Unsorted \
      --outStd BAM_Unsorted \
      --outSAMattrRGline ${readGroup} \
-| samtools sort -@ ${cpus} \
+| samtools sort -@ ${halfCpus} \
                 -m ${threadMemory} \
                 - \
                 ${prefix}_toGenome
