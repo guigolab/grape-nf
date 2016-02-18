@@ -148,8 +148,9 @@ input_chunks = Channel.create()
 data = ['samples': [], 'ids': []]
 input = Channel
     .from(index.readLines())
-    .map {
-        line -> [ line.split()[0], line.split()[1], file(line.split()[2]), line.split()[3], line.split()[4] ]
+    .map { line ->
+        def (sampleId, runId, fileName, format, readId) = line.split()
+        return [sampleId, runId, resolveFile(fileName, index), format, readId]
     }
 
 if (params.chunkSize) {
@@ -478,4 +479,29 @@ out.mix(bigwig, contig, isoforms, genes)
     log.info "-----------------------"
     log.info "Pipeline run completed."
     log.info "-----------------------"
+}
+
+/*
+ * Given a string path resolve it against the index file location.
+ * Params: 
+ * - str: a string value represting the file pah to be resolved
+ * - index: path location against which relative paths need to be resolved 
+ */
+def resolveFile( str, index ) {
+  if( str.startsWith('/') || str =~ /^[\w\d]*:\// ) {
+    return file(str)
+  }
+  else if( index instanceof Path ) {
+    return index.parent.resolve(str)
+  }
+  else {
+    return file(str) 
+  }
+} 
+
+def testResolveFile() {
+  def index = file('/path/to/index')
+  assert resolveFile('str', index) == file('/path/to/str')
+  assert resolveFile('/abs/file', index) == file('/abs/file')
+  assert resolveFile('s3://abs/file', index) == file('s3://abs/file')
 }
