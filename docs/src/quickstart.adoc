@@ -34,18 +34,18 @@ nextflow info
 
 [source,bash]
 ----
-Version: 0.14.2 build 2998
-Modified: 25-06-2015 09:29 UTC (11:29 CEST)
-System: Linux 2.6.32-504.8.1.el6.x86_64
-Runtime: Groovy 2.3.11 on Java HotSpot(TM) 64-Bit Server VM 1.7.0_60-b19
-Encoding: UTF-8 (UTF-8)
+  Version: 0.17.3 build 3495
+  Modified: 18-02-2016 11:00 UTC (12:00 CEST)
+  System: Mac OS X 10.10.5
+  Runtime: Groovy 2.4.5 on Java HotSpot(TM) 64-Bit Server VM 1.8.0_40-b27
+  Encoding: UTF-8 (UTF-8)
 ----
 
 NOTE: Nextflow installation is only required once. You might need to <<_upgrade_nextflow_version, upgrade>> it, though.
 
 == Upgrade Nextflow version
 
-The pipeline requires Nextflow version #0.14.0# or higher. Make sure you have the right version by running `nextflow info`. In case
+The pipeline requires Nextflow version [red]#0.14.0# or higher. Make sure you have the right version by running `nextflow info`. In case
 you have an older version you can upgrade as follows:
 
 [source,bash]
@@ -89,7 +89,7 @@ containing something like:
 ----
 process {
     executor = 'sge'
-    queue    = 'myQueue'
+    queue    = 'my-queue'
     penv     = 'mpi'
 }
 ----
@@ -159,18 +159,18 @@ SAM read group options:
 The pipeline needs a tab separated file as an input. This file should contain information about the FASTQ files to be processed. The
 columns needed in order are:
 
-[cols="10l,90"]
+[cols="1,l,1",options="autowidth"]
 |===
-| sample | the sample identifier, used to merge bam files in case multiple runs for the same sample are present
-| id     | the run identifier (e.g. labExpId)
-| path   | the path to the fastq file
-| type   | the type (e.g. fastq)
-| view   | an attribute that specifies the content of the file (e.g. FastqRd1)
+| [red]#{counter:index-qs}# | sample | the sample identifier, used to merge bam files in case multiple runs for the same sample are present
+| [red]#{counter:index-qs}# | id     | the run identifier (e.g. labExpId)
+| [red]#{counter:index-qs}# | path   | the path to the fastq file
+| [red]#{counter:index-qs}# | type   | the type (e.g. fastq)
+| [red]#{counter:index-qs}# | view   | an attribute that specifies the content of the file (e.g. FastqRd1)
 |===
 
 Here is an example:
 
-[source,text]
+[source]
 ----
 sample1  test1   data/test1_1.fastq.gz   fastq   FastqRd1
 sample1  test1   data/test1_2.fastq.gz   fastq   FastqRd2
@@ -178,18 +178,18 @@ sample1  test1   data/test1_2.fastq.gz   fastq   FastqRd2
 
 Sample and id can be the same in case you don't have/know sample identifiers:
 
-[source,text]
+[source]
 ----
-test  test   data/test.fastq.gz   fastq   FastqRd
+test     test    data/test.fastq.gz      fastq   FastqRd
 ----
 
 Also bam files can be specified in the index, with or without fastqs:
 
-[source,text]
+[source]
 ----
 sample1  test1   data/test1_1.fastq.gz   fastq   FastqRd1
 sample1  test1   data/test1_2.fastq.gz   fastq   FastqRd2
-sample2  test2   data/test2.bam  bam     Alignment
+sample2  test2   data/test2.bam          bam     Alignment
 ----
 
 In this case the bam file will skip the mapping process and will be sent to the subsequent processes.
