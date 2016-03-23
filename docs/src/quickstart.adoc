@@ -1,4 +1,6 @@
 = Grape Quickstart
+:toc: left
+:sectnums:
 :nf-web: http://nextflow.io
 :nf-docs: http://www.nextflow.io/docs/latest/index.html
 :nf-docs-sharing: http://www.nextflow.io/docs/latest/sharing.html
