@@ -1,6 +1,8 @@
-= Grape Quickstart
+= Grape https://github.com/guigolab/grape-nf.git[icon:github[float="right" role="black"]^]
 :toc: left
 :sectnums:
+:icons: font
+:stylesheet: ../crg.css
 :nf-web: http://nextflow.io
 :nf-docs: http://www.nextflow.io/docs/latest/index.html
 :nf-docs-sharing: http://www.nextflow.io/docs/latest/sharing.html
@@ -8,7 +10,6 @@
 :nf-docs-envvars: http://www.nextflow.io/docs/latest/config.html#environment-variables
 :nf-docs-profiles: http://www.nextflow.io/docs/latest/config.html#config-profiles
 :grape-repo: https://github.com/guigolab/grape-nf.git
-
 
 Grape provides an extensive pipeline for RNA-Seq analyses. It allows the creation of an automated and integrated workflow to manage
 and analyse RNA-Seq data.
