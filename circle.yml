@@ -3,10 +3,9 @@ machine:
     version: oraclejdk8
   services:
     - docker
-
-environment:
-  PROFILE: test
-  CHECKDIR: checksums
+  environment:
+    PROFILE: test
+    CHECKDIR: checksums
 
 test:
   override:
