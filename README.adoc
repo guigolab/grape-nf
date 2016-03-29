@@ -1,7 +1,7 @@
-= Grape 
-nextflow: http://nextflow.io
-nextflow-docs: http://www.nextflow.io/docs/latest/index.html
-circle-shield: https://circleci.com/gh/guigolab/grape-nf.svg?style=shield
+= Grape
+:nextflow: http://nextflow.io
+:nextflow-docs: http://www.nextflow.io/docs/latest/index.html
+:circle-shield: https://circleci.com/gh/guigolab/grape-nf.svg?style=shield
 
 image:{circle-shield}[]
 
