@@ -1,22 +1,33 @@
 .PHONY: all html check_deploy deploy clean deepclean
 
 GEMS = env
-DEPLOY_LIST = deploy-list.txt
 HTML_DIR = _html
 PDF_DIR = _pdf
-DOCS = quickstart workflow
-SECURE_HEADER = header.php
+PHP_DIR = _php
+DOCS = quickstart
+INDEX = quickstart
+PHP_HEADER = header.php
+DEPLOY_SRC = _deploy
+ifndef DEPLOY_EXT
+	DEPLOY_EXT = php
+endif
 
 all: html
 
 html: setup $(DOCS:=.html)
 pdf: setup $(DOCS:=.pdf)
 
+php: html $(DOCS:=.php)
+
 $(DOCS:=.html): %.html: src/%.adoc
 	@GEM_HOME=$(GEMS) $(GEMS)/bin/asciidoctor $^ -o $(HTML_DIR)/$@
 
 $(DOCS:=.pdf): %.pdf: src/%.adoc
 	@GEM_HOME=$(GEMS) $(GEMS)/bin/asciidoctor-pdf $^ -o $(PDF_DIR)/$@
+
+$(DOCS:=.php): %.php: $(HTML_DIR)/%.html
+	@mkdir -p $(PHP_DIR)
+	@cat src/$(PHP_HEADER) $^ >> $(PHP_DIR)/$@
 
 setup: $(GEMS)/bin/asciidoctor $(GEMS)/bin/asciidoctor-pdf
 
@@ -27,30 +38,28 @@ $(GEMS): $(GEMS)/bin/bundle
 $(GEMS)/bin/bundle:
 	@GEM_HOME=$(GEMS) gem install bundler
 
-secure: html $(DOCS:=.php)
-
-$(DOCS:=.php): %.php: $(HTML_DIR)/%.html
-	@cat $(SECURE_HEADER) $^ >> $@
-
-$(DEPLOY_LIST):
-	@for doc in $(DOCS:=.php); do \
-		echo $$doc >> $@; \
+prepare_deploy: $(DEPLOY_EXT)
+	@mkdir -p $(DEPLOY_SRC)
+	@ln -f src/password.php $(DEPLOY_SRC)
+	@for doc in $(DOCS:=.$(DEPLOY_EXT)); do \
+		[[ $$doc == $(INDEX).$(DEPLOY_EXT) ]] && DEST=index.$(DEPLOY_EXT) || DEST=$$doc; \
+		ln -f $(PHP_DIR)/$$doc $(DEPLOY_SRC)/$$DEST; \
 	done
-	@echo '.htpasswd' >> $@
 
 check_deploy:
-ifndef DEPLOY_DIR
-	$(error Undefined variable DEPLOY_DIR)
+ifndef DEPLOY_DEST
+	$(error Undefined variable DEPLOY_DEST)
 endif
 
-deploy: html $(DEPLOY_LIST) check_deploy
-	rsync -a --files-from=$(DEPLOY_LIST) . $(DEPLOY_DIR)
+deploy: prepare_deploy check_deploy
+	rsync -a --delete --exclude=".*" $(DEPLOY_SRC)/ $(DEPLOY_DEST)/
 
 serve:
 	php -S 127.0.0.1:8000 -t .
 
 clean:
-	rm -rf $(HTML_DIR) $(PDF_DIR) $(DEPLOY_LIST) $(DOCS:=.php)
+	rm -rf $(HTML_DIR) $(PDF_DIR) $(DEPLOY_SRC) $(PHP_DIR)
 
 deepclean: clean
-	rm -rf $(GEMS) bin .bundle
+	[[ $(GEMS) == 'env' ]] && rm -rf $(GEMS) 
+	rm -rf bin .bundle
