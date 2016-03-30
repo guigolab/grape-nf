@@ -10,6 +10,6 @@ clean-docs: docs/Makefile
 	@$(MAKE) -C docs clean
 	
 clean-test:
-	@rm -rf work nextflow
+	@rm -rf work nextflow .nextflow* checksum pipeline.db
 
 clean-all: clean-docs clean-test
