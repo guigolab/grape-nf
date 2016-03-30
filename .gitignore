@@ -1,3 +1,4 @@
+.htpasswd
 .DS_Store
 .nextflow*
 *.log
