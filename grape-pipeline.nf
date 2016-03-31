@@ -148,6 +148,7 @@ input_chunks = Channel.create()
 data = ['samples': [], 'ids': []]
 input = Channel
     .from(index.readLines())
+    .filter { it }  // get only lines not empty
     .map { line ->
         def (sampleId, runId, fileName, format, readId) = line.split()
         return [sampleId, runId, resolveFile(fileName, index), format, readId]
