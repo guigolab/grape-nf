@@ -80,12 +80,12 @@ if (params.help) {
 }
 
 // check mandatory options
-if (!params.genome) {
-    exit 1, "Genome file not specified"
+if (!params.genomeIndex && !params.genome) {
+    exit 1, "Reference genome not specified"
 }
 
-if (!params.annotation) {
-    exit 1, "Annotation file not specified"
+if ('quantification' in pipelineSteps && !params.annotation) {
+    exit 1, "Annotation not specified"
 }
 
 log.info ""
@@ -140,6 +140,7 @@ log.info ""
 
 genomes = params.genome.split(',').collect { file(it) }
 annos = params.annotation.split(',').collect { file(it) }
+genomeidxs = params.genomeIndex.split(',').collect { file(it) }
 
 index = params.index ? file(params.index) : System.in
 input_files = Channel.create()
@@ -245,21 +246,29 @@ if ('contig' in pipelineSteps || 'bigwig' in pipelineSteps) {
 
 if ('mapping' in pipelineSteps) {
 
-    process index {
+    if (! params.genomeIndex) {
+        process index {
 
-        input:
-        set species, file(genome) from Genomes2
-        set species, file(annotation) from Annotations7
+            input:
+            set species, file(genome) from Genomes2
+            set species, file(annotation) from Annotations7
 
-        output:
-        set species, file("genomeDir") into GenomeIdx
+            output:
+            set species, file("genomeDir") into GenomeIdx
 
-        script:
-        sjOverHang = params.sjOverHang
-        readLength = params.readLength
+            script:
+            sjOverHang = params.sjOverHang
+            readLength = params.readLength
 
-        template(task.command)
+            template(task.command)
 
+        }
+
+    } else {
+        GenomeIdx = Channel.create()
+        GenomeIdx = Genomes2.merge(Channel.from(genomeidxs)) { d, i -> 
+            [d[0], i]
+        }
     }
 
     (GenomeIdx1, GenomeIdx2) = GenomeIdx.into(2)
