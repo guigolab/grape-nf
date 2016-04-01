@@ -218,7 +218,7 @@ It is also possible to run a subset of pipeline steps using the option ``--steps
 nextflow -bg run grape-nf --steps mapping,quantification --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume 2>&1 > pipeline.log
 ----
 
-### Stop the pipeline
+=== Stop the pipeline
 
 To stop a running pipeline just run the following command from within the pipeline base directory:
 
