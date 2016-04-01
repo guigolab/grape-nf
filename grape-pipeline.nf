@@ -140,7 +140,9 @@ log.info ""
 
 genomes = params.genome.split(',').collect { file(it) }
 annos = params.annotation.split(',').collect { file(it) }
-genomeidxs = params.genomeIndex.split(',').collect { file(it) }
+if (params.genomeIndex) {
+    genomeidxs = params.genomeIndex.split(',').collect { file(it) }
+}
 
 index = params.index ? file(params.index) : System.in
 input_files = Channel.create()
