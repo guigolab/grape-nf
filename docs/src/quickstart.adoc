@@ -160,15 +160,15 @@ SAM read group options:
 === Input format
 
 The pipeline needs a tab separated file as an input. This file should contain information about the FASTQ files to be processed. The
-columns needed in order are:
+needed columns in order are:
 
 [cols="1,l,1",options="autowidth"]
 |===
 | [red]#{counter:index-qs}# | sample | the sample identifier, used to merge bam files in case multiple runs for the same sample are present
-| [red]#{counter:index-qs}# | id     | the run identifier (e.g. labExpId)
+| [red]#{counter:index-qs}# | id     | the run identifier (e.g. `labExpId`)
 | [red]#{counter:index-qs}# | path   | the path to the fastq file
-| [red]#{counter:index-qs}# | type   | the type (e.g. fastq)
-| [red]#{counter:index-qs}# | view   | an attribute that specifies the content of the file (e.g. FastqRd1)
+| [red]#{counter:index-qs}# | type   | the type (e.g. `fastq`)
+| [red]#{counter:index-qs}# | view   | an attribute that specifies the content of the file (e.g. `FastqRd1`)
 |===
 
 Here is an example:
