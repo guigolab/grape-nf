@@ -6,6 +6,7 @@
 	done
 ) > header.txt && \
 samtools merge -@ ${cpus} \
-							 -h header.txt \
-							 ${prefix}.bam \
-							 ${bam}
+               -h header.txt \
+               ${prefix}.bam \
+               ${bam} && \
+samtools index ${prefix}.bam
