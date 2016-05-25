@@ -130,7 +130,7 @@ nextflow run grape-nf --help
 [source%nowrap,bash]
 ----
 N E X T F L O W  ~  version 0.17.3
-Launching 'guigolab/grape-nf' - revision: 777fd2c6e9 [master]
+Launching 'guigolab/grape-nf' - revision: a6147f7add [master]
 
 G R A P E ~ RNA-seq Pipeline
 ----------------------------
