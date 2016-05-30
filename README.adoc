@@ -268,13 +268,13 @@ The pipeline compiles a list of output files into the file `pipeline.db` inside 
 
 [cols="1,l,1",options="autowidth"]
 |===
-| [red]#{counter:index-qs}# | sample | the sample identifier, used to merge bam files in case multiple runs for the same sample are present
-| [red]#{counter:index-qs}# | id          | the run identifier (e.g. `test1`)
-| [red]#{counter:index-qs}# | path        | the path to the fastq file
-| [red]#{counter:index-qs}# | type        | the type (e.g. `bam`)
-| [red]#{counter:index-qs}# | view        | an attribute that specifies the content of the file (e.g. `GenomeAlignments`)
-| [red]#{counter:index-qs}# | readType    | the input data type (either `Single-End` or `Paired-End`)
-| [red]#{counter:index-qs}# | readStrand  | the inferred exepriment strandednes if any (it can be `NONE` for unstranded data, `SENSE` or `ANTISENSE` for single-end data, `MATE1_SENSE` or `MATE2_SENSE` for paired-end data.)
+| [red]#{counter:db-qs}# | sample | the sample identifier, used to merge bam files in case multiple runs for the same sample are present
+| [red]#{counter:db-qs}# | id          | the run identifier (e.g. `test1`)
+| [red]#{counter:db-qs}# | path        | the path to the fastq file
+| [red]#{counter:db-qs}# | type        | the type (e.g. `bam`)
+| [red]#{counter:db-qs}# | view        | an attribute that specifies the content of the file (e.g. `GenomeAlignments`)
+| [red]#{counter:db-qs}# | readType    | the input data type (either `Single-End` or `Paired-End`)
+| [red]#{counter:db-qs}# | readStrand  | the inferred exepriment strandednes if any (it can be `NONE` for unstranded data, `SENSE` or `ANTISENSE` for single-end data, `MATE1_SENSE` or `MATE2_SENSE` for paired-end data.)
 |===
 
 Here is an example from the test run:
