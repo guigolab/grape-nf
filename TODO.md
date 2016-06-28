@@ -1,6 +1,7 @@
 # Things to do
 
 - [ ] add FastQC
+- [ ] add bamstats
 - [ ] add preprocessing steps for input (fastq) and references (genome, annotation)
   - [ ] check chromosomes
   - [ ] check mate ids
