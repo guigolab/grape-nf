@@ -2,6 +2,7 @@
 
 - [ ] add FastQC
 - [ ] add bamstats
+- [ ] update genome and annotation names for views
 - [ ] add preprocessing steps for input (fastq) and references (genome, annotation)
   - [ ] check chromosomes
   - [ ] check mate ids
