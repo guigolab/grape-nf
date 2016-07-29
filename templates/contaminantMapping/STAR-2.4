@@ -13,4 +13,4 @@ STAR --runThreadN ${cpus} \
      --outSAMtype BAM Unsorted \
      --outReadsUnmapped Fastx \
      --outFileNamePrefix "${prefix}."
-gzip ${prefix}.Unmapped.out.mate[12]
+pigz -p${cpus} ${prefix}.Unmapped.out.mate[12]
