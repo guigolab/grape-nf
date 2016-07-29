@@ -234,7 +234,7 @@ Channel.from(genomes)
     }
 
 (Genomes1, Genomes2, Genomes3) = Genomes.into(3)
-(Annotations1, Annotations2, Annotations3, Annotations4, Annotations5, Annotations6, Annotations7) = Annotations.into(7)
+(Annotations1, Annotations2, Annotations3, Annotations4, Annotations5, Annotations6, Annotations7, Annotations8) = Annotations.into(8)
 
 pref = "_m${params.maxMismatches}_n${params.maxMultimaps}"
 
@@ -256,7 +256,7 @@ if ('contig' in pipelineSteps || 'bigwig' in pipelineSteps) {
     FaiIdx = Channel.empty()
 }
 
-(FaiIdx1, FaiIdx2) = FaiIdx.into(2)
+(FaiIdx1, FaiIdx2, FaiIdx3) = FaiIdx.into(3)
 
 if ('contaminant-filtering' in pipelineSteps && config.process.$contaminantIndex != null) {
 
@@ -460,12 +460,44 @@ allBams = bamStrand.cross(bam2)
 
 (allBams1, allBams2, out) = allBams.into(3)
 
-(bigwigBams, contigBams) = allBams1.filter { it[3] =~ /Genome/ }.into(3)
+(bamStatsBams, bigwigBams, contigBams) = allBams1.filter { it[3] =~ /Genome/ }.into(3)
 quantificationBams = allBams2.filter { it[3] =~ /${quantificationMode}/ }
 
 if (!('bigwig' in pipelineSteps)) bigwigBams = Channel.empty()
 if (!('contig' in pipelineSteps)) contigBams = Channel.empty()
 if (!('quantification' in pipelineSteps)) quantificationBams = Channel.empty()
+
+process genomicRegions {
+    input:
+    set species, file(genomeFai) from FaiIdx3.first()
+    set species, file(annotation) from Annotations8.first()
+
+    output:
+    set species, file('genomic_regions.bed') into GenomicRegions
+
+    script:
+    template(task.command)
+}
+
+process bamStats {
+
+    input:
+    set id, sample, type, view, file(bam), pairedEnd, readStrand from bamStatsBams
+    set species, file(annotation) from GenomicRegions.first()
+
+    output:
+    set id, sample, type, views, file('*.json'), pairedEnd, readStrand into bamStats
+
+    script:
+    type = "json"
+    prefix = "${sample}"
+    views = "BamStats"
+    maxBuf = task.ext.maxBuf
+    logLevel = task.ext.logLevel
+
+    template(task.command)
+
+}
 
 process bigwig {
 
@@ -535,7 +567,7 @@ process quantification {
 
 }
 
-out.mix(bigwig, contig, isoforms, genes)
+out.mix(bamStats, bigwig, contig, isoforms, genes)
 .collectFile(name: pdb.name, storeDir: pdb.parent, newLine: true) { id, sample, type, view, file, pairedEnd, readStrand ->
     [sample, id, file, type, view, pairedEnd ? 'Paired-End' : 'Single-End', readStrand].join("\t")
 }

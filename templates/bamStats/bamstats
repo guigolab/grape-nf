@@ -1,0 +1,8 @@
+#!/bin/bash -eu
+bamstats -c ${cpus} \
+         -i ${bam} \
+         -a ${annotation} \
+         -o ${prefix}_stats.json \
+         --max-buf ${maxBuf} \
+         --loglevel ${logLevel} \
+         -u

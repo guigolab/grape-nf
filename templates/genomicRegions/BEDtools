@@ -1,0 +1,29 @@
+#!/bin/bash -eu
+awk '\$3 == "exon"' ${annotation} \
+| sort -k1,1 -k4,4n \
+| mergeBed -i stdin \
+| awk -v OFS="\t" '\$(NF+1)="exon"' \
+> merged_exons.bed
+awk '\$3 == "gene"' ${annotation} \
+| sort -k1,1 -k4,4n \
+| mergeBed -i stdin \
+| awk -v OFS="\t" '\$(NF+1)="gene"' \
+> merged_genes.bed
+subtractBed -a merged_genes.bed \
+            -b merged_exons.bed \
+| awk -v OFS="\t" '\$(NF)="intron"' \
+> introns.bed
+complementBed -i merged_genes.bed \
+              -g ${genomeFai} \
+| awk -v OFS="\t" '\$(NF+1)="intergenic"' \
+> intergenic.bed
+cat merged_exons.bed \
+    merged_genes.bed \
+    introns.bed \
+    intergenic.bed \
+| sort -k1,1 -k2,2n \
+> genomic_regions.bed \
+&& rm merged_exons.bed \
+      merged_genes.bed \
+      introns.bed \
+      intergenic.bed
