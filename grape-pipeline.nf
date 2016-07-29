@@ -47,6 +47,10 @@ pdb.write('')
 // get list of steps from comma-separated strings
 pipelineSteps = params.steps.split(',').collect { it.trim() }
 
+if (params.contaminantGenomes && !('contaminant-filtering' in pipelineSteps)) {
+    pipelineSteps << 'contaminant-filtering'
+}
+
 //print usage
 if (params.help) {
     log.info ''
@@ -86,6 +90,10 @@ if (!params.genomeIndex && !params.genome) {
 
 if ('quantification' in pipelineSteps && !params.annotation) {
     exit 1, "Annotation not specified"
+}
+
+if ('contaminant-filtering' in pipelineSteps && !params.contaminantGenomes) {
+    exit 1, " Contaminant genome(s) not specified"
 }
 
 log.info ""
@@ -138,10 +146,13 @@ log.info "Use Docker                      : ${useDocker}"
 log.info "Error strategy                  : ${errorStrategy}"
 log.info ""
 
-genomes = params.genome.split(',').collect { file(it) }
-annos = params.annotation.split(',').collect { file(it) }
+genomes = params.genome.tokenize(',').collect { file(it) }
+annos = params.annotation.tokenize(',').collect { file(it) }
 if (params.genomeIndex) {
-    genomeidxs = params.genomeIndex.split(',').collect { file(it) }
+    genomeidxs = params.genomeIndex.tokenize(',').collect { file(it) }
+}
+if (params.contaminantGenomes) {
+    contaminantGenomes = Channel.from(params.contaminantGenomes.tokenize(',').collect { file(it) }).flatMap()
 }
 
 index = params.index ? file(params.index) : System.in
@@ -246,6 +257,47 @@ if ('contig' in pipelineSteps || 'bigwig' in pipelineSteps) {
 
 (FaiIdx1, FaiIdx2) = FaiIdx.into(2)
 
+if ('contaminant-filtering' in pipelineSteps && config.process.$contaminantIndex != null) {
+
+    process contaminantIndex {
+
+        input:
+        file(genomes) from contaminantGenomes.toSortedList()
+
+        output:
+        set species, file("genomeDir") into ContaminantIdx
+
+        script:
+        species = "contaminants"
+        readLength = params.readLength
+
+        template(task.command)
+    }
+
+    process contaminantMapping {
+
+        input:
+        set id, sample, file(reads), qualityOffset from input_files
+        set species, file(genomeDir) from ContaminantIdx.first()
+
+        output:
+        set id, sample, file("${prefix}.Unmapped.out.mate[12].gz"), qualityOffset into fastqs
+
+        script:
+        prefix = "${id}"
+        matchNmin = task.ext.matchNmin
+        matchNminOverLread = task.ext.matchNminOverLread
+        scoreMinOverLread = task.ext.scoreMinOverLread
+        maxMultimaps = task.ext.maxMultimaps
+        maxMismatches = task.ext.maxMismatches
+
+        template(task.command)
+
+    }
+} else {
+    (fastqs) = input_files.into(1)
+}
+
 if ('mapping' in pipelineSteps) {
 
     if (! params.genomeIndex) {
@@ -278,7 +330,7 @@ if ('mapping' in pipelineSteps) {
     process mapping {
 
         input:
-        set id, sample, file(reads), qualityOffset from input_files
+        set id, sample, file(reads), qualityOffset from fastqs
         set species, file(annotation) from Annotations3.first()
         set species, file(genomeDir) from GenomeIdx2.first()
 

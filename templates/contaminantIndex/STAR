@@ -1,0 +1,6 @@
+#!/bin/bash -eu
+mkdir genomeDir
+STAR --runThreadN ${cpus} \
+     --runMode genomeGenerate \
+     --genomeDir genomeDir \
+     --genomeFastaFiles ${genomes}

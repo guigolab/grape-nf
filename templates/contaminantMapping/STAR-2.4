@@ -1,0 +1,16 @@
+#!/bin/bash -eu
+STAR --runThreadN ${cpus} \
+     --genomeDir ${genomeDir} \
+     --readFilesIn ${reads} \
+     --readFilesCommand pigz -p${cpus} -dc \
+     --outFilterMatchNmin ${matchNmin} \
+     --outFilterMatchNminOverLread ${matchNminOverLread} \
+     --outFilterScoreMinOverLread ${scoreMinOverLread} \
+     --outFilterMultimapNmax ${maxMultimaps} \
+     --outFilterMismatchNmax ${maxMismatches} \
+     --alignIntronMax 1 \
+     --alignSJoverhangMin 1000 \
+     --outSAMtype BAM Unsorted \
+     --outReadsUnmapped Fastx \
+     --outFileNamePrefix "${prefix}."
+gzip ${prefix}.Unmapped.out.mate[12]
