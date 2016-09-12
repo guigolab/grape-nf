@@ -1,0 +1,45 @@
+= Riboprofiling
+
+Experimental support for Riboprofiling data.
+
+== Configuration
+
+To run the pipeline for Riboprofiling data you need to create a `.nextflow` configuration file in the current working directory. The file should contain the following (of course adjusting the parameter values as needed):
+
+[source,groovy]
+----
+process {
+	$contaminantMapping {
+		ext {
+    	matchNmin = 0
+      matchNminOverLread = 0.66
+      scoreMinOverLread = 0.66
+      maxMultimaps = 10
+      maxMismatches = 2
+    }
+	}
+
+	$mapping {
+		ext {
+			matchNmin = 0
+			matchNminOverLread = 0.66
+			scoreMinOverLread = 0.66
+		}
+	}
+
+	$quantification {
+		mode = 'Riboprofiling'
+	}
+}
+----
+
+== Run
+
+[source,bash]
+----
+nextflow -bg run grape-nf -r riboprofiling --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --contaminant-genomes 'refs/contaminants/*.fa' --rg-platform ILLUMINA --rg-center-name CRG -resume > pipeline.log
+----
+
+NOTE: The single quotes in `'refs/contaminants/*.fa'` are needed in order to skip bash wildcard expansion.
+
+NOTE: If you run the pipeline in the CRG cluster please append `-c MODULES_CONFIGURATION_FILE` as usual
