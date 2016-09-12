@@ -10,6 +10,7 @@ STAR --runThreadN ${cpus} \
      --outFilterScoreMinOverLread ${scoreMinOverLread} \
      --outFilterMultimapNmax ${maxMultimaps} \
      --outFilterMismatchNmax ${maxMismatches} \
+     --outFilterMultimapScoreRange ${multimapScoreRange} \
      --alignIntronMin 20 \
      --alignIntronMax 1000000 \
      --alignMatesGapMax 1000000 \

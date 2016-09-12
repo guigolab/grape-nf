@@ -345,6 +345,7 @@ if ('mapping' in pipelineSteps) {
         matchNmin = task.ext.matchNmin
         matchNminOverLread = task.ext.matchNminOverLread
         scoreMinOverLread = task.ext.scoreMinOverLread
+        multimapScoreRange = task.ext.multimapScoreRange
         maxMultimaps = params.maxMultimaps
         maxMismatches = params.maxMismatches
 
