@@ -14,7 +14,6 @@ process {
             matchNmin = 0
             matchNminOverLread = 0.66
             scoreMinOverLread = 0.66
-            multimapScoreRange = 1
             maxMultimaps = 10
             maxMismatches = 2
         }
@@ -25,6 +24,7 @@ process {
             matchNmin = 0
             matchNminOverLread = 0.66
             scoreMinOverLread = 0.66
+            multimapScoreRange = 1
         }
     }
 
