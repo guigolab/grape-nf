@@ -4,7 +4,7 @@ Experimental support for Riboprofiling data.
 
 == Configuration
 
-To run the pipeline for Riboprofiling data you need to create a `.nextflow` configuration file in the current working directory. The file should contain the following (of course adjusting the parameter values as needed):
+To run the pipeline for Riboprofiling data you need to create a `nextflow.config` configuration file in the current working directory. The file should contain the following (of course adjusting the parameter values as needed):
 
 [source,groovy]
 ----
@@ -14,6 +14,7 @@ process {
             matchNmin = 0
             matchNminOverLread = 0.66
             scoreMinOverLread = 0.66
+            multimapScoreRange = 1
             maxMultimaps = 10
             maxMismatches = 2
         }
@@ -37,6 +38,7 @@ process {
 
 [source,bash]
 ----
+nextflow pull grape-nf -r riboprofiling
 nextflow -bg run grape-nf -r riboprofiling --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --contaminant-genomes 'refs/contaminants/*.fa' --rg-platform ILLUMINA --rg-center-name CRG -resume > pipeline.log
 ----
 
