@@ -9,27 +9,27 @@ To run the pipeline for Riboprofiling data you need to create a `.nextflow` conf
 [source,groovy]
 ----
 process {
-	$contaminantMapping {
-		ext {
-    	matchNmin = 0
+    $contaminantMapping {
+        ext {
+        matchNmin = 0
       matchNminOverLread = 0.66
       scoreMinOverLread = 0.66
       maxMultimaps = 10
       maxMismatches = 2
     }
-	}
+    }
 
-	$mapping {
-		ext {
-			matchNmin = 0
-			matchNminOverLread = 0.66
-			scoreMinOverLread = 0.66
-		}
-	}
+    $mapping {
+        ext {
+            matchNmin = 0
+            matchNminOverLread = 0.66
+            scoreMinOverLread = 0.66
+        }
+    }
 
-	$quantification {
-		mode = 'Riboprofiling'
-	}
+    $quantification {
+        mode = 'Riboprofiling'
+    }
 }
 ----
 
