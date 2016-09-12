@@ -342,6 +342,9 @@ if ('mapping' in pipelineSteps) {
         type = 'bam'
         view = 'Alignments'
         prefix = "${id}${pref}"
+        matchNmin = task.ext.matchNmin
+        matchNminOverLread = task.ext.matchNminOverLread
+        scoreMinOverLread = task.ext.scoreMinOverLread
         maxMultimaps = params.maxMultimaps
         maxMismatches = params.maxMismatches
 
