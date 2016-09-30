@@ -34,6 +34,7 @@ mappingTool = "${config.process.$mapping.tool} ${config.process.$mapping.version
 bigwigTool = "${config.process.$bigwig.tool} ${config.process.$bigwig.version}"
 quantificationTool = "${config.process.$quantification.tool} ${config.process.$quantification.version}"
 quantificationMode = "${config.process.$quantification.mode}"
+quantificationInput = quantificationMode == "Riboprofiling" ? "Transcriptome" : quantificationMode
 useDocker = config.docker.enabled
 errorStrategy = config.process.errorStrategy
 executor = config.process.executor ?: 'local'
@@ -465,7 +466,7 @@ allBams = bamStrand.cross(bam2)
 (allBams1, allBams2, out) = allBams.into(3)
 
 (bamStatsBams, bigwigBams, contigBams) = allBams1.filter { it[3] =~ /Genome/ }.into(3)
-quantificationBams = allBams2.filter { it[3] =~ /${quantificationMode}/ }
+quantificationBams = allBams2.filter { it[3] =~ /${quantificationInput}/ }
 
 if (!('bigwig' in pipelineSteps)) bigwigBams = Channel.empty()
 if (!('contig' in pipelineSteps)) contigBams = Channel.empty()
