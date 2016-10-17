@@ -459,9 +459,9 @@ process inferExp {
 }
 
 allBams = bamStrand.cross(bam2)
-.map {
+.map { bam ->
     def strand =  quantificationMode == "Riboprofiling" ? 'NONE' : bam[0][1]
-    bam -> bam[1].flatten() + [strand]
+    bam[1].flatten() + [strand]
 }
 
 (allBams1, allBams2, out) = allBams.into(3)
