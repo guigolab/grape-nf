@@ -8,16 +8,21 @@ STAR --runThreadN ${cpus} \
      --outFileNamePrefix ./Signal/ \
      --outWigReferencesPrefix ${wigRefPrefix}
 
+cp ${genomeFai} chrSizes.txt
+if [[ ${wigRefPrefix} != - ]]; then
+    sed  -ni '/^${wigRefPrefix}/p' chrSizes.txt
+fi
+
 bedGraphToBigWig Signal/Signal.UniqueMultiple.str1.out.bg \
-                 <(grep '^${wigRefPrefix}' ${genomeFai}) \
+                 chrSizes.txt \
                  ${prefix}.UniqueMultiple.plusRaw.bw 
 bedGraphToBigWig Signal/Signal.UniqueMultiple.str2.out.bg \
-                 <(grep '^${wigRefPrefix}' ${genomeFai}) \
+                 chrSizes.txt \
                  ${prefix}.UniqueMultiple.minusRaw.bw 
 
 bedGraphToBigWig Signal/Signal.Unique.str1.out.bg \
-                 <(grep '^${wigRefPrefix}' ${genomeFai}) \
+                 chrSizes.txt \
                  ${prefix}.Unique.plusRaw.bw
 bedGraphToBigWig Signal/Signal.Unique.str2.out.bg \
-                 <(grep '^${wigRefPrefix}' ${genomeFai}) \
+                 chrSizes.txt \
                  ${prefix}.Unique.minusRaw.bw
