@@ -20,13 +20,21 @@
  */
 
 //Set default values for params
-params.steps = 'mapping,bigwig,contig,quantification'
-params.readLength = 150
-params.sjOverHang = 100
-params.wigRefPrefix = 'chr'
-params.maxMultimaps = 10
-params.maxMismatches = 4
+params.bamSort = null
+params.chunkSize = null
 params.dbFile = 'pipeline.db'
+params.genomeIndex = null
+params.help = false
+params.maxMismatches = 4
+params.maxMultimaps = 10
+params.readLength = 150
+params.rgCenterName = null
+params.rgDesc = null
+params.rgLibrary = null
+params.rgPlatform = null
+params.sjOverHang = 100
+params.steps = 'mapping,bigwig,contig,quantification'
+params.wigRefPrefix = 'chr'
 
 
 // Some configuration variables
