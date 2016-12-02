@@ -441,7 +441,13 @@ if (!('mapping' in pipelineSteps)) {
     bam << Channel.STOP
 }
 
-(bam1, bam2) = bam.into(2)
+
+
+if ( quantificationMode == "Riboprofiling" ) {
+    (bam1, bam2, bam3) = bam.into(3)
+} else {
+    (bam1, bam2) = bam.into(2)
+}
 
 
 process inferExp {
@@ -462,7 +468,7 @@ process inferExp {
 }
 
 if ( quantificationMode == "Riboprofiling" ) {
-    bamStrand = bam1.filter { it[3] =~ /Genome/ }
+    bamStrand = bam3.filter { it[3] =~ /Genome/ }
     .map { bam ->
         [bam[0], 'NONE']
     }
