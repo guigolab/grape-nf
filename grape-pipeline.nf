@@ -463,7 +463,7 @@ process inferExp {
 
 if ( quantificationMode == "Riboprofiling" ) {
     bamStrand = bam1.filter { it[3] =~ /Genome/ }
-    map { bam ->
+    .map { bam ->
         [bam[0], 'NONE']
     }
 }
