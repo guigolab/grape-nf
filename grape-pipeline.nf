@@ -445,6 +445,9 @@ if (!('mapping' in pipelineSteps)) {
 
 
 process inferExp {
+    when:
+    quantificationMode != "Riboprofiling"
+
     input:
     set id, sample, type, view, file(bam), pairedEnd from bam1.filter { it[3] =~ /Genome/ }
     set species, file(annotation) from Annotations4.first()
@@ -456,6 +459,13 @@ process inferExp {
     prefix = "${annotation.name.split('\\.', 2)[0]}"
 
     template(task.command)
+}
+
+if ( quantificationMode == "Riboprofiling" ) {
+    bamStrand = bam1.filter { it[3] =~ /Genome/ }
+    map { bam ->
+        [bam[0], 'NONE']
+    }
 }
 
 allBams = bamStrand.cross(bam2)
