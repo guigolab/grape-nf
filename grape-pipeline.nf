@@ -20,6 +20,7 @@
  */
 
 //Set default values for params
+params.addXs = false
 params.bamSort = null
 params.chunkSize = null
 params.dbFile = 'pipeline.db'
