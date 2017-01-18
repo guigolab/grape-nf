@@ -40,10 +40,10 @@ params.wigRefPrefix = 'chr'
 
 
 // Some configuration variables
-mappingTool = "${config.process.$mapping.tool} ${config.process.$mapping.version}"
-bigwigTool = "${config.process.$bigwig.tool} ${config.process.$bigwig.version}"
-quantificationTool = "${config.process.$quantification.tool} ${config.process.$quantification.version}"
-quantificationMode = "${config.process.$quantification.mode}"
+mappingTool = "${config.process.$mapping.ext.tool} ${config.process.$mapping.ext.version}"
+bigwigTool = "${config.process.$bigwig.ext.tool} ${config.process.$bigwig.ext.version}"
+quantificationTool = "${config.process.$quantification.ext.tool} ${config.process.$quantification.ext.version}"
+quantificationMode = "${config.process.$quantification.ext.mode}"
 useDocker = config.docker.enabled
 errorStrategy = config.process.errorStrategy
 executor = config.process.executor ?: 'local'
@@ -250,7 +250,7 @@ if ('contig' in pipelineSteps || 'bigwig' in pipelineSteps) {
         set species, file { "${genome}.fai" } into FaiIdx
 
         script:
-        template(task.command)
+        template(task.ext.command)
 
     }
 } else {
@@ -275,7 +275,7 @@ if ('mapping' in pipelineSteps) {
             sjOverHang = params.sjOverHang
             readLength = params.readLength
 
-            template(task.command)
+            template(task.ext.command)
 
         }
 
@@ -317,16 +317,16 @@ if ('mapping' in pipelineSteps) {
         if ( params.rgLibrary ) readGroupList << ["LB", "${params.rgLibrary}"]
         if ( params.rgCenterName ) readGroupList << ["CN", "${params.rgCenterName}"]
         if ( params.rgDesc ) readGroupList << ["DS", "${params.rgDesc}"]
-        readGroup = task.readGroup
+        readGroup = task.ext.readGroup
 
         fqs = reads.toString().split(" ")
         pairedEnd = (fqs.size() == 2)
         totalMemory = task.memory.toBytes()
         threadMemory = task.memory.toBytes()/(2*task.cpus)
-        task.sort = params.bamSort ?: task.sort
+        task.ext.sort = params.bamSort ?: task.ext.sort
         halfCpus = task.cpus / 2
 
-        template(task.command)
+        template(task.ext.command)
 
     }
 
@@ -352,7 +352,7 @@ if ('quantification' in pipelineSteps && quantificationMode != "Genome") {
         set species, file('txDir') into QuantificationRef
 
         script:
-        template(task.command)
+        template(task.ext.command)
 
     }
 
@@ -381,7 +381,7 @@ process mergeBam {
     id = id.sort().join(':')
     prefix = "${sample}${pref}_to${view.replace('Alignments','')}"
 
-    template(task.command)
+    template(task.ext.command)
 
 }
 
@@ -410,7 +410,7 @@ process inferExp {
     script:
     prefix = "${annotation.name.split('\\.', 2)[0]}"
 
-    template(task.command)
+    template(task.ext.command)
 }
 
 allBams = bamStrand.cross(bam2)
@@ -440,9 +440,9 @@ process bigwig {
     type = "bigWig"
     prefix = "${sample}"
     wigRefPrefix = params.wigRefPrefix ?: ""
-    views = task.views
+    views = task.ext.views
 
-    template(task.command)
+    template(task.ext.command)
 
 }
 
@@ -469,7 +469,7 @@ process contig {
     view = 'Contigs'
     prefix = "${sample}.contigs"
 
-    template(task.command)
+    template(task.ext.command)
 
 }
 
@@ -486,12 +486,12 @@ process quantification {
     script:
     prefix = "${sample}"
     refPrefix = quantRef.name.replace('.gtf','').capitalize()
-    type = task.fileType
+    type = task.ext.fileType
     viewTx = "Transcript${refPrefix}"
     viewGn = "Gene${refPrefix}"
     memory = task.memory.toMega()
 
-    template(task.command)
+    template(task.ext.command)
 
 }
 
