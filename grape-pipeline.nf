@@ -28,6 +28,7 @@ params.genomeIndex = null
 params.help = false
 params.maxMismatches = 4
 params.maxMultimaps = 10
+params.pairedEnd = false
 params.readLength = 150
 params.rgCenterName = null
 params.rgDesc = null
@@ -76,6 +77,7 @@ if (params.help) {
     log.info '    --max-mismatches THRESHOLD          Set maps with more than THRESHOLD error events to unmapped. Default "4".'
     log.info '    --max-multimaps THRESHOLD           Set multi-maps with more than THRESHOLD mappings to unmapped. Default "10".'
     log.info '    --bam-sort METHOD                   Specify the method used for sorting the genome BAM file.'
+    log.info '    --paired-end                        Treat input data as paired-end.'
     log.info '    --add-xs                            Add the XS field required by Cufflinks/Stringtie to the genome BAM file.'
     log.info ''
     log.info 'SAM read group options:'
@@ -208,7 +210,7 @@ input_files = input_files.map {
 
 // id, sample, type, view, "${id}${prefix}.bam", pairedEnd
 input_bams.map {
-    [it.key, it.value[0][0], it.value[0][3], it.value[0][4], it.value.collect { sample, id, path, type, view -> path }, true].flatten()
+    [it.key, it.value[0][0], it.value[0][3], it.value[0][4], it.value.collect { sample, id, path, type, view -> path }, params.pairedEnd].flatten()
 }
 .subscribe onNext: {
     bam << it
