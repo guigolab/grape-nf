@@ -210,8 +210,10 @@ input_files = input_files.map {
 
 // id, sample, type, view, "${id}${prefix}.bam", pairedEnd
 input_bams.map {
-    [it.key, it.value[0][0], it.value[0][3], it.value[0][4], it.value.collect { sample, id, path, type, view -> path }, params.pairedEnd].flatten()
-}
+    it.value.collect { bam ->
+        [it.key, bam[0], bam[3], bam[4], bam[2], params.pairedEnd]
+    }
+}.flatMap ()
 .subscribe onNext: {
     bam << it
 }, onComplete: {}
