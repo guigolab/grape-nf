@@ -31,7 +31,7 @@ It only needs two easy steps:
 
 TIP: In the case you don't have `wget` installed you can use the `curl` utility instead by entering the following command: `curl -fsSL get.nextflow.io | bash`
 
-NOTE: The pipeline requires Nextflow version [red]#0.14.0# or higher. Make sure you have the right version by running `nextflow info`. In case you have an older version you can upgrade as follows:
+NOTE: The pipeline requires Nextflow version [red]#0.23.1# or higher. Make sure you have the right version by running `nextflow info`. In case you have an older version you can upgrade as follows:
 
 [source,bash]
 ----
