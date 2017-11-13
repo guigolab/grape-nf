@@ -1,5 +1,10 @@
 # GRAPE-nf Changelog
 
+## Version 0.2.1
+
+- Decreasing disk stress and processing time of the contig step by replacing temporary bam files by pipes. The drawback is that it is harder to control the maximum number of used cores.
+- Add options for docker so that created files are no longer owned by root
+
 ## Version 0.2.0
 
 - Added ability to resolve relative paths in the index file against its current location
