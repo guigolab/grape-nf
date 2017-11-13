@@ -4,7 +4,7 @@ samtools view -h -@ ${cpus} ${bam} \
       BEGIN {OFS="\\t"} 
       {if (\$1!~/^@/ && and(\$2,64)>0) {\$2=xor(\$2,0x10)}; print}
     ' \
-  | samtools view -Sbu \
+  | samtools view -Sbu - \
   | bamtools filter -tag NH:1 \
   | tee >(
       genomeCoverageBed -strand + -split -bg -ibam - \
