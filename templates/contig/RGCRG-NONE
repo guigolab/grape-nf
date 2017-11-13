@@ -1,4 +1,6 @@
 #!/bin/bash -eu
-bamtools filter -tag NH:1 -in ${bam} -out tmp_unique.bam
-bamToBed -i tmp_unique.bam | sort -T. -k1,1 -k2,2n | mergeBed > ${prefix}.bed
-rm tmp_unique.bam
+bamtools filter -tag NH:1 -in ${bam} \
+  | bamToBed -i - \
+  | sort -T. -k1,1 -k2,2n \
+  | mergeBed \
+> ${prefix}.bed
