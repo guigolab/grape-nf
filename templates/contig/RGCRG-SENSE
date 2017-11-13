@@ -1,8 +1,11 @@
 #!/bin/bash -eu
-bamtools filter -tag NH:1 -in ${bam} -out tmp_unique.bam
-genomeCoverageBed -strand + -split -bg -ibam tmp_unique.bam > ${prefix}.plusRaw.bedgraph
-genomeCoverageBed -strand - -split -bg -ibam tmp_unique.bam > ${prefix}.minusRaw.bedgraph
-rm tmp_unique.bam
+bamtools filter -tag NH:1 -in ${bam} \
+  | tee >(
+      genomeCoverageBed -strand + -split -bg -ibam - \
+      > ${prefix}.plusRaw.bedgraph
+    ) \
+  | genomeCoverageBed -strand - -split -bg -ibam - \
+> ${prefix}.minusRaw.bedgraph
 
 contigsNew.py --chrFile ${genomeFai} \
               --fileP ${prefix}.plusRaw.bedgraph \
