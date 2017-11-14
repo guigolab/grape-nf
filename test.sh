@@ -24,7 +24,7 @@ NORMAL="\033[0m"
 PROFILE=${PROFILE-"testGemFlux"} 
 CHECKDIR=${CHECKDIR-"checksum"}
 
-RUN_OPTS="-process.errorStrategy=terminate"
+RUN_OPTS=${RUN_OPTS-"-process.errorStrategy=terminate"}
 
 echo -e "==$YELLOW Running pipeline with profile -> $BLUE${PROFILE}$NORMAL"
 [ ! -x nextflow ] && (curl -fsSL get.nextflow.io | bash && chmod +x nextflow) || true
