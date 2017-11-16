@@ -21,6 +21,8 @@ NORMAL="\033[0m"
 
 [[ $1 == "help" ]] && usage
 
+BASE_DIR=$(dirname $0)
+
 PROFILE=${PROFILE-"testGemFlux"} 
 CHECKDIR=${CHECKDIR-"checksum"}
 
@@ -28,9 +30,9 @@ RUN_OPTS=${RUN_OPTS-"-process.errorStrategy=terminate"}
 
 echo -e "==$YELLOW Running pipeline with profile -> $BLUE${PROFILE}$NORMAL"
 [ ! -x nextflow ] && (curl -fsSL get.nextflow.io | bash && chmod +x nextflow) || true
-./nextflow -c test-profiles.config run . -profile $PROFILE ${RUN_OPTS}
+./nextflow -c ${BASE_DIR}/test-profiles.config run ${BASE_DIR} -profile $PROFILE ${RUN_OPTS} "$@"
 echo -e "==$YELLOW Compare results$NORMAL"
 mkcd $CHECKDIR
 cut -f 3 ../pipeline.db | xargs -I{} ln -fs {}
-md5sum -c ../data/$PROFILE.md5
+md5sum -c ../${BASE_DIR}/data/$PROFILE.md5
 echo -e "==$YELLOW DONE$NORMAL"
