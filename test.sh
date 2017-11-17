@@ -29,8 +29,8 @@ CHECKDIR=${CHECKDIR-"checksum"}
 RUN_OPTS=${RUN_OPTS-"-process.errorStrategy=terminate"}
 
 echo -e "==$YELLOW Running pipeline with profile -> $BLUE${PROFILE}$NORMAL"
-[ ! -x nextflow ] && (curl -fsSL get.nextflow.io | bash && chmod +x nextflow) || true
-./nextflow -c ${BASE_DIR}/test-profiles.config run ${BASE_DIR} -profile $PROFILE ${RUN_OPTS} "$@"
+nextflow &>/dev/null || export PATH=$PWD:$PATH && [ ! -x nextflow ] && (curl -fsSL get.nextflow.io | bash && chmod +x nextflow)
+nextflow -c ${BASE_DIR}/test-profiles.config run ${BASE_DIR} -profile $PROFILE ${RUN_OPTS} "$@"
 echo -e "==$YELLOW Compare results$NORMAL"
 mkcd $CHECKDIR
 cut -f 3 ../pipeline.db | xargs -I{} ln -fs {}
