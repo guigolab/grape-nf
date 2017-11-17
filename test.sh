@@ -37,6 +37,9 @@ CHECKDIR=${CHECKDIR-"checksum"}
 
 RUN_OPTS=${RUN_OPTS-"-process.errorStrategy=terminate"}
 
+WITH_DOCKER=${WITH_DOCKER-"1"}
+[[ $WITH_DOCKER ]] && RUN_OPTS=" -with-docker"
+
 echo -e "==$YELLOW Running pipeline with profile -> $BLUE${PROFILE}$NORMAL"
 nxf_setup && nextflow -c ${BASE_DIR}/test-profiles.config run ${BASE_DIR} -profile $PROFILE ${RUN_OPTS} "$@"
 echo -e "==$YELLOW Compare results$NORMAL"
