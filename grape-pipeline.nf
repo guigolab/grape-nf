@@ -205,6 +205,7 @@ input_chunks
     .choice(input_files, input_bams) { it -> if ( it.value[0][3] == 'fastq' ) 0 else if ( it.value[0][3] == 'bam' ) 1}
 
 input_files = input_files.map {
+    it.value.sort{ l -> l[4]}
     [it.key, it.value[0][0], it.value.collect { sample, id, path, type, view -> path }, fastq(it.value[0][2]).qualityScore()]
 }
 

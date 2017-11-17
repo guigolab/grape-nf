@@ -1,2 +1,2 @@
-sample1	test1	data/test1_1.fastq.gz	fastq	FqRd1
 sample1	test1	data/test1_2.fastq.gz	fastq	FqRd2
+sample1	test1	data/test1_1.fastq.gz	fastq	FqRd1
