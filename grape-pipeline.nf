@@ -322,8 +322,9 @@ if ('mapping' in pipelineSteps) {
 
         fqs = reads.toString().split(" ")
         pairedEnd = (fqs.size() == 2)
-        totalMemory = task.memory.toBytes()
-        threadMemory = task.memory.toBytes()/(2*task.cpus)
+        taskMemory = task.memory ?: 1.GB
+        totalMemory = taskMemory.toBytes()
+        threadMemory = taskMemory.toBytes()/(2*task.cpus)
         task.ext.sort = params.bamSort ?: task.ext.sort
         halfCpus = task.cpus / 2
 
@@ -490,7 +491,7 @@ process quantification {
     type = task.ext.fileType
     viewTx = "Transcript${refPrefix}"
     viewGn = "Gene${refPrefix}"
-    memory = task.memory.toMega()
+    memory = {task.memory ?: 1.GB}().toMega()
 
     template(task.ext.command)
 
