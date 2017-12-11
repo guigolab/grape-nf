@@ -1,7 +1,6 @@
 #!/bin/bash -eu
-samtools sort -@ ${cpus} -ni -O bam -T . -o tmp_query_sorted.bam ${bam}
-
-rsem-calculate-expression --bam \
+samtools sort -@ ${cpus} -ni -O sam -T . ${bam} \
+  | rsem-calculate-expression --sam \
                           --estimate-rspd  \
                           --calc-ci \
                           --no-bam-output \
@@ -10,8 +9,8 @@ rsem-calculate-expression --bam \
                           --ci-memory ${memory} \
                           --paired-end \
                           --forward-prob 1 \
-                          tmp_query_sorted.bam \
+                          - \
                           ${quantRef}/RSEMref \
                           ${prefix}
-rm tmp_query_sorted.bam                          
+
 rsem-plot-model ${prefix} ${prefix}.pdf
