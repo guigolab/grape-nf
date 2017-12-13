@@ -8,7 +8,7 @@ samtools sort -@ ${cpus} -ni -O sam -T . ${bam} \
                           -p ${cpus} \
                           --ci-memory ${memory} \
                           --forward-prob 1 \
-                          tmp_query_sorted.bam \
+                          - \
                           ${quantRef}/RSEMref \
                           ${prefix}
 
