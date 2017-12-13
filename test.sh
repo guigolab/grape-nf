@@ -78,7 +78,7 @@ echo -e "==$YELLOW Running pipeline with profile -> $BLUE${PROFILE}$NORMAL"
 nxf_setup && nextflow -c ${BASE_DIR}/test-profiles.config run ${BASE_DIR} -profile $PROFILE ${RUN_OPTS} "$@"
 echo -e "==$YELLOW Compare results$NORMAL"
 mkcd $CHECKDIR
-cut -f 3 ${BASE_DIR}/pipeline.db | xargs -I{} bash -c "get_file $BASE_DIR {}"
+cut -f 3 ../pipeline.db | xargs -I{} bash -c "get_file $BASE_DIR {}"
 md5sum -c ${BASE_DIR}/data/$PROFILE.md5
 echo -e "==$YELLOW Clean up$NORMAL"
 cd .. && rm -rf $CHECKDIR
