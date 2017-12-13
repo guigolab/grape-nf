@@ -30,6 +30,7 @@ params.maxMismatches = 4
 params.maxMultimaps = 10
 params.pairedEnd = false
 params.readLength = 150
+params.readStrand = null
 params.rgCenterName = null
 params.rgDesc = null
 params.rgLibrary = null
@@ -398,21 +399,32 @@ if (!('mapping' in pipelineSteps)) {
     bam << Channel.STOP
 }
 
-(bam1, bam2) = bam.into(2)
+(bam1, bam2, bamInfer) = bam.into(3)
 
+if (params.readStrand) {
+    
+    bam1.filter { it[3] =~ /Genome/ }
+    .map {
+        [it[0], params.readStrand]
+    }.set { bamStrand }
 
-process inferExp {
-    input:
-    set id, sample, type, view, file(bam), pairedEnd from bam1.filter { it[3] =~ /Genome/ }
-    set species, file(annotation) from Annotations4.first()
+} else {
 
-    output:
-    set id, stdout into bamStrand
+    process inferExp {
 
-    script:
-    prefix = "${annotation.name.split('\\.', 2)[0]}"
+        input:
+        set id, sample, type, view, file(bam), pairedEnd from bamInfer.filter { it[3] =~ /Genome/ }
+        set species, file(annotation) from Annotations4.first()
 
-    template(task.ext.command)
+        output:
+        set id, stdout into bamStrand
+
+        script:
+        prefix = "${annotation.name.split('\\.', 2)[0]}"
+
+        template(task.ext.command)
+    }
+
 }
 
 allBams = bamStrand.cross(bam2)
