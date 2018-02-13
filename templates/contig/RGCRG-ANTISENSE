@@ -4,10 +4,10 @@ samtools view -h -@ ${cpus} ${bam} \
   | samtools view -Sbu - \
   | tee >(
       genomeCoverageBed -strand + -split -bg -ibam - \
-      > ${prefix}.contigs.plusRaw.bedgraph
+      > ${prefix}.plusRaw.bedgraph
     ) \
   | genomeCoverageBed -strand - -split -bg -ibam - \
-> ${prefix}.contigs.minusRaw.bedgraph
+> ${prefix}.minusRaw.bedgraph
 
 contigsNew.py --chrFile ${genomeFai} \
               --fileP ${prefix}.plusRaw.bedgraph \
