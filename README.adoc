@@ -288,3 +288,17 @@ sample1   test1   /path/to/results/sample1.genes.gff      gtf      GeneAnnotatio
 sample1   test1   /path/to/results/test1_m4_n10.bam       bam      GenomeAlignments       Paired-End   MATE2_SENSE
 sample1   test1   /path/to/results/sample1.minusRaw.bw    bigWig   MinusRawSignal         Paired-End   MATE2_SENSE
 ----
+
+== Software versions
+
+The pipeline can be run without a container engine by installing the required software on the local system.
+
+The required tool version for the `standard` profile that have been tested so far are the following:
+
+- https://github.com/alexdobin/STAR/releases/tag/STAR_2.4.0j[STAR v2.4.0j]
+- https://github.com/emi80/samtools/releases/tag/1.2-rglab-CRG[samtools v1.2-RGlab@CRG]
+- https://github.com/deweylab/RSEM/releases/tag/v1.2.21[RSEM v1.2.21]
+- http://rseqc.sourceforge.net/[RSeQC v2.6.4]
+- https://github.com/arq5x/bedtools2/releases/tag/v2.19.1[bedtools v2.19.1]
+- https://github.com/pezmaster31/bamtools/releases/tag/v2.3.0[bamtools v2.3.0]
+- https://github.com/ucscGenomeBrowser/kent/releases/tag/v308_base[KentUtils v308]
