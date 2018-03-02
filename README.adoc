@@ -10,9 +10,9 @@
 :grape-repo: https://github.com/guigolab/grape-nf.git
 :docker-web: https://www.docker.com/
 :docker-hub: https://hub.docker.com/r/grape/
-:circle-shield: https://circleci.com/gh/guigolab/grape-nf.svg?style=shield
+:travis-badge: https://travis-ci.org/guigolab/grape-nf.svg?branch=master
 
-image:{circle-shield}["Circle CI", link="https://circleci.com/gh/guigolab/grape-nf"]
+image:{travis-badge}["Build Status", link="https://travis-ci.org/guigolab/grape-nf"]
 
 Grape provides an extensive pipeline for RNA-Seq analyses. It allows the creation of an automated and integrated workflow to manage and analyse RNA-Seq data.
 
