@@ -1,5 +1,9 @@
 #!/bin/bash -eu
-genomeCoverageBed -strand + -split -bg -ibam ${bam} > ${prefix}.plusRaw.bedgraph
-genomeCoverageBed -strand - -split -bg -ibam ${bam} > ${prefix}.minusRaw.bedgraph
+genomeCoverageBed -strand + -split -bg -ibam ${bam} \
+  | sort -k1,1 -k2,2n \
+> ${prefix}.plusRaw.bedgraph
+genomeCoverageBed -strand - -split -bg -ibam ${bam} \
+  | sort -k1,1 -k2,2n \
+> ${prefix}.minusRaw.bedgraph
 bedGraphToBigWig ${prefix}.plusRaw.bedgraph ${genomeFai} ${prefix}.plusRaw.bw
 bedGraphToBigWig ${prefix}.minusRaw.bedgraph ${genomeFai} ${prefix}.minusRaw.bw

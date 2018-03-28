@@ -13,6 +13,18 @@ if [[ ${wigRefPrefix} != - ]]; then
     sed  -ni '/^${wigRefPrefix}/p' chrSizes.txt
 fi
 
+#make sure the bedGraph files are sorted before converting to bigWig
+for bedGraph in Signal/Signal.UniqueMultiple.str1.out.bg \
+                Signal/Signal.UniqueMultiple.str2.out.bg \
+                Signal/Signal.Unique.str1.out.bg \
+                Signal/Signal.Unique.str2.out.bg; do
+    if [[ ! $( sort -C -k1,1 -k2,2n $bedGraph ) ]]; then
+        sort -k1,1 -k2,2n $bedGraph > $bedGraph.sorted && \
+        mv $bedGraph.sorted $bedGraph
+    fi
+done
+
+
 bedGraphToBigWig Signal/Signal.UniqueMultiple.str1.out.bg \
                  chrSizes.txt \
                  ${prefix}.UniqueMultiple.plusRaw.bw 

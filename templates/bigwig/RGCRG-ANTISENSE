@@ -3,8 +3,12 @@ samtools view -h -@ ${cpus} ${bam} | \
 awk 'BEGIN {OFS="\\t"} {if (\$1!~/^@/) {\$2=xor(\$2,0x10)}; print}' | \
 samtools view -@ ${cpus} -Sb - > tmp.bam
 
-genomeCoverageBed -strand + -split -bg -ibam tmp.bam > ${prefix}.plusRaw.bedgraph
-genomeCoverageBed -strand - -split -bg -ibam tmp.bam > ${prefix}.minusRaw.bedgraph
+genomeCoverageBed -strand + -split -bg -ibam tmp.bam \
+  | sort -k1,1 -k2,2n \
+> ${prefix}.plusRaw.bedgraph
+genomeCoverageBed -strand - -split -bg -ibam tmp.bam \
+  | sort -k1,1 -k2,2n \
+> ${prefix}.minusRaw.bedgraph
 rm tmp.bam
 bedGraphToBigWig ${prefix}.plusRaw.bedgraph ${genomeFai} ${prefix}.plusRaw.bw
 bedGraphToBigWig ${prefix}.minusRaw.bedgraph ${genomeFai} ${prefix}.minusRaw.bw

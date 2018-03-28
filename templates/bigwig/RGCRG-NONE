@@ -1,3 +1,5 @@
 #!/bin/bash -eu
-genomeCoverageBed -split -bg -ibam ${bam} > ${prefix}.raw.bedgraph
+genomeCoverageBed -split -bg -ibam ${bam} \
+  | sort -k1,1 -k2,2n \
+> ${prefix}.raw.bedgraph
 bedGraphToBigWig ${prefix}.raw.bedgraph ${genomeFai} ${prefix}.raw.bw
