@@ -10,9 +10,9 @@ jdk:
   - oraclejdk8
 
 env:
-  - PROFILE=testGemFlux
-  - PROFILE=testStarRsem
-  - PROFILE=testStarFlux
+  - PROFILE=gemflux
+  - PROFILE=starrsem
+  - PROFILE=starflux
 
 script:
   - ./test.sh

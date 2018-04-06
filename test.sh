@@ -66,7 +66,7 @@ NORMAL="\033[0m"
 
 BASE_DIR=$(canonicalize_path $(dirname $0))
 
-PROFILE=${PROFILE-"testGemFlux"} 
+PROFILE=${PROFILE-"starrsem"} 
 CHECKDIR=${CHECKDIR-"checksum"}
 
 RUN_OPTS=${RUN_OPTS-"-process.errorStrategy=terminate"}
