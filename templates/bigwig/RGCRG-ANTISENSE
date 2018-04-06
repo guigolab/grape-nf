@@ -1,4 +1,7 @@
-#!/bin/bash -eu
+#!/bin/bash
+set -e
+set -u
+
 samtools view -h -@ ${cpus} ${bam} \
   | awk 'BEGIN {OFS="\\t"} {if (\$1!~/^@/) {\$2=xor(\$2,0x10)}; print}' \
   | samtools view -Sbu - \
