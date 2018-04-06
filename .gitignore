@@ -3,5 +3,6 @@
 .nextflow*
 *.log
 *.db
+trace.txt*
 work/
 tmp/
