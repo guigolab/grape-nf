@@ -345,7 +345,7 @@ if ('mapping' in pipelineSteps) {
 
 if ('quantification' in pipelineSteps && quantificationMode != "Genome") {
 
-    process t_index {
+    process txIndex {
 
         input:
         set species, file(genome) from Genomes3
