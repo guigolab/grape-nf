@@ -41,15 +41,14 @@ params.wigRefPrefix = 'chr'
 
 
 // Some configuration variables
-mappingTool = "${config.process.$mapping.ext.tool} ${config.process.$mapping.ext.version}"
-bigwigTool = "${config.process.$bigwig.ext.tool} ${config.process.$bigwig.ext.version}"
-quantificationTool = "${config.process.$quantification.ext.tool} ${config.process.$quantification.ext.version}"
-quantificationMode = "${config.process.$quantification.ext.mode}"
-useDocker = config.docker.enabled
+mappingTool = "${config.process.'withName:mapping'.ext.tool} ${config.process.'withName:mapping'.ext.version}"
+bigwigTool = "${config.process.'withName:bigwig'.ext.tool} ${config.process.'withName:bigwig'.ext.version}"
+quantificationTool = "${config.process.'withName:quantification'.ext.tool} ${config.process.'withName:quantification'.ext.version}"
+quantificationMode = "${config.process.'withName:quantification'.ext.mode}"
+useContainers = config.docker?.enabled ? 'docker' : (config.singularity?.enabled ? 'singularity' : 'no')
 errorStrategy = config.process.errorStrategy
 executor = config.process.executor ?: 'local'
 queue = config.process.queue
-
 
 // Clear pipeline.db file
 pdb = file(params.dbFile)
@@ -146,7 +145,7 @@ log.info "---------------------"
 log.info "Engine                          : ${executor}"
 if (queue && executor != 'local')
     log.info "Queue(s)                        : ${queue}"
-log.info "Use Docker                      : ${useDocker}"
+log.info "Use containers                  : ${useContainers}"
 log.info "Error strategy                  : ${errorStrategy}"
 log.info ""
 
