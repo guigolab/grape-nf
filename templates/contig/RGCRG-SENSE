@@ -2,7 +2,7 @@
 set -e
 set -u
 
-bamtools filter -tag NH:1 -in ${bam} \
+sambamba view  -f bam -F '[NH] == 1' ${bam} \
   | tee >(
       genomeCoverageBed -strand + -split -bg -ibam - \
       > ${prefix}.plusRaw.bedgraph

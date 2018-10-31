@@ -23,4 +23,4 @@ STAR --runThreadN ${cpus} \
      --limitBAMsortRAM ${totalMemory}
 mv Aligned.sortedByCoord.out.bam ${prefix}_toGenome.bam
 mv Aligned.toTranscriptome.out.bam ${prefix}_toTranscriptome.bam
-samtools index ${prefix}_toGenome.bam
+sambamba index ${prefix}_toGenome.bam

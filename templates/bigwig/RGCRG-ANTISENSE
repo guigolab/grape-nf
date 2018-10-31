@@ -2,9 +2,9 @@
 set -e
 set -u
 
-samtools view -h -@ ${cpus} ${bam} \
+sambamba view -h -t ${cpus} ${bam} \
   | awk 'BEGIN {OFS="\\t"} {if (\$1!~/^@/) {\$2=xor(\$2,0x10)}; print}' \
-  | samtools view -Sbu - \
+  | sambamba view -S -f bam -l 0 /dev/stdin \
   | tee >(
       genomeCoverageBed -strand + -split -bg -ibam - \
       > ${prefix}.plusRaw.bedgraph

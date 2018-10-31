@@ -23,4 +23,4 @@ STAR --runThreadN ${cpus} \
      --outSAMstrandField intronMotif \
      --outFilterIntronMotifs RemoveNoncanonical
 mv Aligned.sortedByCoord.out.bam ${prefix}_toGenome.bam
-samtools index ${prefix}_toGenome.bam
+sambamba index ${prefix}_toGenome.bam
