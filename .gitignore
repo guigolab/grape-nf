@@ -8,3 +8,4 @@ work/
 tmp/
 nextflow
 pipeline.db
+checksum/
