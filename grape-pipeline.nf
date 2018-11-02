@@ -26,6 +26,8 @@ params.chunkSize = null
 params.dbFile = 'pipeline.db'
 params.genomeIndex = null
 params.help = false
+params.markDuplicates = false
+params.removeDuplicates = false
 params.maxMismatches = 4
 params.maxMultimaps = 10
 params.pairedEnd = false
@@ -426,9 +428,31 @@ if (params.readStrand) {
 
 }
 
-allBams = bamStrand.cross(bam2)
+bamStrand.cross(bam2)
 .map {
     bam -> bam[1].flatten() + [bam[0][1]]
+}.tap{allBamsMarkDup}
+.filter { it[3] =~ /${quantificationMode}/ }
+.set{ allBamsTx }
+
+if ( params.markDuplicates || params.removeDuplicates ) {
+    process markdup {
+
+        input:
+        set id, sample, type, view, file(bam), pairedEnd, readStrand from allBamsMarkDup.filter { it[3] =~ /Genome/ }
+
+        output:
+        set id, sample, type, view, file("${prefix}.bam"), pairedEnd, readStrand into allBamsGenome
+
+        script:
+        prefix = "${bam.baseName}.markdup"
+
+        template(task.ext.command)
+    }
+
+    allBamsGenome.mix(allBamsTx).set{allBams}
+} else {
+    allBams = allBamsMarkDup
 }
 
 (allBams1, allBams2, out) = allBams.into(3)

@@ -1,0 +1,9 @@
+#!/bin/bash
+set -e
+set -u
+
+sambamba markdup -t ${cpus} \
+                --remove-duplicates \
+                 ${bam} \
+                 ${prefix}.bam && \
+sambamba index ${prefix}.bam
