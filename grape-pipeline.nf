@@ -237,8 +237,20 @@ Channel.from(genomes)
         a -> [[a[0],a[1]], [a[0],a[2]]]
     }
 
-(Genomes1, Genomes2, Genomes3) = Genomes.into(3)
-(Annotations1, Annotations2, Annotations3, Annotations4, Annotations5, Annotations6, Annotations7) = Annotations.into(7)
+Genomes.into { 
+    Genomes1;
+    Genomes2; 
+    Genomes3;
+}
+Annotations.into { 
+    Annotations1;
+    Annotations2;
+    Annotations3;
+    Annotations4;
+    Annotations5;
+    Annotations6;
+    Annotations7;
+}
 
 pref = "_m${params.maxMismatches}_n${params.maxMultimaps}"
 
@@ -260,7 +272,10 @@ if ('contig' in pipelineSteps || 'bigwig' in pipelineSteps) {
     FaiIdx = Channel.empty()
 }
 
-(FaiIdx1, FaiIdx2) = FaiIdx.into(2)
+FaiIdx.into { 
+    FaiIdx1;
+    FaiIdx2; 
+}
 
 if ('mapping' in pipelineSteps) {
 
@@ -400,7 +415,11 @@ if (!('mapping' in pipelineSteps)) {
     bam << Channel.STOP
 }
 
-(bam1, bam2, bamInfer) = bam.into(3)
+bam.into { 
+    bam1;
+    bam2;
+    bamInfer;
+}
 
 if (params.readStrand) {
     
@@ -455,10 +474,22 @@ if ( params.markDuplicates || params.removeDuplicates ) {
     allBams = allBamsMarkDup
 }
 
-(allBams1, allBams2, out) = allBams.into(3)
+allBams.into { 
+    allBams1;
+    allBams2;
+    out;
+}
 
-(bigwigBams, contigBams) = allBams1.filter { it[3] =~ /Genome/ }.into(3)
-quantificationBams = allBams2.filter { it[3] =~ /${quantificationMode}/ }
+allBams1
+    .filter { it[3] =~ /Genome/ }
+    .into{ 
+        bigwigBams;
+        contigBams;
+    }
+
+allBams2
+    .filter { it[3] =~ /${quantificationMode}/ }
+    .set { quantificationBams }
 
 if (!('bigwig' in pipelineSteps)) bigwigBams = Channel.empty()
 if (!('contig' in pipelineSteps)) contigBams = Channel.empty()
