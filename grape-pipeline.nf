@@ -250,6 +250,7 @@ Annotations.into {
     Annotations5;
     Annotations6;
     Annotations7;
+    Annotations8;
 }
 
 pref = "_m${params.maxMismatches}_n${params.maxMultimaps}"
@@ -485,6 +486,7 @@ allBams1
     .into{ 
         bigwigBams;
         contigBams;
+        statsBams;
     }
 
 allBams2
@@ -494,6 +496,25 @@ allBams2
 if (!('bigwig' in pipelineSteps)) bigwigBams = Channel.empty()
 if (!('contig' in pipelineSteps)) contigBams = Channel.empty()
 if (!('quantification' in pipelineSteps)) quantificationBams = Channel.empty()
+
+process bamStats {
+
+    input:
+    set id, sample, type, view, file(bam), pairedEnd, readStrand from statsBams
+    set species, file(annotation) from Annotations8.first()
+
+    output:
+    set id, sample, type, views, file('*.json'), pairedEnd, readStrand into bamStats
+
+    script:
+    type = "json"
+    prefix = "${sample}"
+    views = "BamStats"
+    maxBuf = task.ext.maxBuf
+    logLevel = task.ext.logLevel
+
+    template(task.ext.command)
+}
 
 process bigwig {
 
@@ -563,7 +584,7 @@ process quantification {
 
 }
 
-out.mix(bigwig, contig, isoforms, genes)
+out.mix(bamStats, bigwig, contig, isoforms, genes)
 .collectFile(name: pdb.name, storeDir: pdb.parent, newLine: true) { id, sample, type, view, file, pairedEnd, readStrand ->
     [sample, id, file, type, view, pairedEnd ? 'Paired-End' : 'Single-End', readStrand].join("\t")
 }
