@@ -175,9 +175,10 @@ The pipeline can be run without a container engine by installing the required so
 The required tool version for the `standard` profile that have been tested so far are the following:
 
 - [STAR v2.4.0j](https://github.com/alexdobin/STAR/releases/tag/STAR_2.4.0j)
-- [samtools v1.2-RGlab@CRG](https://github.com/emi80/samtools/releases/tag/1.2-rglab-CRG)
+- [samtools v1.2](https://github.com/samtools/samtools/releases/tag/1.2)
+- [sambamba v0.6.8](https://github.com/biod/sambamba/releases/tag/v0.6.8)
 - [RSEM v1.2.21](https://github.com/deweylab/RSEM/releases/tag/v1.2.21)
 - [RSeQC v2.6.4](http://rseqc.sourceforge.net/)
 - [bedtools v2.19.1](https://github.com/arq5x/bedtools2/releases/tag/v2.19.1)
-- [bamtools v2.3.0](https://github.com/pezmaster31/bamtools/releases/tag/v2.3.0)
 - [KentUtils v308](https://github.com/ucscGenomeBrowser/kent/releases/tag/v308_base)
+- [bamstats v0.3.0](https://github.com/guigolab/bamstats/releases/tag/v0.3.0)
