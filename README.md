@@ -24,11 +24,10 @@ It uses [Nextflow](http://www.nextflow.io) as the execution backend. Please chec
 2. Make a test run:
 
     ```
-    nextflow run grape-nf -profile test
+    nextflow run guigolab/grape-nf -with-docker
     ```
 
-**NOTE**: the very first time you execute it, it will take a few minutes to download the pipeline 
-from this GitHub repository and the associated Docker images needed to execute the pipeline.
+**NOTE**: the very first time you execute it, it will take a few minutes to download the pipeline from this GitHub repository and the associated Docker images needed to execute the pipeline.
 
 ## Pipeline help
 
