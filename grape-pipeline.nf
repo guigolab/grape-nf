@@ -161,13 +161,17 @@ index = params.index ? file(params.index) : System.in
 input_files = Channel.create()
 input_chunks = Channel.create()
 
+def getData = false
+
 data = ['samples': [], 'ids': []]
 input = Channel
     .from(index.readLines())
     .filter { it }  // get only lines not empty
     .map { line ->
         def (sampleId, runId, fileName, format, readId) = line.split()
-        return [sampleId, runId, resolveFile(fileName, index), format, readId]
+        if ( !getData && fileName.split(',').size() > 1 )
+            getData = true
+        return [sampleId, runId, fileName, format, readId]
     }
 
 if (params.chunkSize) {
@@ -199,7 +203,37 @@ input.subscribe onNext: {
 input_bams = Channel.create()
 bam = Channel.create()
 
-input_chunks
+if ( getData ) {
+    process fetch {
+        tag { "${outPath.name}" }
+        storeDir { outPath.parent }
+
+        input:
+        set sample, id, path, type, view from input_chunks
+
+        output:
+        set sample, id, file("${outPath.name}"), type, view into input_chunks_get
+
+        script:
+        def paths = path.split(',')
+        outPath = resolveFile(paths[-1], index)
+        urls = paths.size() > 1 ? paths[0..-2].join(' ') : ''
+        """
+        for url in $urls; do
+            if wget \${url}; then
+                exit 0
+            fi
+        done
+        """
+    }
+} else {
+    input_chunks.map { sample, id, path, type, view ->
+        [ sample, id, resolveFile(path,index), type, view ]
+    }.set { input_chunks_get }
+}
+
+
+input_chunks_get
     .groupBy {
         sample, id, path, type, view -> id
     }
