@@ -1,0 +1,8 @@
+#!/bin/bash
+set -e
+set -u
+
+mkdir txDir
+rsem-prepare-reference --gtf <(zcat ${annotation}) \
+                       ${genome} \
+                       txDir/RSEMref

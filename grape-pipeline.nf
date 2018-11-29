@@ -41,8 +41,7 @@ params.sjOverHang = 100
 params.steps = 'mapping,bigwig,contig,quantification'
 params.wigRefPrefix = 'chr'
 
-
-// Some configuration variables
+// Configuration variables
 mappingTool = "${config.process.'withName:mapping'.ext.tool} ${config.process.'withName:mapping'.ext.version}"
 bigwigTool = "${config.process.'withName:bigwig'.ext.tool} ${config.process.'withName:bigwig'.ext.version}"
 quantificationTool = "${config.process.'withName:quantification'.ext.tool} ${config.process.'withName:quantification'.ext.version}"
@@ -51,6 +50,9 @@ useContainers = config.docker?.enabled ? 'docker' : (config.singularity?.enabled
 errorStrategy = config.process.errorStrategy
 executor = config.process.executor ?: 'local'
 queue = config.process.queue
+
+// Auxiliary variables
+def comprExts = ['gz', 'bz2', 'zip']
 
 // Clear pipeline.db file
 pdb = file(params.dbFile)
@@ -297,9 +299,10 @@ if ('contig' in pipelineSteps || 'bigwig' in pipelineSteps) {
         set species, file(annotation) from Annotations1
 
         output:
-        set species, file { "${genome}.fai" } into FaiIdx
+        set species, file { "${genome.name.replace('.gz','')}.fai" } into FaiIdx
 
         script:
+        compressed = genome.extension in comprExts ? "-${genome.extension}" : ''
         template(task.ext.command)
 
     }
@@ -327,6 +330,8 @@ if ('mapping' in pipelineSteps) {
             script:
             sjOverHang = params.sjOverHang
             readLength = params.readLength
+            genomeCompressed = genome.extension in comprExts ? "-genome-${genome.extension}" : ''
+            annoCompressed = annotation.extension in comprExts ? "-anno-${annotation.extension}" : ''
 
             template(task.ext.command)
 
@@ -406,6 +411,8 @@ if ('quantification' in pipelineSteps && quantificationMode != "Genome") {
         set species, file('txDir') into QuantificationRef
 
         script:
+        genomeCompressed = genome.extension in comprExts ? "-genome-${genome.extension}" : ''
+        annoCompressed = annotation.extension in comprExts ? "-anno-${annotation.extension}" : ''
         template(task.ext.command)
 
     }
