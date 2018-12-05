@@ -42,7 +42,7 @@ nxf_setup() {
 }
 
 normalize_bam() {
-	docker run --rm -v $1:$1 -w $PWD grape/contig:rgcrg-0.1 bash -c "samtools view -h $2 | grep -v '@CO\|@PG' | samtools view -Sb - > $(basename $2) 2>/dev/null"
+	docker run --rm -v $1:$1 -w $PWD grapenf/samtools:1.3.1 bash -c "samtools view -h $2 | grep -v '@CO\|@PG' | samtools view -Sb - > $(basename $2) 2>/dev/null"
 }
 
 get_file() {
