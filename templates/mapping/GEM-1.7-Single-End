@@ -27,5 +27,6 @@ pigz -p ${cpus} -dc ${prefix}.filtered.map.gz \
 | samtools sort -@ ${cpus} \
                 -m ${threadMemory} \
                 - \
-                ${prefix}
+                -T . \
+                -o ${prefix}.bam
 samtools index ${prefix}.bam
