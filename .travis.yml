@@ -10,8 +10,11 @@ jdk:
   - oraclejdk8
 
 env:
-  - PROFILE=ihec
-  - PROFILE=ihecrmdup
+  - PROFILE=gemflux
+  - PROFILE=starrsem
+  - PROFILE=starflux
+  - PROFILE=markdup
+  - PROFILE=rmdup
 
 script:
   - ./test.sh
