@@ -162,8 +162,7 @@ if (params.genomeIndex) {
 index = params.index ? file(params.index) : System.in
 input_files = Channel.create()
 input_chunks = Channel.create()
-
-def getData = false
+input_chunks_toFetch = Channel.create()
 
 data = ['samples': [], 'ids': []]
 input = Channel
@@ -171,9 +170,10 @@ input = Channel
     .filter { it }  // get only lines not empty
     .map { line ->
         def (sampleId, runId, fileName, format, readId) = line.split()
-        if ( !getData && fileName.split(',').size() > 1 )
-            getData = true
-        return [sampleId, runId, fileName, format, readId]
+        def fetch =  false
+        if ( fileName.split(',').size() > 1 )
+            fetch = true
+        return [sampleId, runId, fileName, format, readId, fetch]
     }
 
 if (params.chunkSize) {
@@ -181,13 +181,16 @@ if (params.chunkSize) {
 }
 
 input.subscribe onNext: {
-        sample, id, path, type, view ->
+        sample, id, path, type, view, fetch ->
         items = "sequencing runs"
         if( params.chunkSize ) {
             items = "chunks         "
             id = id+path.baseName.find(/\..+$/)
         }
-        input_chunks << tuple(sample, id, path, type, view)
+        if ( fetch )
+            input_chunks_fetch << tuple(sample, id, path, type, view)
+        else
+            input_chunks << tuple(sample, id, resolveFile(path, index), type, view)
         data['samples'] << sample
         data['ids'] << id },
     onComplete: {
@@ -200,42 +203,36 @@ input.subscribe onNext: {
         log.info "Merging                         : ${ ids != samples ? 'by sample' : 'none' }"
         log.info ""
         input_chunks << Channel.STOP
+        input_chunks_fetch << Channel.STOP
     }
 
 input_bams = Channel.create()
 bam = Channel.create()
 
-if ( getData ) {
-    process fetch {
-        tag { "${outPath.name}" }
-        storeDir { outPath.parent }
+process fetch {
+    tag { "${outPath.name}" }
+    storeDir { outPath.parent }
 
-        input:
-        set sample, id, path, type, view from input_chunks
+    input:
+    set sample, id, path, type, view from input_chunks_toFetch
 
-        output:
-        set sample, id, file("${outPath.name}"), type, view into input_chunks_get
+    output:
+    set sample, id, file("${outPath.name}"), type, view into input_chunks_fetched
 
-        script:
-        def paths = path.split(',')
-        outPath = resolveFile(paths[-1], index)
-        urls = paths.size() > 1 ? paths[0..-2].join(' ') : ''
-        """
-        for url in $urls; do
-            if wget \${url}; then
-                exit 0
-            fi
-        done
-        """
-    }
-} else {
-    input_chunks.map { sample, id, path, type, view ->
-        [ sample, id, resolveFile(path,index), type, view ]
-    }.set { input_chunks_get }
+    script:
+    def paths = path.split(',')
+    outPath = resolveFile(paths[-1], index)
+    urls = paths.size() > 1 ? paths[0..-2].join(' ') : ''
+    """
+    for url in $urls; do
+        if wget \${url}; then
+            exit 0
+        fi
+    done
+    """
 }
 
-
-input_chunks_get
+input_chunks.mix(input_chunks_fetched)
     .groupBy {
         sample, id, path, type, view -> id
     }
