@@ -188,7 +188,7 @@ input.subscribe onNext: {
             id = id+path.baseName.find(/\..+$/)
         }
         if ( fetch )
-            input_chunks_fetch << tuple(sample, id, path, type, view)
+            input_chunks_toFetch << tuple(sample, id, path, type, view)
         else
             input_chunks << tuple(sample, id, resolveFile(path, index), type, view)
         data['samples'] << sample
@@ -203,7 +203,7 @@ input.subscribe onNext: {
         log.info "Merging                         : ${ ids != samples ? 'by sample' : 'none' }"
         log.info ""
         input_chunks << Channel.STOP
-        input_chunks_fetch << Channel.STOP
+        input_chunks_toFetch << Channel.STOP
     }
 
 input_bams = Channel.create()
