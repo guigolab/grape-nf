@@ -39,6 +39,7 @@ params.sjOverHang = 100
 params.steps = 'mapping,bigwig,contig,quantification'
 params.wigRefPrefix = 'chr'
 
+require 'modules.nf', params:params
 
 // Some configuration variables
 mappingTool = "${config.process.'withName:mapping'.ext.tool} ${config.process.'withName:mapping'.ext.version}"
@@ -194,352 +195,145 @@ input.subscribe onNext: {
         input_chunks << Channel.STOP
     }
 
-input_bams = Channel.create()
-bam = Channel.create()
 
-input_chunks
-    .groupBy {
-        sample, id, path, type, view -> id
-    }
-    .flatMap ()
-    .choice(input_files, input_bams) { it -> if ( it.value[0][3] == 'fastq' ) 0 else if ( it.value[0][3] == 'bam' ) 1}
+workflow {
 
-input_files = input_files.map {
-    it.value.sort{ l -> l[4]}
-    [it.key, it.value[0][0], it.value.collect { sample, id, path, type, view -> path }, fastq(it.value[0][2]).qualityScore()]
-}
+    flat_chunks = input_chunks.groupTuple(by:[0,1,3], sort:true)
+    input_files = flat_chunks.filter { it[3] == 'fastq' }.map { sample, id, reads, type, view -> tuple( sample, id, reads, fastq(reads[0]).qualityScore() ) }
+    input_bams = flat_chunks.filter { it[3] == 'bam' }
 
-// id, sample, type, view, "${id}${prefix}.bam", pairedEnd
-input_bams.map {
-    it.value.collect { bam ->
-        [it.key, bam[0], bam[3], bam[4], bam[2], params.pairedEnd]
-    }
-}.flatMap ()
-.subscribe onNext: {
-    bam << it
-}, onComplete: {}
+    input_bams.map {
+        it.value.collect { bam ->
+            [it.key, bam[0], bam[3], bam[4], bam[2], params.pairedEnd]
+        }
+    }.flatMap ()
+    .subscribe onNext: {
+        bam << it
+    }, onComplete: {}
 
-def msg = "Output files db"
-log.info "=" * msg.size()
-log.info msg + " -> ${pdb}"
-log.info "=" * msg.size()
-log.info ""
+    def msg = "Output files db"
+    log.info "=" * msg.size()
+    log.info msg + " -> ${pdb}"
+    log.info "=" * msg.size()
+    log.info ""
 
-Genomes = Channel.create()
-Annotations = Channel.create()
-Channel.from(genomes)
-    .merge(Channel.from(annos)) {
-        g, a -> [g.name.split("\\.", 2)[0], g, a]
-    }
-    .separate(Genomes, Annotations) {
-        a -> [[a[0],a[1]], [a[0],a[2]]]
-    }
 
-(Genomes1, Genomes2, Genomes3) = Genomes.into(3)
-(Annotations1, Annotations2, Annotations3, Annotations4, Annotations5, Annotations6, Annotations7) = Annotations.into(7)
+    Genomes = Channel.create()
+    Annotations = Channel.create()
+    Channel.from(genomes)
+        .merge(Channel.from(annos)) {
+            g, a -> [g.name.split("\\.", 2)[0], g, a]
+        }
+        .separate(Genomes, Annotations) {
+            a -> [[a[0],a[1]], [a[0],a[2]]]
+        }
 
-pref = "_m${params.maxMismatches}_n${params.maxMultimaps}"
+    FaiIdx = (  ('contig' in pipelineSteps || 'bigwig' in pipelineSteps) 
+                ? fastaIndex( Genomes, Annotations ) 
+                : Channel.empty() )
 
-if ('contig' in pipelineSteps || 'bigwig' in pipelineSteps) {
-    process fastaIndex {
+    if ('mapping' in pipelineSteps) {
 
-        input:
-        set species, file(genome) from Genomes1
-        set species, file(annotation) from Annotations1
+        if (! params.genomeIndex) {
+            GenomeIdx = index( Genomes, Annotations ) 
 
-        output:
-        set species, file { "${genome}.fai" } into FaiIdx
+        } else {
+            GenomeIdx = Genomes.merge(Channel.from(genomeidxs)) { d, i -> 
+                [d[0], i]
+            }
+        }
 
-        script:
-        template(task.ext.command)
+        mapping( input_files, Annotations.first(), GenomeIdx.first() )
 
-    }
-} else {
-    FaiIdx = Channel.empty()
-}
-
-(FaiIdx1, FaiIdx2) = FaiIdx.into(2)
-
-if ('mapping' in pipelineSteps) {
-
-    if (! params.genomeIndex) {
-        process index {
-
-            input:
-            set species, file(genome) from Genomes2
-            set species, file(annotation) from Annotations7
-
-            output:
-            set species, file("genomeDir") into GenomeIdx
-
-            script:
-            sjOverHang = params.sjOverHang
-            readLength = params.readLength
-
-            template(task.ext.command)
-
+        bam = mapping.output.flatMap  { id, sample, type, view, path, pairedEnd ->
+            [path].flatten().collect { f ->
+                [id, sample, type, (f.name =~ /toTranscriptome/ ? 'Transcriptome' : 'Genome') + view, f, pairedEnd]
+            }
         }
 
     } else {
-        GenomeIdx = Channel.create()
-        GenomeIdx = Genomes2.merge(Channel.from(genomeidxs)) { d, i -> 
-            [d[0], i]
+        GenomeIdx = Channel.empty()
+    }
+
+    if ('quantification' in pipelineSteps && quantificationMode != "Genome") {
+
+        QuantificationRef = txIndex(Genomes, Annotations)
+
+    } else {
+        QuantificationRef = Annotations
+    }
+
+    // Merge or rename bam
+
+    groupped_bam = bam.groupTuple(by: [1, 2, 3, 5]) // group by sample, type, view, pairedEnd (to get unique values for keys)
+    singleBam = groupped_bam.filter { it[4].size() <= 1 } 
+    groupedBam = groupped_bam.filter { it[4].size() > 1 } 
+
+    mergeBam( groupedBam )
+
+    bam = singleBam
+        .mix(mergeBam.output)
+        .map {
+            it.flatten()
         }
+
+    if (!('mapping' in pipelineSteps)) {
+        bam << Channel.STOP
     }
 
-    (GenomeIdx1, GenomeIdx2) = GenomeIdx.into(2)
+    if (params.readStrand) {
+        
+        bam.filter { it[3] =~ /Genome/ }
+            .map {
+                [it[0], params.readStrand]
+            }.set { bamStrand }
 
-    process mapping {
+    } else {
 
-        input:
-        set id, sample, file(reads), qualityOffset from input_files
-        set species, file(annotation) from Annotations3.first()
-        set species, file(genomeDir) from GenomeIdx2.first()
-
-        output:
-        set id, sample, type, view, file("*.bam"), pairedEnd into bam
-
-        script:
-        type = 'bam'
-        view = 'Alignments'
-        prefix = "${id}${pref}"
-        maxMultimaps = params.maxMultimaps
-        maxMismatches = params.maxMismatches
-
-        // prepare BAM @RG tag information
-        // def date = new Date().format("yyyy-MM-dd'T'HH:mmZ", TimeZone.getTimeZone("UTC"))
-        date = ""
-        readGroupList = []
-        readGroupList << ["ID", "${id}"]
-        readGroupList << ["PU", "${id}"]
-        readGroupList << ["SM", "${sample}"]
-        if ( date ) readGroupList << ["DT", "${date}"]
-        if ( params.rgPlatform ) readGroupList << ["PL", "${params.rgPlatform}"]
-        if ( params.rgLibrary ) readGroupList << ["LB", "${params.rgLibrary}"]
-        if ( params.rgCenterName ) readGroupList << ["CN", "${params.rgCenterName}"]
-        if ( params.rgDesc ) readGroupList << ["DS", "${params.rgDesc}"]
-        readGroup = task.ext.readGroup
-
-        fqs = reads.toString().split(" ")
-        pairedEnd = (fqs.size() == 2)
-        taskMemory = task.memory ?: 1.GB
-        totalMemory = taskMemory.toBytes()
-        threadMemory = taskMemory.toBytes()/(2*task.cpus)
-        task.ext.sort = params.bamSort ?: task.ext.sort
-        halfCpus = task.cpus / 2
-
-        template(task.ext.command)
+        bamStrand = inferExp(
+            bam.filter { it[3] =~ /Genome/ },
+            Annotations.first()
+        )
 
     }
 
-    bam = bam.flatMap  { id, sample, type, view, path, pairedEnd ->
-        [path].flatten().collect { f ->
-            [id, sample, type, (f.name =~ /toTranscriptome/ ? 'Transcriptome' : 'Genome') + view, f, pairedEnd]
+    allBams = bamStrand.cross(bam)
+        .map {
+            bam -> bam[1].flatten() + [bam[0][1]]
         }
+
+    contigBams = bigwigBams = allBams.filter { it[3] =~ /Genome/ }
+    quantificationBams = allBams.filter { it[3] =~ /${quantificationMode}/ }
+
+    if (!('bigwig' in pipelineSteps)) bigwigBams = Channel.empty()
+    if (!('contig' in pipelineSteps)) contigBams = Channel.empty()
+    if (!('quantification' in pipelineSteps)) quantificationBams = Channel.empty()
+
+    bigwig( bigwigBams, FaiIdx.first() ) 
+
+    bigwig = bigwig.output.reduce([:]) { files, tuple ->
+        def (id1, sample1, type1, view1, path1, pairedEnd1, readStrand1) = tuple
+        if (!files) files = []
+        paths = path1.toString().replaceAll(/[\[\],]/,"").split(" ").sort()
+        (1..paths.size()).each { files << [id1, sample1, type1, view1[it-1], paths[it-1], pairedEnd1, readStrand1] }
+        return files
     }
+    .flatMap()
 
-} else {
-    GenomeIdx = Channel.empty()
-}
+    contig( contigBams, FaiIdx.first())
 
-if ('quantification' in pipelineSteps && quantificationMode != "Genome") {
+    quantification( quantificationBams,  QuantificationRef.first() )
 
-    process txIndex {
+    allBams
+        .mix(bigwig, contig.output, quantification.output.first, quantification.output.second )
+        .collectFile(name: pdb.name, storeDir: pdb.parent, newLine: true) { id, sample, type, view, file, pairedEnd, readStrand ->
+            [sample, id, file, type, view, pairedEnd ? 'Paired-End' : 'Single-End', readStrand].join("\t")
+        }
+        .subscribe {
+            log.info ""
+            log.info "-----------------------"
+            log.info "Pipeline run completed."
+            log.info "-----------------------"
+        }
 
-        input:
-        set species, file(genome) from Genomes3
-        set species, file(annotation) from Annotations2
-
-        output:
-        set species, file('txDir') into QuantificationRef
-
-        script:
-        template(task.ext.command)
-
-    }
-
-} else {
-    QuantificationRef = Annotations2
-}
-
-// Merge or rename bam
-singleBam = Channel.create()
-groupedBam = Channel.create()
-
-bam.groupTuple(by: [1, 2, 3, 5]) // group by sample, type, view, pairedEnd (to get unique values for keys)
-.choice(singleBam, groupedBam) {
-  it[4].size() > 1 ? 1 : 0
-}
-
-process mergeBam {
-
-    input:
-    set id, sample, type, view, file(bam), pairedEnd from groupedBam
-
-    output:
-    set id, sample, type, view, file("${prefix}.bam"), pairedEnd into mergedBam
-
-    script:
-    id = id.sort().join(':')
-    prefix = "${sample}${pref}_to${view.replace('Alignments','')}"
-
-    template(task.ext.command)
-
-}
-
-
-bam = singleBam
-.mix(mergedBam)
-.map {
-    it.flatten()
-}
-
-if (!('mapping' in pipelineSteps)) {
-    bam << Channel.STOP
-}
-
-(bam1, bam2, bamInfer) = bam.into(3)
-
-if (params.readStrand) {
-    
-    bam1.filter { it[3] =~ /Genome/ }
-    .map {
-        [it[0], params.readStrand]
-    }.set { bamStrand }
-
-} else {
-
-    process inferExp {
-
-        input:
-        set id, sample, type, view, file(bam), pairedEnd from bamInfer.filter { it[3] =~ /Genome/ }
-        set species, file(annotation) from Annotations4.first()
-
-        output:
-        set id, stdout into bamStrand
-
-        script:
-        prefix = "${annotation.name.split('\\.', 2)[0]}"
-
-        template(task.ext.command)
-    }
-
-}
-
-allBams = bamStrand.cross(bam2)
-.map {
-    bam -> bam[1].flatten() + [bam[0][1]]
-}
-
-(allBams1, allBams2, out) = allBams.into(3)
-
-(bigwigBams, contigBams) = allBams1.filter { it[3] =~ /Genome/ }.into(3)
-quantificationBams = allBams2.filter { it[3] =~ /${quantificationMode}/ }
-
-if (!('bigwig' in pipelineSteps)) bigwigBams = Channel.empty()
-if (!('contig' in pipelineSteps)) contigBams = Channel.empty()
-if (!('quantification' in pipelineSteps)) quantificationBams = Channel.empty()
-
-process bigwig {
-
-    input:
-    set id, sample, type, view, file(bam), pairedEnd, readStrand from bigwigBams
-    set species, file(genomeFai) from FaiIdx1.first()
-
-    output:
-    set id, sample, type, views, file('*.bw'), pairedEnd, readStrand into bigwig
-
-    script:
-    type = "bigWig"
-    prefix = "${sample}"
-    wigRefPrefix = params.wigRefPrefix ?: ""
-    views = task.ext.views
-
-    template(task.ext.command)
-
-}
-
-bigwig = bigwig.reduce([:]) { files, tuple ->
-    def (id, sample, type, view, path, pairedEnd, readStrand) = tuple
-    if (!files) files = []
-    paths = path.toString().replaceAll(/[\[\],]/,"").split(" ").sort()
-    (1..paths.size()).each { files << [id, sample, type, view[it-1], paths[it-1], pairedEnd, readStrand] }
-    return files
-}
-.flatMap()
-
-process contig {
-
-    input:
-    set id, sample, type, view, file(bam), pairedEnd, readStrand from contigBams
-    set species, file(genomeFai) from FaiIdx2.first()
-
-    output:
-    set id, sample, type, view, file('*.bed'), pairedEnd, readStrand into contig
-
-    script:
-    type = 'bed'
-    view = 'Contigs'
-    prefix = "${sample}.contigs"
-
-    template(task.ext.command)
-
-}
-
-process quantification {
-
-    input:
-    set id, sample, type, view, file(bam), pairedEnd, readStrand from quantificationBams
-    set species, file(quantRef) from QuantificationRef.first()
-
-    output:
-    set id, sample, type, viewTx, file("*isoforms*"), pairedEnd, readStrand into isoforms
-    set id, sample, type, viewGn, file("*genes*"), pairedEnd, readStrand into genes
-
-    script:
-    prefix = "${sample}"
-    refPrefix = quantRef.name.replace('.gtf','').capitalize()
-    type = task.ext.fileType
-    viewTx = "Transcript${refPrefix}"
-    viewGn = "Gene${refPrefix}"
-    memory = {task.memory ?: 1.GB}().toMega()
-
-    template(task.ext.command)
-
-}
-
-out.mix(bigwig, contig, isoforms, genes)
-.collectFile(name: pdb.name, storeDir: pdb.parent, newLine: true) { id, sample, type, view, file, pairedEnd, readStrand ->
-    [sample, id, file, type, view, pairedEnd ? 'Paired-End' : 'Single-End', readStrand].join("\t")
-}
-.subscribe {
-    log.info ""
-    log.info "-----------------------"
-    log.info "Pipeline run completed."
-    log.info "-----------------------"
-}
-
-/*
- * Given a string path resolve it against the index file location.
- * Params: 
- * - str: a string value represting the file pah to be resolved
- * - index: path location against which relative paths need to be resolved 
- */
-def resolveFile( str, index ) {
-  if( str.startsWith('/') || str =~ /^[\w\d]*:\// ) {
-    return file(str)
-  }
-  else if( index instanceof Path ) {
-    return index.parent.resolve(str)
-  }
-  else {
-    return file(str) 
-  }
-} 
-
-def testResolveFile() {
-  def index = file('/path/to/index')
-  assert resolveFile('str', index) == file('/path/to/str')
-  assert resolveFile('/abs/file', index) == file('/abs/file')
-  assert resolveFile('s3://abs/file', index) == file('s3://abs/file')
 }
