@@ -2,7 +2,7 @@
 set -e
 set -u
 
-samtools sort -@ ${cpus} -ni -O sam -T . ${bam} \
+samtools sort -@ ${cpus} -m ${sortMemory}M -ni -O sam -T . ${bam} \
   | rsem-calculate-expression --sam \
                           --estimate-rspd  \
                           --calc-ci \

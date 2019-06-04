@@ -502,7 +502,8 @@ process quantification {
     type = task.ext.fileType
     viewTx = "Transcript${refPrefix}"
     viewGn = "Gene${refPrefix}"
-    memory = {task.memory ?: 1.GB}().toMega()
+    memory = (task.memory ?: 1.GB).toMega()
+    sortMemory = memory * 0.8 / task.cpus
 
     template(task.ext.command)
 
