@@ -220,9 +220,9 @@ The versions of the tools that have been tested so far with the `standard` pipel
 
 - [STAR v2.4.0j](https://github.com/alexdobin/STAR/releases/tag/STAR_2.4.0j)
 - [samtools v1.2](https://github.com/samtools/samtools/releases/tag/1.2)
-- [sambamba v0.6.8](https://github.com/biod/sambamba/releases/tag/v0.6.8)
+- [sambamba v0.7.0](https://github.com/biod/sambamba/releases/tag/v0.7.0)
 - [RSEM v1.2.21](https://github.com/deweylab/RSEM/releases/tag/v1.2.21)
 - [RSeQC v2.6.4](http://rseqc.sourceforge.net/)
 - [bedtools v2.19.1](https://github.com/arq5x/bedtools2/releases/tag/v2.19.1)
 - [KentUtils v308](https://github.com/ucscGenomeBrowser/kent/releases/tag/v308_base)
-- [bamstats v0.3.0](https://github.com/guigolab/bamstats/releases/tag/v0.3.0)
+- [bamstats v0.3.2](https://github.com/guigolab/bamstats/releases/tag/v0.3.2)
