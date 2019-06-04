@@ -503,6 +503,7 @@ if ( params.markDuplicates || params.removeDuplicates ) {
         set id, sample, type, view, file("${prefix}.bam"), pairedEnd, readStrand into allBamsGenome
 
         script:
+        memory = (task.memory ?: 2.GB).toMega()
         prefix = "${bam.baseName}.markdup"
 
         template(task.ext.command)

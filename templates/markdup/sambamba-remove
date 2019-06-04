@@ -3,6 +3,7 @@ set -e
 set -u
 
 sambamba markdup -t ${cpus} \
+                --sort-buffer-size ${memory} \
                 --remove-duplicates \
                  ${bam} \
                  ${prefix}.bam && \
