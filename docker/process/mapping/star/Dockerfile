@@ -7,4 +7,4 @@ LABEL author.email="emiliopalumbo@gmail.com"
 
 COPY --from=grapenf/star:2.4.0j /usr/local/bin/STAR /usr/local/bin/
 COPY --from=grapenf/star:2.4.0j /usr/glibc-compat/lib/* /usr/glibc-compat/lib/
-COPY --from=grapenf/sambamba:0.6.8 /usr/local/bin/sambamba /usr/local/bin/
+COPY --from=grapenf/sambamba:0.7.0 /usr/local/bin/sambamba /usr/local/bin/
