@@ -6,3 +6,5 @@
 trace.txt*
 work/
 tmp/
+nextflow
+pipeline.db
