@@ -233,21 +233,17 @@ process fetch {
 }
 
 input_chunks.mix(input_chunks_fetched)
-    .groupBy {
-        sample, id, path, type, view -> id
-    }
-    .flatMap ()
-    .choice(input_files, input_bams) { it -> if ( it.value[0][3] == 'fastq' ) 0 else if ( it.value[0][3] == 'bam' ) 1}
+    .groupTuple(by: [0,1,3], sort: { it[4] } )
+    .choice(input_files, input_bams) { it -> if ( it[3] == 'fastq' ) 0 else if ( it[3] == 'bam' ) 1}
 
 input_files = input_files.map {
-    it.value.sort{ l -> l[4]}
-    [it.key, it.value[0][0], it.value.collect { sample, id, path, type, view -> path }, fastq(it.value[0][2]).qualityScore()]
+    [it[1], it[0], it[2], fastq(it[2][0]).qualityScore()]
 }
 
 // id, sample, type, view, "${id}${prefix}.bam", pairedEnd
 input_bams.map {
-    it.value.collect { bam ->
-        [it.key, bam[0], bam[3], bam[4], bam[2], params.pairedEnd]
+    it[2].withIndex().collect { bam, index ->
+        [it[1], it[0], it[3], it[4][index], bam, params.pairedEnd]
     }
 }.flatMap ()
 .subscribe onNext: {
