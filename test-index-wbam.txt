@@ -1,3 +1,3 @@
 sample1	test1	data/test1_1.fastq.gz	fastq	FqRd1
 sample1	test1	data/test1_2.fastq.gz	fastq	FqRd2
-test2	test2	data/test2_m4_n10.bam	bam	Alignments
+test2	test2	data/test2_m4_n10.bam	bam	GenomeAlignments

@@ -246,9 +246,7 @@ input_bams.map {
         [it[1], it[0], it[3], it[4][index], bam, params.pairedEnd]
     }
 }.flatMap ()
-.subscribe onNext: {
-    bam << it
-}, onComplete: {}
+.set { bamsFromIndex }
 
 def msg = "Output files db"
 log.info "=" * msg.size()
@@ -418,7 +416,7 @@ if ('quantification' in pipelineSteps && quantificationMode != "Genome") {
 singleBam = Channel.create()
 groupedBam = Channel.create()
 
-bam.groupTuple(by: [1, 2, 3, 5]) // group by sample, type, view, pairedEnd (to get unique values for keys)
+bam.mix(bamsFromIndex).groupTuple(by: [1, 2, 3, 5]) // group by sample, type, view, pairedEnd (to get unique values for keys)
 .choice(singleBam, groupedBam) {
   it[4].size() > 1 ? 1 : 0
 }
