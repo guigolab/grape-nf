@@ -233,7 +233,7 @@ process fetch {
 }
 
 input_chunks.mix(input_chunks_fetched)
-    .groupTuple(by: [0,1,3], sort: { it[4] } )
+    .groupTuple(by: [0,1,3], sort: true)
     .choice(input_files, input_bams) { it -> if ( it[3] == 'fastq' ) 0 else if ( it[3] == 'bam' ) 1}
 
 input_files = input_files.map {
