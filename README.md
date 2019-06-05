@@ -41,6 +41,46 @@ conda env create -f conda/grape-env.yml
 
 or to delegate Nextflow to prepare the environment using the conda configuration [directive](https://www.nextflow.io/docs/latest/conda.html?highlight=conda#use-conda-environment-files).
 
+### Using Singularity
+
+A few tips and troubleshooting steps in order to run the pipeline using Singularity.
+
+#### Image cache dir
+
+The first time you run the pipeline with Singularity it will download the required images from the [Docker Hub](https://hub.docker.com/) and save them in a folder inside the pipeline work dir. You can specify a different location (e.g. a centralized cache) by using the `NXF_SINGULARITY_CACHEDIR` environment variable or by including the following snippet in a file called `nextflow.config` and placing it in the current working folder of your pipeline:
+
+```
+singularity {
+  cacheDir = "/data/singularity"
+}
+```
+
+Please check the [Singularity section](https://www.nextflow.io/docs/latest/singularity.html) in Nextflow documentation for more information.
+
+#### Bind mounts
+
+Singularity allows you to map directories on your host system to directories within your container using bind mounts. Bind paths can be configured by the system administrator in the system-wide Singularity configuration file and will be automatically mounted when you run a container.
+
+If enabled by the system administrator and allowed by the kernel, you can also specify your own bind paths in the Singularity command line. This is useful in case you need to run the pipeline on data volumes that are not enabled at system level.
+
+In order to do so using Nextflow you should include the following snippet in the `nextflow.config` file:
+
+```
+singularity {
+  runOptions = "-B /data"
+}
+```
+
+You can specify multiple folders by separating them with a comma, e.g.:
+
+```
+singularity {
+  runOptions = "-B /data,/refs"
+}
+```
+
+Please see [here](https://www.sylabs.io/guides/3.2/user-guide/bind_paths_and_mounts.html) for further instructions on Singularity mounts.
+
 ## Pipeline parameters
 
 A usage message is provided and can be seen using the `--help` pipeline option in the command as follows:
@@ -216,12 +256,12 @@ nextflow -bg run grape-nf --steps mapping,quantification --index input-files.tsv
 
 The pipeline can be also run natively by installing the required software on the local system or by using [Environment Modules](http://www.nextflow.io/docs/latest/process.html?#module). 
 
-The versions of the tools that have been tested so far with the `standard` pipeline profile are the following:
+The versions of the tools that have been tested so far with the `standarogram.html
 
-- [STAR v2.4.0j](https://github.com/alexdobin/STAR/releases/tag/STAR_2.4.0j)
-- [samtools v1.2](https://github.com/samtools/samtools/releases/tag/1.2)
-- [sambamba v0.7.0](https://github.com/biod/sambamba/releases/tag/v0.7.0)
-- [RSEM v1.2.21](https://github.com/deweylab/RSEM/releases/tag/v1.2.21)
+- [STAR v2.4.0j](https://github.com/alexdobin/STAR/releases/tag/STAR_2.rogram.html
+- [samtools v1.2](https://github.com/samtools/samtools/releases/tag/1.2rogram.html
+- [sambamba v0.7.0](https://github.com/biod/sambamba/releases/tag/v0.7.rogram.html
+- [RSEM v1.2.21](https://github.com/deweylab/RSEM/releases/tag/v1.2.21)rogram.html
 - [RSeQC v2.6.4](http://rseqc.sourceforge.net/)
 - [bedtools v2.19.1](https://github.com/arq5x/bedtools2/releases/tag/v2.19.1)
 - [KentUtils v308](https://github.com/ucscGenomeBrowser/kent/releases/tag/v308_base)
