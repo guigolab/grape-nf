@@ -221,7 +221,7 @@ process fetch {
 
     script:
     def paths = path.split(',')
-    outPath = resolveFile(paths[-1], index)
+    outPath = workflow.launchDir.resolve(paths[-1])
     urls = paths.size() > 1 ? paths[0..-2].join(' ') : ''
     """
     for url in $urls; do
