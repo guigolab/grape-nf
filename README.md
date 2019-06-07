@@ -81,6 +81,16 @@ singularity {
 
 Please see [here](https://www.sylabs.io/guides/3.2/user-guide/bind_paths_and_mounts.html) for further instructions on Singularity mounts.
 
+## IHEC data
+
+A reference RNA-seq test dataset is made available by the IHEC consortium. In order to run the pipeline on this data the following command can be used:
+
+```
+nexflow run guigolab/grape-nf -profile ihec ...
+```
+
+Processing this data requires a considerable amount of resources (see [here](ihec-resource.config)). It is recommended to run the pipeline in an HPC environment using Singularity.
+
 ## Pipeline parameters
 
 A usage message is provided and can be seen using the `--help` pipeline option in the command as follows:
