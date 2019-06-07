@@ -1,5 +1,10 @@
 # GRAPE-nf Changelog
 
+## Version 0.4.1
+
+- Fix wrong comment in config file braking pipeline execution
+- Update minimum Nextflow version badge in readme to 0.30.2
+
 ## Version 0.4.0
 
 - Add mark-duplicates step - #40.
