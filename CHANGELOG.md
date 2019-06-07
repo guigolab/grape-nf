@@ -2,7 +2,7 @@
 
 ## Version 0.3.0
 
-- Fix #21 - sort index file lines when grouping paired FASTQ files
+- Fix #21 - sort index file lines when grouping paired `FASTQ` files
 - Disable Docker by default and update test script - resolve #22
 - Update test profiles and main config - address #25
 - Move process resource to external config file - #24
@@ -16,10 +16,10 @@
 
 Additional fixes and imporvements:
 
-- Change README markup to Markdown
+- Change `README` markup to Markdown
 - Update CI configuration
-- Improve RGCRG bigwig templates by removing temporary bam files
-- Fix missing NH:1 filter in contigs antisense template
+- Improve `RGCRG` bigwig templates by removing temporary bam files
+- Fix missing `NH:1` filter in contigs antisense template
 - Move to Travis CI
 - Fix issue with test script using wrong pipeline.db when running outside pipeline base dir
 
