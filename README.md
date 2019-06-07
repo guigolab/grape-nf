@@ -1,6 +1,6 @@
 # Grape
 
-[![nextflow](https://img.shields.io/badge/nextflow-%E2%89%A50.23.1-brightgreen.svg)](http://nextflow.io)
+[![nextflow](https://img.shields.io/badge/nextflow-%E2%89%A50.30.2-brightgreen.svg)](http://nextflow.io)
 [![Build Status](https://travis-ci.org/guigolab/grape-nf.svg?branch=master)](https://travis-ci.org/guigolab/grape-nf)
 
 Grape provides an extensive pipeline for RNA-Seq analyses. It allows the creation of an automated and integrated workflow to manage and analyse RNA-Seq data.
