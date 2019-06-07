@@ -1,5 +1,32 @@
 # GRAPE-nf Changelog
 
+## Version 0.4.0
+
+- Add mark-duplicates step - #40.
+- Convert existing samtools commands in templates to corresponding available sambamba one - #41.
+- Add bamStats process - #42
+- Add process and logic to download input files - #43
+- Support compressed reference files - #44
+- Replace groupBy related logic in pipeline script - #46
+
+Additional fixes and improvements
+
+- Add memory limit to sambamba sort command in RSEM quantification step
+- Add sort buffer size option in sambamba markdup
+- Update container for fetch process
+- Update IHEC profile BAM sorting tool
+- Update Nextflow and TravisCI config files
+- Update gem mapping templates for new version of samtools
+- Add nextflow config profiles for IHEC and update TravisCI configuration
+- Clean-up into calls using closure syntax
+- Set halfCpus as integer and fix it when task.cpus is 1
+- Add Dockerfiles
+- Update readme and add description of pipeline parameters
+- Add Singularity section to readme with tips and troubleshoot
+- Update tool versions in readme
+- Bump sambamba version to 0.7.0
+- Bump tool versions for bamstats, samtools and RSeQC
+
 ## Version 0.3.0
 
 - Fix #21 - sort index file lines when grouping paired `FASTQ` files
