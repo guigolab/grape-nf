@@ -9,3 +9,5 @@ tmp/
 nextflow
 pipeline.db
 checksum/
+singularity/
+download/
