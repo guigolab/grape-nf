@@ -89,7 +89,7 @@ A reference RNA-seq test dataset is made available by the IHEC consortium. In or
 nexflow run guigolab/grape-nf -profile ihec ...
 ```
 
-Processing this data requires a considerable amount of resources (see [here](ihec-resources.config)). It is recommended to run the pipeline in an HPC environment using Singularity.
+Processing this data requires a considerable amount of resources (see [here](ihec-resources.config)). It is recommended to run the pipeline in an HPC environment or in the cloud. Please see the [configuration](#pipeline-configuration) section for more details.
 
 ## Pipeline parameters
 
