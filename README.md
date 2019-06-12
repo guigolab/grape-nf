@@ -1,6 +1,7 @@
 # Grape
 
-[![nextflow](https://img.shields.io/badge/nextflow-%E2%89%A50.30.2-brightgreen.svg)](http://nextflow.io)
+[![Nextflow version: >=0.30.2](https://img.shields.io/badge/nextflow-%E2%89%A50.30.2-brightgreen.svg)](http://nextflow.io)
+[![Singularity version: >=3.x](https://img.shields.io/badge/singularity-3.x-blue.svg)](http://sylabs.io/singularity)
 [![Build Status](https://travis-ci.org/guigolab/grape-nf.svg?branch=master)](https://travis-ci.org/guigolab/grape-nf)
 
 Grape provides an extensive pipeline for RNA-Seq analyses. It allows the creation of an automated and integrated workflow to manage and analyse RNA-Seq data.
@@ -43,7 +44,7 @@ or to delegate Nextflow to prepare the environment using the conda configuration
 
 ### Using Singularity
 
-A few tips and troubleshooting steps in order to run the pipeline using Singularity.
+Singularity is the preferred container engine for running the pipeline in an HPC environment. In order to minimize the amount of issues that could arise we recommend the use of Singularity version 3.0 or higher. At the time of writing of this document the latest Singularity release is 3.2.
 
 #### Image cache dir
 
@@ -59,25 +60,9 @@ Please check the [Singularity section](https://www.nextflow.io/docs/latest/singu
 
 #### Bind mounts
 
-Singularity allows you to map directories on your host system to directories within your container using bind mounts. Bind paths can be configured by the system administrator in the system-wide Singularity configuration file and will be automatically mounted when you run a container.
+Nextflow expects that data paths are defined system wide, and your Singularity images need to be able to access these paths. Singularity allows paths that do not currently exist within the container to be created and mounted dynamically by specifying them on the command line. For this to work the [user bind control](https://singularity-admindoc.readthedocs.io/en/latest/the_singularity_config_file.html#user-bind-control-boolean-default-yes) option must be set to `true` in the Singularity config file. Nextflow support for this feature is enabled by default for the pipeline, by defining the `singularity.autoMounts = true` setting in the main configuration file.
 
-If enabled by the system administrator and allowed by the kernel, you can also specify your own bind paths in the Singularity command line. This is useful in case you need to run the pipeline on data volumes that are not enabled at system level.
-
-In order to do so using Nextflow you should include the following snippet in the `nextflow.config` file:
-
-```
-singularity {
-  runOptions = "-B /data"
-}
-```
-
-You can specify multiple folders by separating them with a comma, e.g.:
-
-```
-singularity {
-  runOptions = "-B /data,/refs"
-}
-```
+Starting in version 3.0, Singularity can bind paths to non-existent mount points within the container even in the absence of the “overlay fs” feature, thus supporting architectures running legacy kernel versions (including RHEL6 vintage systems). For older versions of Singularity a kernel supporting the OverlayFS union mount filesystem is required for this functionality to be supported.
 
 Please see [here](https://www.sylabs.io/guides/3.2/user-guide/bind_paths_and_mounts.html) for further instructions on Singularity mounts.
 
