@@ -1,6 +1,6 @@
 # Dockerfile for the grape-nf base image
 #
-FROM       frolvlad/alpine-glibc
+FROM       frolvlad/alpine-glibc:glibc-2.25 
 
 LABEL author.name="Emilio Palumbo"
 LABEL author.email="emiliopalumbo@gmail.com"
