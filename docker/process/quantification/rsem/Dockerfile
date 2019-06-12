@@ -14,7 +14,7 @@ LABEL author.email="emiliopalumbo@gmail.com"
 RUN apk add --no-cache perl R
 
 ARG SAMBAMBA_VER=0.7.0
-ENV _SAMBAMBA_VER $SAMBAMBA_VER
+ENV _SAMBAMBA_VER ${SAMBAMBA_VER}
 
 COPY --from=rsem /usr/local/bin/* /usr/local/bin/
 COPY --from=sambamba /usr/local/bin/sambamba /usr/local/bin/

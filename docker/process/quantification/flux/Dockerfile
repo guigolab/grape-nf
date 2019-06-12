@@ -1,9 +1,16 @@
 # Dockerfile for the grape-nf FLUX-CAPACITOR quantification image
 #
-FROM grapenf/flux-capacitor:1.6.1
+ARG SAMTOOLS_VER=1.3.1
+ARG FLUX_VER=1.6.1
+
+FROM grapenf/samtools:${SAMTOOLS_VER} AS samtools
+FROM grapenf/flux-capacitor:${FLUX_VER}
 
 LABEL author.name="Emilio Palumbo"
 LABEL author.email="emiliopalumbo@gmail.com"
 
-COPY --from=grapenf/samtools:1.3.1 /usr/local/bin/samtools /usr/local/bin/
-COPY --from=grapenf/samtools:1.3.1 /usr/glibc-compat/lib/* /usr/glibc-compat/lib/
+ARG SAMTOOLS_VER=1.3.1
+ENV _SAMTOOLS_VER ${SAMTOOLS_VER}
+
+COPY --from=samtools /usr/local/bin/samtools /usr/local/bin/
+COPY --from=samtools /usr/glibc-compat/lib/* /usr/glibc-compat/lib/
