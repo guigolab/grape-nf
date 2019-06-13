@@ -2,7 +2,9 @@
 #
 FROM ubuntu:16.04 AS builder
 
-ENV _STAR_VERSION 2.4.0j
+ARG STAR_VER=2.4.0j
+
+ENV _STAR_VERSION ${STAR_VER}
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \

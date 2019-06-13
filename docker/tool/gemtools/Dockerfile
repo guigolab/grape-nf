@@ -2,7 +2,9 @@
 #
 FROM ubuntu:16.04 AS builder
 
-ENV _GEMTOOLS_VERSION 1.7.1
+ARG GEMTOOLS_VER=1.7.1
+
+ENV _GEMTOOLS_VERSION ${GEMTOOLS_VER}
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         wget \

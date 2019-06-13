@@ -2,7 +2,9 @@
 #
 FROM       grapenf/java
 
-ENV _FLUX_VERSION 1.6.1
+ARG FLUX_VER=1.6.1
+
+ENV _FLUX_VERSION ${FLUX_VER}
 
 ENV PATH $PATH:/flux-capacitor-1.6.1/bin
 

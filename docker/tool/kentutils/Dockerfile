@@ -2,7 +2,9 @@
 #
 FROM ubuntu:16.04 AS builder
 
-ENV _KENTUTILS_VERSION 308
+ARG KENTUTILS_VER=308
+
+ENV _KENTUTILS_VERSION ${KENTUTILS_VER}
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \

@@ -2,7 +2,9 @@
 #
 FROM ubuntu:16.04 AS builder
 
-ENV _SAMTOOLS_VERSION 1.3.1
+ARG SAMTOOLS_VER=1.3.1
+
+ENV _SAMTOOLS_VERSION ${SAMTOOLS_VER}
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \

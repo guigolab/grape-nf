@@ -2,7 +2,9 @@
 #
 FROM ubuntu:16.04 AS builder
 
-ENV _BEDTOOLS_VERSION 2.19.1
+ARG BEDTOOLS_VER=2.19.1
+
+ENV _BEDTOOLS_VERSION ${BEDTOOLS_VER}
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \

@@ -2,7 +2,9 @@
 #
 FROM ubuntu:16.04 AS builder
 
-ENV _RSEM_VERSION 1.2.21
+ARG RSEM_VER=1.2.21
+
+ENV _RSEM_VERSION ${RSEM_VER}
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
