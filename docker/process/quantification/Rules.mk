@@ -1,0 +1,6 @@
+QUANTIFICATION_TOOLS = rsem flux
+QUANTIFICATION_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+
+.PHONY: $(QUANTIFICATION_TOOLS)
+
+-include $(QUANTIFICATION_TOOLS:%=$(QUANTIFICATION_DIR)/%/Rules.mk)
