@@ -19,7 +19,7 @@ logs/tools:
 $(TOOLS): TOOL=$(shell echo $@ | cut -d- -f1| tr a-z A-Z)
 $(TOOLS): logs/tools
 	@[ $(VERBOSE) ] && echo Building container for $@ $($(TOOL)_VER) || true
-	@echo docker build -t grapenf/$@:$($(TOOL)_VER) tool/$@ #> logs/$@.log
+	@docker build --build-arg $(TOOL)_VER=$($(TOOL)_VER) -t grapenf/$@:$($(TOOL)_VER) tool/$@ > logs/tools/$@.log
 
 $(PROC_TOOLS): INFO=$(subst _, ,$@)
 $(PROC_TOOLS): PROC=$(word 1,$(INFO))
