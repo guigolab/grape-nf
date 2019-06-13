@@ -10,6 +10,9 @@ processes: $(PROC_TOOLS)
 
 tools: $(TOOLS)
 
+logs:
+	@mkdir logs
+
 logs/tools:
 	@mkdir -p logs/tools
 
@@ -26,3 +29,10 @@ $(PROC_TOOLS):
 	@[ $(VERBOSE) ] && echo Building container for $@ $($(TOOL)_VER) || true
 	@echo docker build $($(TOOL)_ARGS:%=--build-arg %) \
 		-t grapenf/$(PROC):$(PROC_TOOL)-$($(TOOL)_VER) process/$(PROC)/$(PROC_TOOL)
+
+base: logs
+	@[ $(VERBOSE) ] && echo Building container for $@ - glibc ${GLIBC_VER} || true
+	@docker build --build-arg GLIBC_VER=${GLIBC_VER} -t grapenf/$@:latest $@ > logs/$@.log
+	@$(eval ALPINE_VER := $(shell docker run --rm -ti grapenf/$@:latest cat /etc/alpine-release))
+	@docker tag grapenf/$@:latest grapenf/$@:$(ALPINE_VER) >> logs/$@.log
+	@docker tag grapenf/$@:latest grapenf/$@:$(ALPINE_VER)
