@@ -10,7 +10,7 @@ processes: $(PROC_TOOLS)
 
 tools: $(TOOLS)
 
-logs logs/tool:
+logs logs/tool logs/process:
 	@mkdir -p $@
 
 $(TOOLS): TOOL=$(shell echo $@ | cut -d- -f1| tr a-z A-Z)
@@ -22,10 +22,10 @@ $(PROC_TOOLS): INFO=$(subst _, ,$@)
 $(PROC_TOOLS): PROC=$(word 1,$(INFO))
 $(PROC_TOOLS): PROC_TOOL=$(word 2,$(INFO))
 $(PROC_TOOLS): TOOL=$(shell echo $(PROC_TOOL) | tr a-z A-Z)
-$(PROC_TOOLS):
+$(PROC_TOOLS): logs/process
 	@[ $(VERBOSE) ] && echo Building container for $@ $($(TOOL)_VER) || true
-	@echo docker build $($(TOOL)_ARGS:%=--build-arg %) \
-		-t grapenf/$(PROC):$(PROC_TOOL)-$($(TOOL)_VER) process/$(PROC)/$(PROC_TOOL)
+	@docker build $($(TOOL)_ARGS:%=--build-arg %) \
+		-t grapenf/$(PROC):$(PROC_TOOL)-$($(TOOL)_VER) process/$(PROC)/$(PROC_TOOL) > logs/process/$@.log
 
 base: logs
 base: VER_CMD=docker run --rm grapenf/$@:latest cat /etc/alpine-release
