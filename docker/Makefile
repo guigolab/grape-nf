@@ -28,19 +28,17 @@ $(PROC_TOOLS):
 		-t grapenf/$(PROC):$(PROC_TOOL)-$($(TOOL)_VER) process/$(PROC)/$(PROC_TOOL)
 
 base: logs
-	@[ $(VERBOSE) ] && echo Building container for $@ - glibc ${GLIBC_VER} || true
-	@docker build --build-arg GLIBC_VER=${GLIBC_VER} -t grapenf/$@:latest $@ > logs/$@.log
-	@$(eval ALPINE_VER := $(shell docker run --rm grapenf/$@:latest cat /etc/alpine-release))
-	@docker tag grapenf/$@:latest grapenf/$@:$(ALPINE_VER) >> logs/$@.log
-
-python: base
-	@[ $(VERBOSE) ] && echo Building container for $@ || true
-	@docker build -t grapenf/$@:latest $@ > logs/$@.log
-	@$(eval PYTHON_VER := $(shell docker run --rm grapenf/$@:latest python --version))
-	@docker tag grapenf/$@:latest grapenf/$@:$(word 2,$(PYTHON_VER)) >> logs/$@.log
+base: VER_CMD=docker run --rm grapenf/$@:latest cat /etc/alpine-release
+base: BUILD_ARGS=--build-arg GLIBC_VER=$(GLIBC_VER)
 
 java: base
+java: VER_CMD=docker run --rm grapenf/$@:latest java -version 2>&1 | head -1
+
+python: base
+python: VER_CMD=docker run --rm grapenf/$@:latest python --version 2>&1
+
+base java python:
 	@[ $(VERBOSE) ] && echo Building container for $@ || true
-	@docker build -t grapenf/$@:latest $@ > logs/$@.log
-	@$(eval JAVA_VER := $(shell docker run --rm grapenf/$@:latest java -version 2>&1 | head -1))
-	@docker tag grapenf/$@:latest grapenf/$@:$(subst ",,$(word 3,$(JAVA_VER))) >> logs/$@.log
+	@docker build $(BUILD_ARGS) -t grapenf/$@:latest $@ > logs/$@.log
+	@$(eval VER := $(lastword $(shell $(VER_CMD))))
+	@docker tag grapenf/$@:latest grapenf/$@:$(VER) >> logs/$@.log
