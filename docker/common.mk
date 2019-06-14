@@ -1,7 +1,9 @@
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
+NS := grapenf
+
 TOOLS := bamstats bedtools flux-capacitor gemtools kentutils rsem rseqc sambamba samtools star
-PROCS = contig quantification
+PROCS := contig quantification
 
 GLIBC_VER := 2.25
 
