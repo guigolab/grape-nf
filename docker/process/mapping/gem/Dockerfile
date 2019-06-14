@@ -1,9 +1,14 @@
 # Dockerfile for the grape-nf GEM mapping image
 #
-FROM grapenf/gemtools:1.7.1
+ARG GEMTOOLS_VER=1.7.1
+ARG SAMTOOLS_VER=1.3.1
+
+FROM grapenf/samtools:${SAMTOOLS_VER} as samtools
+
+FROM grapenf/gemtools:${GEMTOOLS_VER}
 
 LABEL author.name="Emilio Palumbo"
 LABEL author.email="emiliopalumbo@gmail.com"
 
-COPY --from=grapenf/samtools:1.3.1 /usr/local/bin/samtools /usr/local/bin/
-COPY --from=grapenf/samtools:1.3.1 /usr/glibc-compat/lib/* /usr/glibc-compat/lib/
+COPY --from=samtools /usr/local/bin/samtools /usr/local/bin/
+COPY --from=samtools /usr/glibc-compat/lib/* /usr/glibc-compat/lib/
