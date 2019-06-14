@@ -33,6 +33,11 @@ $(PROC_TOOLS):
 base: logs
 	@[ $(VERBOSE) ] && echo Building container for $@ - glibc ${GLIBC_VER} || true
 	@docker build --build-arg GLIBC_VER=${GLIBC_VER} -t grapenf/$@:latest $@ > logs/$@.log
-	@$(eval ALPINE_VER := $(shell docker run --rm -ti grapenf/$@:latest cat /etc/alpine-release))
+	@$(eval ALPINE_VER := $(shell docker run --rm grapenf/$@:latest cat /etc/alpine-release))
 	@docker tag grapenf/$@:latest grapenf/$@:$(ALPINE_VER) >> logs/$@.log
-	@docker tag grapenf/$@:latest grapenf/$@:$(ALPINE_VER)
+
+python: base
+	@[ $(VERBOSE) ] && echo Building container for $@ || true
+	@docker build -t grapenf/$@:latest $@ > logs/$@.log
+	@$(eval PYTHON_VER := $(shell docker run --rm grapenf/$@:latest python --version))
+	@docker tag grapenf/$@:latest grapenf/$@:$(word 2,$(PYTHON_VER)) >> logs/$@.log
