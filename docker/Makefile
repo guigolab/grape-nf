@@ -4,7 +4,7 @@
 VERBOSE ?= 1
 PROC_TOOLS := $(foreach p,$(PROCS),$(foreach t,$($(shell echo $(p) | tr a-z A-Z)_TOOLS),.$(p)_$(t)))
 
-.PHONY: processes tools $(TOOLS) $(PROC_TOOLS)
+.PHONY: processes tools $(TOOLS) $(PROC_TOOLS) base python java
 
 processes: $(PROC_TOOLS)
 
@@ -38,3 +38,9 @@ python: base
 	@docker build -t grapenf/$@:latest $@ > logs/$@.log
 	@$(eval PYTHON_VER := $(shell docker run --rm grapenf/$@:latest python --version))
 	@docker tag grapenf/$@:latest grapenf/$@:$(word 2,$(PYTHON_VER)) >> logs/$@.log
+
+java: base
+	@[ $(VERBOSE) ] && echo Building container for $@ || true
+	@docker build -t grapenf/$@:latest $@ > logs/$@.log
+	@$(eval JAVA_VER := $(shell docker run --rm grapenf/$@:latest java -version 2>&1 | head -1))
+	@docker tag grapenf/$@:latest grapenf/$@:$(subst ",,$(word 3,$(JAVA_VER))) >> logs/$@.log
