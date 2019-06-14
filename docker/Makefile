@@ -25,7 +25,9 @@ $(PROC_TOOLS): TOOL=$(shell echo $(PROC_TOOL) | tr a-z A-Z)
 $(PROC_TOOLS): logs/process
 	@[ $(VERBOSE) ] && echo Building process image $(NS)/$(PROC):$(PROC_TOOL)-$($(TOOL)_VER) || true
 	@docker build $($(TOOL)_ARGS:%=--build-arg %) \
-		-t $(NS)/$(PROC):$(PROC_TOOL)-$($(TOOL)_VER) process/$(PROC)/$(PROC_TOOL) > $</$@.log
+		-t $(NS)/$(PROC):$(PROC_TOOL)-$($(TOOL)_VER) process/$(PROC)/$(PROC_TOOL) > $</$(PROC)_$(PROC_TOOL).log
+	@[ $(VERBOSE) ] && [ "$(TAGS)" ] && echo Creating $(NS)/$(PROC):$(PROC_TOOL)-$($(TOOL)_VER) image tags: ${TAGS} || true
+	@$(foreach t,$(TAGS),docker tag $(NS)/$(PROC):$(PROC_TOOL)-$($(TOOL)_VER) $(t);)
 
 base: VER_CMD=docker run --rm $(NS)/$@:latest cat /etc/alpine-release
 base: BUILD_ARGS=--build-arg GLIBC_VER=$(GLIBC_VER)
