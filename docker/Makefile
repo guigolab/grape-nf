@@ -10,16 +10,13 @@ processes: $(PROC_TOOLS)
 
 tools: $(TOOLS)
 
-logs:
-	@mkdir logs
-
-logs/tools:
-	@mkdir -p logs/tools
+logs logs/tool:
+	@mkdir -p $@
 
 $(TOOLS): TOOL=$(shell echo $@ | cut -d- -f1| tr a-z A-Z)
-$(TOOLS): logs/tools
+$(TOOLS): logs/tool
 	@[ $(VERBOSE) ] && echo Building container for $@ $($(TOOL)_VER) || true
-	@docker build --build-arg $(TOOL)_VER=$($(TOOL)_VER) -t grapenf/$@:$($(TOOL)_VER) tool/$@ > logs/tools/$@.log
+	@docker build --build-arg $(TOOL)_VER=$($(TOOL)_VER) -t grapenf/$@:$($(TOOL)_VER) tool/$@ > logs/tool/$@.log
 
 $(PROC_TOOLS): INFO=$(subst _, ,$@)
 $(PROC_TOOLS): PROC=$(word 1,$(INFO))
