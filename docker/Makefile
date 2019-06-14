@@ -17,6 +17,8 @@ $(TOOLS): TOOL=$(shell echo $@ | cut -d- -f1| tr a-z A-Z)
 $(TOOLS): logs/tool
 	@[ $(VERBOSE) ] && echo Building tool image $(NS)/$@:$($(TOOL)_VER) || true
 	@docker build --build-arg $(TOOL)_VER=$($(TOOL)_VER) -t $(NS)/$@:$($(TOOL)_VER) tool/$@ > $</$@.log
+	@[ $(VERBOSE) ] && [ "$(TAGS)" ] && echo Creating $(NS)/$@:$($(TOOL)_VER) image tags: $(TAGS) || true
+	@$(foreach t,$(TAGS),docker tag $(NS)/$@:$($(TOOL)_VER) $(t);)
 
 $(PROC_TOOLS): INFO=$(subst _, ,$(subst .,,$@))
 $(PROC_TOOLS): PROC=$(word 1,$(INFO))

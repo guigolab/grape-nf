@@ -19,3 +19,9 @@ SAMTOOLS_VER := 1.3.1
 STAR_VER := 2.4.0j
 
 RGCRG_VER := 0.1
+
+sambamba: TAGS = $(NS)/markdup:$@-$(SAMBAMBA_VER) $(NS)/mergebam:$@-$(SAMBAMBA_VER)
+
+samtools: TAGS = $(NS)/fastaindex:$@-${SAMTOOLS_VER}
+
+bamstats: TAGS = $(NS)/bamstats:$@-${BAMSTATS_VER}
