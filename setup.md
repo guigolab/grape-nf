@@ -21,9 +21,12 @@ This document describes setting up and testing the pipleine to run on a single m
     
 ## Run initial pipeline tests
 
-   ./nextflow run ./grape-nf -with-singularity 
+Run the basic testsuite with:
+
+    ./nextflow run ./grape-nf -with-singularity 
    
 The first time singularity will pull and cache all images.
+
 // FATAL:   Unable to pull docker://grapenf/bamstats:bamstats-0.3.2: conveyor failed to get: no descriptor found for reference "cddb8cf488abc7102b1efd0dec0448cd9377ad09606f565013b52251ef9ea1dd"
 
 Check that the run was successful by looking at status in `trace.txt`
@@ -41,5 +44,7 @@ Check that the run was successful by looking at status in `trace.txt`
     9       7d/dbbd06       4888    quantification (test1-RSEM-1.2.21)      COMPLETED       0       2019-06-22 12:10:57.571 8.8s    8.4s    137.7%  73 MB   1 GB    75 MB   63.8 MB
 
 ## Run the IHEC testsuite defined in the `ihec` nextflow profile:
- 
+
+Now run the IHEC testsuite on the MCF10A RNA-Seq data: 
+
     ./nextflow run ./grape-nf -profile ihec -with-singularity
