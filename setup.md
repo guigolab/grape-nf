@@ -1,33 +1,36 @@
 # IHEC RNA-Seq pipleine
 
 The pipeline developed by [Guigo Lab](https://github.com/guigolab/grape-nf) has been adopted for the IHEC integrative analysis. 
-This document describes setting up and testing the pipleine to run on a single machine (or on submitted to cluster to run on a single compute node). 
+This document describes setting up and testing the pipleine to run on a single machine (or submitted as a batch job to run on a single compute node of a cluster). 
 
 # Setting up and running IHEC RNA-Seq pipeline
 
 ## Get nextflow workflow manager
     
-    wget https://github.com/nextflow-io/nextflow/releases/download/v19.04.0/nextflow-19.04.0-all
-    mv nextflow-19.04.0-all nextflow
+    wget https://github.com/nextflow-io/nextflow/releases/download/v19.04.0/nextflow-19.04.0-all -O nextflow
     chmod +x ./nextflow
 
 ## Get tarball for Guigo lab RNA-Seq IHEC pipleine
 
-    git clone https://github.com/guigolab/grape-nf.git # to_do: replace git clone by wget on tarball release
-    cd grape-nf
-    git fetch https://github.com/guigolab/grape-nf.git IHEC:IHEC
-    git checkout IHEC
-    cd -
+    curl -sL https://github.com/guigolab/grape-nf/archive/IHEC.tar.gz | tar xz
     
 ## Run initial pipeline tests
 
+Create a pipeline working directory and move to it:
+
+    mkdir pipeline-test && cd pipeline-test
+
 Run the basic testsuite with:
 
-    ./nextflow run ./grape-nf -with-singularity 
+    ../nextflow run ../grape-nf-IHEC -with-singularity 
    
-The first time singularity will pull and cache all images.
+The first time Nextflow will pull and cache all the required Singularity images. By default images will be saved inside the pipeline `work` folder. A different (e.g. shared) location can be specified by either setting the `NXF_SINGULARITY_CACHEDIR` environment variable or creating a file called `nextflow.config` in the current working folder of your pipeline and including the following snippet (replace `<PATH/TO/SINGUALRITY/CACHE/DIR>` with the actual path containing the cached images):
 
-// FATAL:   Unable to pull docker://grapenf/bamstats:bamstats-0.3.2: conveyor failed to get: no descriptor found for reference "cddb8cf488abc7102b1efd0dec0448cd9377ad09606f565013b52251ef9ea1dd"
+```groovy
+singularity {
+  cacheDir = "<PATH/TO/SINGUALRITY/CACHE/DIR>"
+}
+```
 
 Check that the run was successful by looking at status in `trace.txt`
 
@@ -43,8 +46,23 @@ Check that the run was successful by looking at status in `trace.txt`
     7       ef/bc41f1       4382    contig (test1-RGCRG-0.1)        COMPLETED       0       2019-06-22 12:10:57.139 1.5s    1s      108.2%  1 MB    6 MB    6.3 MB  2.5 MB
     9       7d/dbbd06       4888    quantification (test1-RSEM-1.2.21)      COMPLETED       0       2019-06-22 12:10:57.571 8.8s    8.4s    137.7%  73 MB   1 GB    75 MB   63.8 MB
 
+### Troubleshooting
+
+The following error
+
+    FATAL:   Unable to pull docker://grapenf/bamstats:bamstats-0.3.2: conveyor failed to get: no descriptor found for reference "cddb8cf488abc7102b1efd0dec0448cd9377ad09606f565013b52251ef9ea1dd"
+
+is a transient connection error that may happen when pulling Singualrity images from the Docker Hub. To solve this, just run the pipeline again until it completes without errors.
+
 ## Run the IHEC testsuite defined in the `ihec` nextflow profile:
 
-Now run the IHEC testsuite on the MCF10A RNA-Seq data: 
+The pipeline can be run on the MCF10A IHEC RNA-Seq dataset specified in the `ihec` configuration profile. Please note that processing this data requires a considerable amount of [computational resources](https://github.com/guigolab/grape-nf/blob/IHEC/ihec-resources.config). Move back to the initial folder and create a new working directory for the pipeline run:
 
-    ./nextflow run ./grape-nf -profile ihec -with-singularity
+    cd ..
+    mkdir IHEC-pipeline-test && cd IHEC-pipeline-test
+
+Copy the `nextflow.config` file from the initial test folder or create one as needed.
+
+Use the following command to run the IHEC testsuite:
+
+    ../nextflow run ../grape-nf -profile ihec -with-singularity
