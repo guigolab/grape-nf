@@ -503,7 +503,7 @@ process quantification {
     viewTx = "Transcript${refPrefix}"
     viewGn = "Gene${refPrefix}"
     memory = (task.memory ?: 1.GB).toMega()
-    sortMemory = memory * 0.8 / task.cpus
+    sortMemory = Math.round(memory * 0.8 / task.cpus)
 
     template(task.ext.command)
 
