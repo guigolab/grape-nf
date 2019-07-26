@@ -5,6 +5,11 @@ This document describes setting up and testing the pipleine to run on a single m
 
 ## Setting up and running IHEC RNA-Seq pipeline
 
+### Requirements
+
+- Java Runtime 8 or newer
+- [Singularity](https://sylabs.io/singularity/) 3.0 or newer
+
 ### Get nextflow workflow manager
 
     wget https://github.com/nextflow-io/nextflow/releases/download/v19.04.0/nextflow-19.04.0-all -O nextflow
