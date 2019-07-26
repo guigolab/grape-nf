@@ -1,20 +1,20 @@
 # IHEC RNA-Seq pipleine
 
 The pipeline developed by [Guigo Lab](https://github.com/guigolab/grape-nf) has been adopted for the IHEC integrative analysis. 
-This document describes setting up and testing the pipleine to run on a single machine (or submitted as a batch job to run on a single compute node of a cluster). 
+This document describes setting up and testing the pipleine to run on a single machine (or submitted as a batch job to run on a single compute node of a cluster).
 
-# Setting up and running IHEC RNA-Seq pipeline
+## Setting up and running IHEC RNA-Seq pipeline
 
-## Get nextflow workflow manager
-    
+### Get nextflow workflow manager
+
     wget https://github.com/nextflow-io/nextflow/releases/download/v19.04.0/nextflow-19.04.0-all -O nextflow
     chmod +x ./nextflow
 
-## Get tarball for Guigo lab RNA-Seq IHEC pipleine
+## #Get tarball for Guigo lab RNA-Seq IHEC pipleine
 
     curl -sL https://github.com/guigolab/grape-nf/archive/IHEC.tar.gz | tar xz
-    
-## Run initial pipeline tests
+
+### Run initial pipeline tests
 
 Create a pipeline working directory and move to it:
 
@@ -23,14 +23,12 @@ Create a pipeline working directory and move to it:
 Run the basic testsuite with:
 
     ../nextflow run ../grape-nf-IHEC -with-singularity 
-   
+
 The first time Nextflow will pull and cache all the required Singularity images. By default images will be saved inside the pipeline `work` folder. A different (e.g. shared) location can be specified by either setting the `NXF_SINGULARITY_CACHEDIR` environment variable or creating a file called `nextflow.config` in the current working folder of your pipeline and including the following snippet (replace `<PATH/TO/SINGUALRITY/CACHE/DIR>` with the actual path containing the cached images):
 
-```groovy
-singularity {
-  cacheDir = "<PATH/TO/SINGUALRITY/CACHE/DIR>"
-}
-```
+    singularity {
+        cacheDir = "<PATH/TO/SINGUALRITY/CACHE/DIR>"
+    }
 
 Check that the run was successful by looking at status in `trace.txt`
 
