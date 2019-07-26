@@ -14,6 +14,8 @@ This document describes setting up and testing the pipleine to run on a single m
 
     wget https://github.com/nextflow-io/nextflow/releases/download/v19.04.0/nextflow-19.04.0-all -O nextflow
     chmod +x ./nextflow
+    # optional: move the nextflow executable in a folder within yout PATH environment variable
+    mv ./nextflow <FOLDER/WITHIN/PATH>
 
 ### Get tarball for Guigo lab RNA-Seq IHEC pipleine
 
