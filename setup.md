@@ -10,7 +10,7 @@ This document describes setting up and testing the pipleine to run on a single m
     wget https://github.com/nextflow-io/nextflow/releases/download/v19.04.0/nextflow-19.04.0-all -O nextflow
     chmod +x ./nextflow
 
-## #Get tarball for Guigo lab RNA-Seq IHEC pipleine
+### Get tarball for Guigo lab RNA-Seq IHEC pipleine
 
     curl -sL https://github.com/guigolab/grape-nf/archive/IHEC.tar.gz | tar xz
 
