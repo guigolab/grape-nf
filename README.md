@@ -8,6 +8,8 @@ Grape provides an extensive pipeline for RNA-Seq analyses. It allows the creatio
 
 It uses [Nextflow](http://www.nextflow.io) as the execution backend. Please check [Nextflow documentation](http://www.nextflow.io/docs/latest/index.html) for more information.
 
+Grape has been adopted for RNA-seq integrative analysis within the IHEC consortium. Check the [IHEC setup document](ihec-setup.md) to run the pipeline following IHEC recommendations.
+
 ## Requirements
 
 - Unix-like operationg system (Linux, MacOS, etc)
