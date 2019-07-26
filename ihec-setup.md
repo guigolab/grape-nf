@@ -10,16 +10,17 @@ This document describes setting up and testing the pipleine to run on a single m
 - Java Runtime 8 or newer
 - [Singularity](https://sylabs.io/singularity/) 3.0 or newer
 
-### Get nextflow workflow manager
+### Get the Nextflow workflow manager
 
     wget https://github.com/nextflow-io/nextflow/releases/download/v19.04.0/nextflow-19.04.0-all -O nextflow
     chmod +x ./nextflow
     # optional: move the nextflow executable in a folder within yout PATH environment variable
     mv ./nextflow <FOLDER/WITHIN/PATH>
 
-### Get tarball for Guigo lab RNA-Seq IHEC pipleine
+### Get tarball for Guigo lab RNA-Seq IHEC pipeline
 
-    curl -sL https://github.com/guigolab/grape-nf/archive/IHEC.tar.gz | tar xz
+    mkdir grape-nf-IHEC
+    curl -sL https://github.com/IHEC/grape-nf/archive/master.tar.gz | tar xz --strip-components=1 -C grape-nf-IHEC
 
 ### Run initial pipeline tests
 
@@ -59,7 +60,7 @@ The following error
 
 is a transient connection error that may happen when pulling Singualrity images from the Docker Hub. To solve this, just run the pipeline again until it completes without errors.
 
-## Run the IHEC testsuite defined in the `ihec` nextflow profile:
+## Run the IHEC testsuite defined in the `ihec` nextflow profile
 
 The pipeline can be run on the MCF10A IHEC RNA-Seq dataset specified in the `ihec` configuration profile. Please note that processing this data requires a considerable amount of [computational resources](https://github.com/guigolab/grape-nf/blob/IHEC/ihec-resources.config). Move back to the initial folder and create a new working directory for the pipeline run:
 
@@ -70,4 +71,4 @@ Copy the `nextflow.config` file from the initial test folder or create one as ne
 
 Use the following command to run the IHEC testsuite:
 
-    ../nextflow run ../grape-nf -profile ihec -with-singularity
+    ../nextflow run ../grape-nf-IHEC -profile ihec -with-singularity
