@@ -54,9 +54,9 @@ Check that the run was successful by looking at status in `trace.txt`
 
 ### Troubleshooting
 
-The following error
+The following error (with IMAGE as e.g. `bamstats:bamstats-0.3.2`, and HASH as e.g. `cddb8cf488abc7102b1efd0dec0448cd9377ad09606f565013b52251ef9ea1dd`)
 
-    FATAL:   Unable to pull docker://grapenf/bamstats:bamstats-0.3.2: conveyor failed to get: no descriptor found for reference "cddb8cf488abc7102b1efd0dec0448cd9377ad09606f565013b52251ef9ea1dd"
+    FATAL:   Unable to pull docker://grapenf/<IMAGE>: conveyor failed to get: no descriptor found for reference "<HASH>"
 
 is a transient connection error that may happen when pulling Singualrity images from the Docker Hub. To solve this, just run the pipeline again until it completes without errors.
 
