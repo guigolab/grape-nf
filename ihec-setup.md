@@ -72,3 +72,11 @@ Copy the `nextflow.config` file from the initial test folder or create one as ne
 Use the following command to run the IHEC testsuite:
 
     ../nextflow run ../grape-nf-IHEC -profile ihec -with-singularity
+
+## Run the IHEC pipeline on custom data
+
+In order to run the IHEC pipeline on custom data you need to prepare the input index file following the [Pipeline input](https://github.com/guigolab/grape-nf#pipeline-input) section of the readme. 
+
+Create a new folder for the run and move there. If needed, copy the `nextflow.config` file from the initial test folder or create a new one following the steps above. Once the index file is ready, and supposing you called it `input-files.tsv`, you can use the following command line to run the analysis:
+
+    ../nexflow -bg run ../grape-nf-IHEC -profile ihec -with-singularity --index input-files.tsv > pipeline.log
