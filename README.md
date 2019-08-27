@@ -70,11 +70,7 @@ Please see [here](https://www.sylabs.io/guides/3.2/user-guide/bind_paths_and_mou
 
 ## IHEC data
 
-A reference RNA-seq test dataset is made available by the IHEC consortium. In order to run the pipeline on this data the following command can be used:
-
-```
-nexflow run guigolab/grape-nf -profile ihec ...
-```
+A reference RNA-seq test dataset is made available by the IHEC consortium. In order to run the pipeline on this data the `ihec` profile should be used by spcifying the option `-profile ihec` on the command line.
 
 Processing this data requires a considerable amount of [resources](ihec-resources.config), therefore it is recommended to run the pipeline in an HPC environment or in the cloud. Please see the [configuration](#pipeline-configuration) section for more details.
 
