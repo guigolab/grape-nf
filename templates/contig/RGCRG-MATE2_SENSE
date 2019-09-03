@@ -1,12 +1,19 @@
-#!/bin/bash -eu
-samtools view -h -@ ${cpus} ${bam} | \
-awk 'BEGIN {OFS="\\t"} {if (\$1!~/^@/ && and(\$2,64)>0) {\$2=xor(\$2,0x10)}; print}' | \
-samtools view -@ ${cpus} -Sb - > tmp.bam
+#!/bin/bash
+set -e
+set -u
 
-bamtools filter -tag NH:1 -in tmp.bam -out tmp_unique.bam && rm tmp.bam
-genomeCoverageBed -strand + -split -bg -ibam tmp_unique.bam > ${prefix}.plusRaw.bedgraph
-genomeCoverageBed -strand - -split -bg -ibam tmp_unique.bam > ${prefix}.minusRaw.bedgraph
-rm tmp_unique.bam
+sambamba view -h -t ${cpus} ${bam} \
+  | awk '
+      BEGIN {OFS="\\t"} 
+      {if (\$1!~/^@/ && and(\$2,64)>0) {\$2=xor(\$2,0x10)}; print}
+    ' \
+  | sambamba view -S -f bam -l 0 -F '[NH] == 1' /dev/stdin \
+  | tee >(
+      genomeCoverageBed -strand + -split -bg -ibam - \
+      > ${prefix}.plusRaw.bedgraph
+    ) \
+  | genomeCoverageBed -strand - -split -bg -ibam - \
+> ${prefix}.minusRaw.bedgraph
 
 contigsNew.py --chrFile ${genomeFai} \
               --fileP ${prefix}.plusRaw.bedgraph \

@@ -95,13 +95,18 @@ if [ ! $tr ] || [ ! $annot ];then
     exit 1
 fi
 
-annotbase=`basename $annot`
+annotbase=`basename $annot .gz`
 trbase=`basename $tr`
 [ output == '.' ] && output=${trbase%.gtf}\_gene_with_rpkm.gff
 withtrlist=$(dirname $output)/${trbase}.${annotbase%.gtf}.withtrlist.gff
 
+cat=cat
+if [[ $annot =~ \.gz$ ]]; then
+  cat=zcat
+fi
+
 echo "I am making the file of genes with associated transcripts from the annotation" >&2
-awk 'BEGIN{OFS=FS="\t"}$3=="transcript"{
+$cat $annot | awk 'BEGIN{OFS=FS="\t"}$3=="transcript"{
 	split($9, a, "; "); for(i=1;i<=length(a);i++){split(a[i], b, " "); gsub(/"/, "", b[2]); dict[b[1]]=b[2]}
 	gene_id=dict["gene_id"]; transcript_id=dict["transcript_id"]; 
 	trlist[gene_id]=(trlist[gene_id])(transcript_id)(",");}
@@ -109,7 +114,7 @@ $3=="gene"{
 	split($9, a, "; "); for(i=1;i<=length(a);i++){split(a[i], b, " "); gsub(/"/, "", b[2]); dict[b[1]]=b[2]}; 
 	gene_id=dict["gene_id"]; transcript_id=dict["transcript_id"]; 
 	line[gene_id]=$1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$7"\t"$8"\tgene_id \""gene_id"\""}
-END{for(g in line){print line[g]"; transcript_ids \""trlist[g]"\";"}}' $annot | $gff2gff > $withtrlist
+END{for(g in line){print line[g]"; transcript_ids \""trlist[g]"\";"}}' | $gff2gff > $withtrlist
 
 echo "I am making the gene file with rpkm and number of reads" >&2
 awk -v fileRef=$tr 'BEGIN{while (getline < fileRef >0){
@@ -123,7 +128,7 @@ awk -v fileRef=$tr 'BEGIN{while (getline < fileRef >0){
       s1+=rpkm[b[k]]; k++
     } s2=0; k=1; while(b[k]!=""){
       s2+=reads[b[k]]; k++
-    } print $0, "RPKM", s1"\;", "reads", s2"\;"
+    } print $0, "RPKM", s1";", "reads", s2";"
   }' $withtrlist | $gff2gff | sort -k1,1 -k4,4n > $output
 
 echo "I am removing unuseful files" >&2

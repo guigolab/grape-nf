@@ -3,5 +3,11 @@
 .nextflow*
 *.log
 *.db
+trace.txt*
 work/
 tmp/
+nextflow
+pipeline.db
+checksum/
+singularity/
+download/

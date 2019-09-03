@@ -1,5 +1,8 @@
-#!/bin/bash -eu
-set -o pipefail 
+#!/bin/bash
+set -e
+set -u
+set -o pipefail
+
 gemtools rna-pipeline -i ${genomeDir}/genome_index.gem \
                       -a ${annotation} \
                       -r ${genomeDir}/transcript_index.junctions.gem \
@@ -22,5 +25,6 @@ pigz -p ${cpus} -dc ${prefix}.filtered.map.gz \
 | samtools sort -@ ${cpus} \
                 -m ${threadMemory} \
                 - \
-                ${prefix}
+                -T . \
+                -o ${prefix}.bam
 samtools index ${prefix}.bam

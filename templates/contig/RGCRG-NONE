@@ -1,4 +1,9 @@
-#!/bin/bash -eu
-bamtools filter -tag NH:1 -in ${bam} -out tmp_unique.bam
-bamToBed -i tmp_unique.bam | sort -T. -k1,1 -k2,2n | mergeBed > ${prefix}.bed
-rm tmp_unique.bam
+#!/bin/bash
+set -e
+set -u
+
+sambamba view  -f bam -F '[NH] == 1' ${bam} \
+  | bamToBed -i - \
+  | sort -T. -k1,1 -k2,2n \
+  | mergeBed \
+> ${prefix}.bed

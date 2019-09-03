@@ -1,5 +1,0 @@
-#!/bin/bash -eu
-mkdir txDir
-rsem-prepare-reference --gtf ${annotation} \
-											 ${genome} \
-											 txDir/RSEMref
