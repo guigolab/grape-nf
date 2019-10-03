@@ -41,18 +41,25 @@ params.sjOverHang = 100
 params.steps = 'mapping,bigwig,contig,quantification'
 params.wigRefPrefix = 'chr'
 
-// Configuration variables
-mappingTool = "${config.process.'withName:mapping'.ext.tool} ${config.process.'withName:mapping'.ext.version}"
-bigwigTool = "${config.process.'withName:bigwig'.ext.tool} ${config.process.'withName:bigwig'.ext.version}"
-quantificationTool = "${config.process.'withName:quantification'.ext.tool} ${config.process.'withName:quantification'.ext.version}"
-quantificationMode = "${config.process.'withName:quantification'.ext.mode}"
-useContainers = config.docker?.enabled ? 'docker' : (config.singularity?.enabled ? 'singularity' : 'no')
-errorStrategy = config.process.errorStrategy
-executor = config.process.executor ?: 'local'
-queue = config.process.queue
+// Process channels
+Channel.empty().into {
+    fetchInput
+    fastaIndexGenomes; fastaIndexAnnotations
+    indexGenomes; indexAnnotations
+    mappingInput; mappingIndex; mappingAnnotations
+    txIndexGenomes; txIndexAnnotations
+    mergeBamInput
+    markdupInput
+    inferExpInput; inferExpAnnotations
+    bamStatsInput; bamStatsAnnotations
+    bigwigInput; bigwigFastaIndex
+    contigInput; contigFastaIndex
+    quantificationInput; quantificationTxIndex
+}
 
 // Auxiliary variables
 def comprExts = ['gz', 'bz2', 'zip']
+def pref = "_m${params.maxMismatches}_n${params.maxMultimaps}"
 
 // Clear pipeline.db file
 pdb = file(params.dbFile)
@@ -112,16 +119,15 @@ log.info "Index file                      : ${params.index}"
 log.info "Genome                          : ${params.genome}"
 log.info "Annotation                      : ${params.annotation}"
 log.info "Pipeline steps                  : ${pipelineSteps.join(" ")}"
-//log.info "Input chunk size                : ${params?.chunkSize ?: 'no split'}"
+log.info "Pipeline profile                : ${workflow.profile}"
 log.info ""
 
 if ('mapping' in pipelineSteps) {
     log.info "Mapping parameters"
     log.info "------------------"
-    log.info "Tool                            : ${mappingTool}"
+    // log.info "Tool                            : ${mappingTool}"
     log.info "Max mismatches                  : ${params.maxMismatches}"
     log.info "Max multimaps                   : ${params.maxMultimaps}"
-    //log.info "Produce BAM stats               : ${params.bamStats}"
     if ( params.rgPlatform ) log.info "Sequencing platform             : ${params.rgPlatform}"
     if ( params.rgLibrary ) log.info "Sequencing library              : ${params.rgLibrary}"
     if ( params.rgCenterName ) log.info "Sequencing center               : ${params.rgCenterName}"
@@ -131,7 +137,7 @@ if ('mapping' in pipelineSteps) {
 if ('bigwig' in pipelineSteps) {
     log.info "Bigwig parameters"
     log.info "-----------------"
-    log.info "Tool                            : ${bigwigTool}"
+    // log.info "Tool                            : ${bigwigTool}"
     log.info "References prefix               : ${params?.wigRefPrefix ?: 'all'}"
     log.info ""
 }
@@ -139,85 +145,141 @@ if ('bigwig' in pipelineSteps) {
 if ('quantification' in pipelineSteps) {
     log.info "Quantification parameters"
     log.info "-------------------------"
-    log.info "Tool                            : ${quantificationTool}"
-    log.info "Mode                            : ${quantificationMode}"
+    log.info "Tool                            : ${params.quantificationTool}"
+    log.info "Mode                            : ${params.quantificationMode}"
     log.info ""
 }
 
 log.info "Execution information"
 log.info "---------------------"
-log.info "Engine                          : ${executor}"
-if (queue && executor != 'local')
-    log.info "Queue(s)                        : ${queue}"
-log.info "Use containers                  : ${useContainers}"
-log.info "Error strategy                  : ${errorStrategy}"
+log.info "Use containers                  : ${workflow.containerEngine?:false}"
 log.info ""
 
+def msg = "Output files db"
+log.info "=" * msg.size()
+log.info msg + " -> ${pdb}"
+log.info "=" * msg.size()
+log.info ""
+
+// Get input data
+index = params.index ? file(params.index) : System.in
+data = ['samples': [], 'ids': []]
+
+Channel.from(index.readLines())
+.filter { it }  // get only non-empty lines
+.map { line ->
+    def (sampleId, runId, fileName, format, readId) = line.split()
+    def fetch = false
+    data.samples << sampleId
+    data.ids << runId
+    if ( fileName.split(',').size() > 1 )
+        fetch = true
+    if ( ! fetch )
+        fileName = resolveFile(fileName, index)
+    [sampleId, runId, fileName, format, readId, fetch]
+}.tap { 
+    info
+    inputFilesForFetch
+    inputFiles
+}
+
+// Show input data summary
+info.subscribe{}
+ids=data['ids'].unique().size()
+samples=data['samples'].unique().size()
+log.info "Dataset information"
+log.info "-------------------"
+log.info "Number of sequenced samples     : ${samples}"
+log.info "Number of sequencing runs       : ${ids}"
+log.info "Merging                         : ${ ids != samples ? 'by sample' : 'none' }"
+log.info ""
+
+inputFilesForFetch
+.filter { it[5] }
+.map { sampleId, runId, fileName, format, readId, fetch ->
+    [sampleId, runId, fileName, format, readId]
+}.set { 
+    fetchInput 
+}
+
+inputFiles.filter { !it[5] }
+.map { sampleId, runId, fileName, format, readId, fetch ->
+    [sampleId, runId, fileName, format, readId]
+}.set {
+    inputFilesNotToFetch
+}
+
+// Get references
 genomes = params.genome.split(',').collect { file(it) }
-annos = params.annotation.split(',').collect { file(it) }
+annotations = params.annotation.split(',').collect { file(it) }
 if (params.genomeIndex) {
     genomeidxs = params.genomeIndex.split(',').collect { file(it) }
 }
 
-index = params.index ? file(params.index) : System.in
-input_files = Channel.create()
-input_chunks = Channel.create()
-input_chunks_toFetch = Channel.create()
+Channel.from(genomes)
+.merge(Channel.from(annotations)) { g,a ->
+    [ g.simpleName, [g, a] ]
+}.transpose()
+.into { refsForGenomes; refsForAnnotations }
 
-data = ['samples': [], 'ids': []]
-input = Channel
-    .from(index.readLines())
-    .filter { it }  // get only lines not empty
-    .map { line ->
-        def (sampleId, runId, fileName, format, readId) = line.split()
-        def fetch =  false
-        if ( fileName.split(',').size() > 1 )
-            fetch = true
-        return [sampleId, runId, fileName, format, readId, fetch]
-    }
+refsForGenomes.filter {
+    it[1].name =~ /.fa(.gz)?$/
+}.set{ Genomes }
 
-if (params.chunkSize) {
-    input = input.splitFastq(by: params.chunkSize, file: true, elem: 2)
+refsForAnnotations.filter {
+    it[1].name =~ /.gtf(.gz)?$/
+}.set{ Annotations }
+
+Genomes.into { 
+    genomesForFastaIndex
+    genomesForIndex
+    genomesForTxIndex
+}
+Annotations.into { 
+    annotationsForFastaIndex
+    annotationsForIndex
+    annotationsForMapping
+    annotationsForTxIndex
+    annotationsForInferExp
+    annotationsForBamStats
+    annotationsForQuantification
 }
 
-input.subscribe onNext: {
-        sample, id, path, type, view, fetch ->
-        items = "sequencing runs"
-        if( params.chunkSize ) {
-            items = "chunks         "
-            id = id+path.baseName.find(/\..+$/)
-        }
-        if ( fetch )
-            input_chunks_toFetch << tuple(sample, id, path, type, view)
-        else
-            input_chunks << tuple(sample, id, resolveFile(path, index), type, view)
-        data['samples'] << sample
-        data['ids'] << id },
-    onComplete: {
-        ids=data['ids'].unique().size()
-        samples=data['samples'].unique().size()
-        log.info "Dataset information"
-        log.info "-------------------"
-        log.info "Number of sequenced samples     : ${samples}"
-        log.info "Number of ${items}       : ${ids}"
-        log.info "Merging                         : ${ ids != samples ? 'by sample' : 'none' }"
-        log.info ""
-        input_chunks << Channel.STOP
-        input_chunks_toFetch << Channel.STOP
+if ( 'bigwig' in pipelineSteps || 'contig' in pipelineSteps) {
+    genomesForFastaIndex.set { fastaIndexGenomes }
+    annotationsForFastaIndex.set { fastaIndexAnnotations }
+}
+
+if ( 'mapping' in pipelineSteps ) {
+    if ( params.genomeIndex ) {
+        Channel.from(genomeidxs).map {
+            [ it.simpleName, it ]
+        }.set { mappingIndex
+ }
+    } else {
+        genomesForIndex.set { indexGenomes }
+        annotationsForIndex.set { indexAnnotations }
     }
+    annotationsForMapping.set { mappingAnnotations }
+    annotationsForInferExp.set { inferExpAnnotations }
+    annotationsForBamStats.set { bamStatsAnnotations }
+}
 
-input_bams = Channel.create()
-bam = Channel.create()
+if ( 'quantification' in pipelineSteps && params.quantificationMode == "Transcriptome" ) {
+    genomesForTxIndex.set { txIndexGenomes }
+    annotationsForTxIndex.set { txIndexAnnotations }
+}
 
+// Processes
 process fetch {
-    tag { "${outPath.name}" }
+    tag { outPath.name }
     storeDir { outPath.parent }
 
     input:
-    set sample, id, path, type, view from input_chunks_toFetch
+    set sample, id, path, type, view from fetchInput
 
     output:
-    set sample, id, file("${outPath.name}"), type, view into input_chunks_fetched
+    set sample, id, file("${outPath.name}"), type, view into fetchOutput
 
     script:
     def paths = path.split(',')
@@ -232,392 +294,420 @@ process fetch {
     """
 }
 
-input_chunks.mix(input_chunks_fetched)
-    .groupTuple(by: [0,1,3], sort: true)
-    .choice(input_files, input_bams) { it -> if ( it[3] == 'fastq' ) 0 else if ( it[3] == 'bam' ) 1}
+inputFilesNotToFetch.mix(fetchOutput)
+.groupTuple(by: [0,1,3], sort: true)
+.into {
+    inputFilesForBams
+    inputFilesForFastqs
+}
 
-input_files = input_files.map {
+inputFilesForFastqs.filter {
+    it[3] == 'fastq'
+}.map {
     [it[1], it[0], it[2], fastq(it[2][0]).qualityScore()]
+}.set { mappingInput }
+
+inputFilesForBams.filter {
+    it[3] == 'bam'
+}.map { id, sample, path, type, view ->
+    [id, sample, type, view, path, params.pairedEnd].flatten()
+}
+.set {
+    inputBams
 }
 
-// id, sample, type, view, "${id}${prefix}.bam", pairedEnd
-input_bams.map {
-    it[2].withIndex().collect { bam, index ->
-        [it[1], it[0], it[3], it[4][index], bam, params.pairedEnd]
-    }
-}.flatMap ()
-.set { bamsFromIndex }
+process fastaIndex {
 
-def msg = "Output files db"
-log.info "=" * msg.size()
-log.info msg + " -> ${pdb}"
-log.info "=" * msg.size()
-log.info ""
+    tag "${species}-${params.fastaIndexTool}-${params.fastaIndexToolVersion}"
 
-Genomes = Channel.create()
-Annotations = Channel.create()
-Channel.from(genomes)
-    .merge(Channel.from(annos)) {
-        g, a -> [g.name.split("\\.", 2)[0], g, a]
-    }
-    .separate(Genomes, Annotations) {
-        a -> [[a[0],a[1]], [a[0],a[2]]]
-    }
+    input:
+    set species, file(genome) from fastaIndexGenomes
+    set species, file(annotation) from fastaIndexAnnotations
 
-Genomes.into { 
-    Genomes1;
-    Genomes2; 
-    Genomes3;
-}
-Annotations.into { 
-    Annotations1;
-    Annotations2;
-    Annotations3;
-    Annotations4;
-    Annotations5;
-    Annotations6;
-    Annotations7;
-    Annotations8;
+    output:
+    set species, file { "${genome.name.replace('.gz','')}.fai" } into fastaIndexOutput
+    script:
+    compressed = genome.extension in comprExts ? "-${genome.extension}" : ''
+    command = "${task.process}/${params.fastaIndexTool}${compressed}"
+    template(command)
+
 }
 
-pref = "_m${params.maxMismatches}_n${params.maxMultimaps}"
-
-if ('contig' in pipelineSteps || 'bigwig' in pipelineSteps) {
-    process fastaIndex {
-
-        input:
-        set species, file(genome) from Genomes1
-        set species, file(annotation) from Annotations1
-
-        output:
-        set species, file { "${genome.name.replace('.gz','')}.fai" } into FaiIdx
-
-        script:
-        compressed = genome.extension in comprExts ? "-${genome.extension}" : ''
-        template(task.ext.command)
-
-    }
-} else {
-    FaiIdx = Channel.empty()
+fastaIndexOutput.into {
+    fastaIndexForBigwig
+    fastaIndexForContig
 }
 
-FaiIdx.into { 
-    FaiIdx1;
-    FaiIdx2; 
+if ( 'bigwig' in pipelineSteps ) {
+    fastaIndexForBigwig.set { bigwigFastaIndex }
 }
 
-if ('mapping' in pipelineSteps) {
-
-    if (! params.genomeIndex) {
-        process index {
-
-            input:
-            set species, file(genome) from Genomes2
-            set species, file(annotation) from Annotations7
-
-            output:
-            set species, file("genomeDir") into GenomeIdx
-
-            script:
-            sjOverHang = params.sjOverHang
-            readLength = params.readLength
-            genomeCompressed = genome.extension in comprExts ? "-genome-${genome.extension}" : ''
-            annoCompressed = annotation.extension in comprExts ? "-anno-${annotation.extension}" : ''
-
-            template(task.ext.command)
-
-        }
-
-    } else {
-        GenomeIdx = Channel.create()
-        GenomeIdx = Genomes2.merge(Channel.from(genomeidxs)) { d, i -> 
-            [d[0], i]
-        }
-    }
-
-    (GenomeIdx1, GenomeIdx2) = GenomeIdx.into(2)
-
-    process mapping {
-
-        input:
-        set id, sample, file(reads), qualityOffset from input_files
-        set species, file(annotation) from Annotations3.first()
-        set species, file(genomeDir) from GenomeIdx2.first()
-
-        output:
-        set id, sample, type, view, file("*.bam"), pairedEnd into bam
-
-        script:
-        type = 'bam'
-        view = 'Alignments'
-        prefix = "${id}${pref}"
-        maxMultimaps = params.maxMultimaps
-        maxMismatches = params.maxMismatches
-
-        // prepare BAM @RG tag information
-        // def date = new Date().format("yyyy-MM-dd'T'HH:mmZ", TimeZone.getTimeZone("UTC"))
-        date = ""
-        readGroupList = []
-        readGroupList << ["ID", "${id}"]
-        readGroupList << ["PU", "${id}"]
-        readGroupList << ["SM", "${sample}"]
-        if ( date ) readGroupList << ["DT", "${date}"]
-        if ( params.rgPlatform ) readGroupList << ["PL", "${params.rgPlatform}"]
-        if ( params.rgLibrary ) readGroupList << ["LB", "${params.rgLibrary}"]
-        if ( params.rgCenterName ) readGroupList << ["CN", "${params.rgCenterName}"]
-        if ( params.rgDesc ) readGroupList << ["DS", "${params.rgDesc}"]
-        readGroup = task.ext.readGroup
-
-        fqs = reads.toString().split(" ")
-        pairedEnd = (fqs.size() == 2)
-        taskMemory = task.memory ?: 1.GB
-        totalMemory = taskMemory.toBytes()
-        threadMemory = taskMemory.toBytes()/(2*task.cpus)
-        task.ext.sort = params.bamSort ?: task.ext.sort
-        halfCpus = (task.cpus > 1 ? task.cpus / 2 : task.cpus) as int
-
-        template(task.ext.command)
-
-    }
-
-    bam = bam.flatMap  { id, sample, type, view, path, pairedEnd ->
-        [path].flatten().collect { f ->
-            [id, sample, type, (f.name =~ /toTranscriptome/ ? 'Transcriptome' : 'Genome') + view, f, pairedEnd]
-        }
-    }
-
-} else {
-    GenomeIdx = Channel.empty()
+if ( 'contig' in pipelineSteps ) {
+    fastaIndexForContig.set { contigFastaIndex }
 }
 
-if ('quantification' in pipelineSteps && quantificationMode != "Genome") {
+process index {
 
-    process txIndex {
+    label "mapping"
+    tag "${species}-${params.mappingTool}-${params.mappingToolVersion}"
 
-        input:
-        set species, file(genome) from Genomes3
-        set species, file(annotation) from Annotations2
+    input:
+    set species, file(genome) from indexGenomes
+    set species, file(annotation) from indexAnnotations
 
-        output:
-        set species, file('txDir') into QuantificationRef
+    output:
+    set species, file("genomeDir") into indexOutput
 
-        script:
-        genomeCompressed = genome.extension in comprExts ? "-genome-${genome.extension}" : ''
-        annoCompressed = annotation.extension in comprExts ? "-anno-${annotation.extension}" : ''
-        template(task.ext.command)
+    script:
+    cpus = task.cpus
+    sjOverHang = params.sjOverHang
+    readLength = params.readLength
+    genomeCompressed = genome.extension in comprExts ? "-genome-${genome.extension}" : ''
+    annoCompressed = annotation.extension in comprExts ? "-anno-${annotation.extension}" : ''
+    command = "${task.process}/${params.mappingTool}${genomeCompressed}${annoCompressed}"
 
-    }
+    template(command)
 
-} else {
-    QuantificationRef = Annotations2
 }
 
-// Merge or rename bam
-singleBam = Channel.create()
-groupedBam = Channel.create()
+if ( ! params.genomeIndex ) {
+    indexOutput.set { mappingIndex }
+}
 
-bam.mix(bamsFromIndex).groupTuple(by: [1, 2, 3, 5]) // group by sample, type, view, pairedEnd (to get unique values for keys)
-.choice(singleBam, groupedBam) {
-  it[4].size() > 1 ? 1 : 0
+process txIndex {
+
+    label 'quantification'
+    tag "${species}-${params.quantificationTool}-${params.quantificationToolVersion}"
+
+    input:
+    set species, file(genome) from txIndexGenomes
+    set species, file(annotation) from txIndexAnnotations
+
+    output:
+    set species, file('txDir') into txIndexOutput
+
+    script:
+    genomeCompressed = genome.extension in comprExts ? "-genome-${genome.extension}" : ''
+    annoCompressed = annotation.extension in comprExts ? "-anno-${annotation.extension}" : ''
+    command = "${task.process}/${params.quantificationTool}${genomeCompressed}${annoCompressed}"
+
+    template(command)
+
+}
+
+process mapping {
+
+    label "mapping"
+    tag "${id.replace(':', '_')}-${params.mappingTool}-${params.mappingToolVersion}"
+
+    input:
+    set id, sample, file(reads), qualityOffset from mappingInput
+    set species, file(annotation) from mappingAnnotations.first()
+    set species, file(genomeDir) from mappingIndex.first()
+
+    output:
+    set id, sample, type, view, file("*.bam"), pairedEnd into mappingOutput
+
+    script:
+    type = 'bam'
+    view = 'Alignments'
+    prefix = "${id}${pref}"
+    maxMultimaps = params.maxMultimaps
+    maxMismatches = params.maxMismatches
+
+    // prepare BAM @RG tag information
+    // def date = new Date().format("yyyy-MM-dd'T'HH:mmZ", TimeZone.getTimeZone("UTC"))
+    date = ""
+    readGroupList = []
+    readGroupList << ["ID", "${id}"]
+    readGroupList << ["PU", "${id}"]
+    readGroupList << ["SM", "${sample}"]
+    if ( date ) readGroupList << ["DT", "${date}"]
+    if ( params.rgPlatform ) readGroupList << ["PL", "${params.rgPlatform}"]
+    if ( params.rgLibrary ) readGroupList << ["LB", "${params.rgLibrary}"]
+    if ( params.rgCenterName ) readGroupList << ["CN", "${params.rgCenterName}"]
+    if ( params.rgDesc ) readGroupList << ["DS", "${params.rgDesc}"]
+    readGroup = readGroupList.collect { it.join(":") }.join(" ")
+    // readGroup = { readGroupList.collect { it.join("=") }.join(",") }
+
+    fqs = reads.toString().split(" ")
+    pairedEnd = (fqs.size() == 2)
+    taskMemory = task.memory ?: 1.GB
+    totalMemory = taskMemory.toBytes()
+    threadMemory = taskMemory.toBytes()/(2*task.cpus)
+    task.ext.sort = params.bamSort ?: task.ext.sort
+    cpus = task.cpus
+    halfCpus = (task.cpus > 1 ? task.cpus / 2 : task.cpus) as int
+
+    command = "${task.process}/${params.mappingTool}-${params.mappingToolVersion.split("\\.")[0..1].join(".")}"
+    switch(params.mappingTool) {
+        case 'GEM':
+            command += "-${pairedEnd ? 'Paired-End' : 'Single-End'}"
+            break
+        case 'STAR':
+            command += (params.bamSort ? "-"+params.bamSort : '') + (params.quantificationMode ? "-"+params.quantificationMode : '') + (params.addXs ? "-XS" : '')
+            break
+    }
+    template(command)
+
+}
+
+mappingOutput.flatMap  { id, sample, type, view, path, pairedEnd ->
+    [path].flatten().collect { f ->
+        [id, sample, type, (f.name =~ /toTranscriptome/ ? 'Transcriptome' : 'Genome') + view, f, pairedEnd]
+    }
+}.mix(inputBams).groupTuple(by: [1, 2, 3, 5]) // group by sample, type, view, pairedEnd (to get unique values for keys)
+.into {
+    bamFilesForSingle
+    bamFilesForMergeBam
+}
+
+bamFilesForSingle.filter {
+    it[4].size() == 1
+}.set {
+    bamFilesSingle
+}
+
+bamFilesForMergeBam.filter {
+    it[4].size() > 1
+}.set {
+    mergeBamInput
 }
 
 process mergeBam {
 
+    tag "${id.replace(':', '_')}-${params.mergeBamTool}-${params.mergeBamToolVersion}"
+
     input:
-    set id, sample, type, view, file(bam), pairedEnd from groupedBam
+    set id, sample, type, view, file(bam), pairedEnd from mergeBamInput
 
     output:
-    set id, sample, type, view, file("${prefix}.bam"), pairedEnd into mergedBam
+    set id, sample, type, view, file("${prefix}.bam"), pairedEnd into mergeBamOutput
 
     script:
+    cpus = task.cpus
     id = id.sort().join(':')
     prefix = "${sample}${pref}_to${view.replace('Alignments','')}"
-
-    template(task.ext.command)
+    command = "${task.process}/${params.mergeBamTool}"
+    
+    template(command)
 
 }
 
-
-bam = singleBam
-.mix(mergedBam)
+bamFilesSingle
+.mix(mergeBamOutput)
 .map {
     it.flatten()
+}.into {
+    bamFilesForGenome
+    bamFilesForTranscriptome
 }
 
-if (!('mapping' in pipelineSteps)) {
-    bam << Channel.STOP
+bamFilesForTranscriptome.filter {
+    it[3] =~ /^Transcriptome/
+}.set{
+    bamFilesToTranscriptome
 }
 
-bam.into { 
-    bam1;
-    bam2;
-    bamInfer;
+bamFilesForGenome.filter {
+    it[3] =~ /^Genome/
+}.into{
+    bamFilesForMarkdup
+    bamFilesToGenome
 }
-
-if (params.readStrand) {
-    
-    bam1.filter { it[3] =~ /Genome/ }
-    .map {
-        [it[0], params.readStrand]
-    }.set { bamStrand }
-
-} else {
-
-    process inferExp {
-
-        input:
-        set id, sample, type, view, file(bam), pairedEnd from bamInfer.filter { it[3] =~ /Genome/ }
-        set species, file(annotation) from Annotations4.first()
-
-        output:
-        set id, stdout into bamStrand
-
-        script:
-        prefix = "${annotation.name.split('\\.', 2)[0]}"
-
-        template(task.ext.command)
-    }
-
-}
-
-bamStrand.cross(bam2)
-.map {
-    bam -> bam[1].flatten() + [bam[0][1]]
-}.tap{allBamsMarkDup}
-.filter { it[3] =~ /${quantificationMode}/ }
-.set{ allBamsTx }
 
 if ( params.markDuplicates || params.removeDuplicates ) {
-    process markdup {
-
-        input:
-        set id, sample, type, view, file(bam), pairedEnd, readStrand from allBamsMarkDup.filter { it[3] =~ /Genome/ }
-
-        output:
-        set id, sample, type, view, file("${prefix}.bam"), pairedEnd, readStrand into allBamsGenome
-
-        script:
-        memory = (task.memory ?: 2.GB).toMega()
-        prefix = "${bam.baseName}.markdup"
-
-        template(task.ext.command)
-    }
-
-    allBamsGenome.mix(allBamsTx).set{allBams}
-} else {
-    allBams = allBamsMarkDup
+    bamFilesForMarkdup.set { markdupInput }
 }
 
-allBams.into { 
-    allBams1;
-    allBams2;
-    out;
+process markdup {
+
+    tag "${id.replace(':', '_')}-${params.markdupTool}-${params.markdupToolVersion}"
+
+    input:
+    set id, sample, type, view, file(bam), pairedEnd from markdupInput
+
+    output:
+    set id, sample, type, view, file("${prefix}.bam"), pairedEnd into markdupOutput
+
+    script:
+    cpus = task.cpus
+    memory = (task.memory ?: 2.GB).toMega()
+    prefix = "${bam.baseName}.markdup"
+
+    command = "${task.process}/${params.markdupTool}${params.removeDuplicates ? '-remove' : ''}"
+    template(command)
 }
 
-allBams1
-    .filter { it[3] =~ /Genome/ }
-    .into{ 
-        bigwigBams;
-        contigBams;
-        statsBams;
-    }
+if ( params.markDuplicates || params.removeDuplicates ) {
+    bamFilesToGenome = markdupOutput
+}
 
-allBams2
-    .filter { it[3] =~ /${quantificationMode}/ }
-    .set { quantificationBams }
+bamFilesToGenome.into {
+    inferExpInput
+    bamStatsInput
+}
 
-if (!('bigwig' in pipelineSteps)) bigwigBams = Channel.empty()
-if (!('contig' in pipelineSteps)) contigBams = Channel.empty()
-if (!('quantification' in pipelineSteps)) quantificationBams = Channel.empty()
+process inferExp {
+
+    tag "${id.replace(':', '_')}-${params.inferExpTool}-${params.inferExpToolVersion}"
+
+    input:
+    set id, sample, type, view, file(bam), pairedEnd from inferExpInput
+    set species, file(annotation) from inferExpAnnotations.first()
+
+    output:
+    // set id, stdout into bamStrand
+    set id, sample, type, view, file(bam), pairedEnd, stdout into inferExpOutput
+
+    script:
+    prefix = "${annotation.name.split('\\.', 2)[0]}"
+    command = "${task.process}/${params.inferExpTool}"
+
+    template(command)
+}
+
+inferExpOutput.into {
+    bigwigInput
+    contigInput
+    bamFilesCrossTranscriptome
+    bamFilesCrossBamStats
+    quantificationInputGenome
+    bamFilesToGenome
+}
+
+bamFilesToTranscriptome.cross(bamFilesCrossTranscriptome).map { transcriptome, genome ->
+    transcriptome + genome[-1]
+}.into {
+    bamFilesToTranscriptome
+    quantificationInputTranscriptome
+}
+
+switch(params.quantificationMode) {
+    case 'Genome':
+        quantificationInputGenome.set { quantificationInput }
+        annotationsForQuantification.set { quantificationIndex }
+        break
+    case 'Transcriptome':
+        quantificationInputTranscriptome.set { quantificationInput }
+        txIndexOutput.set { quantificationIndex }
+        break
+}
 
 process bamStats {
 
+    tag "${id.replace(':', '_')}-${params.bamStatsTool}-${params.bamStatsToolVersion}"
+
     input:
-    set id, sample, type, view, file(bam), pairedEnd, readStrand from statsBams
-    set species, file(annotation) from Annotations8.first()
+    set id, sample, type, view, file(bam), pairedEnd from bamStatsInput
+    set species, file(annotation) from bamStatsAnnotations.first()
 
     output:
-    set id, sample, type, views, file('*.json'), pairedEnd, readStrand into bamStats
+    set id, sample, type, views, file('*.json'), pairedEnd into bamStatsOutput
 
     script:
+    cpus = task.cpus
     type = "json"
     prefix = "${sample}"
     views = "BamStats"
-    maxBuf = task.ext.maxBuf
-    logLevel = task.ext.logLevel
+    maxBuf = params.bamStatsMaxBuf
+    logLevel = params.bamStatsLogLevel
+    command = "${task.process}/${params.bamStatsTool}"
 
-    template(task.ext.command)
+    template(command)
+}
+
+bamStatsOutput.cross(bamFilesCrossBamStats).map { stats, genome ->
+    stats + genome[-1]
+}.set {
+    bamStatsFiles
 }
 
 process bigwig {
 
+    tag "${id.replace(':', '_')}-${params.bigwigTool}-${params.bigwigToolVersion}"
+
     input:
-    set id, sample, type, view, file(bam), pairedEnd, readStrand from bigwigBams
-    set species, file(genomeFai) from FaiIdx1.first()
+    set id, sample, type, view, file(bam), pairedEnd, readStrand from bigwigInput
+    set species, file(genomeFai) from bigwigFastaIndex.first()
 
     output:
-    set id, sample, type, views, file('*.bw'), pairedEnd, readStrand into bigwig
+    set id, sample, type, views, file('*.bw'), pairedEnd, readStrand into bigwigOutput
 
     script:
+    cpus = task.cpus
     type = "bigWig"
     prefix = "${sample}"
     wigRefPrefix = params.wigRefPrefix ?: ""
-    views = task.ext.views
+    views = params.bigwigViews[readStrand]
+    command = "${task.process}/${params.bigwigTool}-${readStrand}"
 
-    template(task.ext.command)
+    template(command)
 
 }
-
-bigwig = bigwig.reduce([:]) { files, tuple ->
-    def (id, sample, type, view, path, pairedEnd, readStrand) = tuple
-    if (!files) files = []
-    paths = path.toString().replaceAll(/[\[\],]/,"").split(" ").sort()
-    (1..paths.size()).each { files << [id, sample, type, view[it-1], paths[it-1], pairedEnd, readStrand] }
-    return files
-}
-.flatMap()
 
 process contig {
 
+    tag "${id.replace(':', '_')}-${params.contigTool}-${params.contigToolVersion}"
+
     input:
-    set id, sample, type, view, file(bam), pairedEnd, readStrand from contigBams
-    set species, file(genomeFai) from FaiIdx2.first()
+    set id, sample, type, view, file(bam), pairedEnd, readStrand from contigInput
+    set species, file(genomeFai) from contigFastaIndex.first()
 
     output:
-    set id, sample, type, view, file('*.bed'), pairedEnd, readStrand into contig
+    set id, sample, type, view, file('*.bed'), pairedEnd, readStrand into contigOutput
 
     script:
+    cpus = task.cpus
     type = 'bed'
     view = 'Contigs'
     prefix = "${sample}.contigs"
+    command = "${task.process}/${params.contigTool}-${readStrand}"
 
-    template(task.ext.command)
+    template(command)
 
 }
 
 process quantification {
 
+    label 'quantification'
+    tag "${id.replace(':', '_')}-${params.quantificationTool}-${params.quantificationToolVersion}"
+
     input:
-    set id, sample, type, view, file(bam), pairedEnd, readStrand from quantificationBams
-    set species, file(quantRef) from QuantificationRef.first()
+    set id, sample, type, view, file(bam), pairedEnd, readStrand from quantificationInput
+    set species, file(quantRef) from quantificationIndex.first()
 
     output:
-    set id, sample, type, viewTx, file("*isoforms*"), pairedEnd, readStrand into isoforms
-    set id, sample, type, viewGn, file("*genes*"), pairedEnd, readStrand into genes
+    set id, sample, type, viewTx, file("*isoforms*"), pairedEnd, readStrand into quantificationIsoforms
+    set id, sample, type, viewGn, file("*genes*"), pairedEnd, readStrand into quantificationGenes
 
     script:
+    cpus = task.cpus
     prefix = "${sample}"
     refPrefix = quantRef.name.replace('.gtf','').capitalize()
-    type = task.ext.fileType
+    type = params.quantificationFileType
     viewTx = "Transcript${refPrefix}"
     viewGn = "Gene${refPrefix}"
     memory = (task.memory ?: 1.GB).toMega()
+    command = "${task.process}/${params.quantificationTool}"
+    if ( params.quantificationTool == 'RSEM') {
+        command += "-${pairedEnd ? 'Paired-End' : 'Single-End'}"
+    }
+    command += "-${readStrand}"
 
-    template(task.ext.command)
+    template(command)
 
 }
 
-out.mix(bamStats, bigwig, contig, isoforms, genes)
+bigwigOutput.flatMap { id, sample, type, views, files, pairedEnd, readStrand ->
+    [views, files].transpose().collect { view, f ->
+        [ id, sample, type, view, f, pairedEnd, readStrand ]
+    }
+}.set {
+    bigwigFiles
+}
+
+bamFilesToGenome.mix(bamFilesToTranscriptome, bamStatsFiles, bigwigFiles, contigOutput, quantificationIsoforms, quantificationGenes)
 .collectFile(name: pdb.name, storeDir: pdb.parent, newLine: true) { id, sample, type, view, file, pairedEnd, readStrand ->
     [sample, id, file, type, view, pairedEnd ? 'Paired-End' : 'Single-End', readStrand].join("\t")
 }
