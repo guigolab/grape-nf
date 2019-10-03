@@ -427,8 +427,8 @@ process mapping {
     if ( params.rgLibrary ) readGroupList << ["LB", "${params.rgLibrary}"]
     if ( params.rgCenterName ) readGroupList << ["CN", "${params.rgCenterName}"]
     if ( params.rgDesc ) readGroupList << ["DS", "${params.rgDesc}"]
-    readGroup = readGroupList.collect { it.join(":") }.join(" ")
-    // readGroup = { readGroupList.collect { it.join("=") }.join(",") }
+    (s,t) = params.mappingReadGroupSeparators
+    readGroup = readGroupList.collect { it.join(s) }.join(t)
 
     fqs = reads.toString().split(" ")
     pairedEnd = (fqs.size() == 2)
