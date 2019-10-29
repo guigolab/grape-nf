@@ -19,6 +19,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+// imports
+import groovy.json.JsonSlurper
+
 //Set default values for params
 params.addXs = false
 params.bamSort = null
@@ -559,7 +562,7 @@ process inferExp {
 
     output:
     // set id, stdout into bamStrand
-    set id, sample, type, view, file(bam), pairedEnd, stdout into inferExpOutput
+    set id, sample, type, view, file(bam), pairedEnd, stdout into inferExpOutputJSON
 
     script:
     prefix = "${annotation.name.split('\\.', 2)[0]}"
@@ -567,6 +570,14 @@ process inferExp {
     threshold = params.inferExpThreshold
 
     template(command)
+}
+
+inferExpOutputJSON.map {
+    j = new JsonSlurper()
+    d = j.parseText(it[-1])
+    it[0..-3] + [ d.paired, d.exp ]
+}.set {
+    inferExpOutput
 }
 
 inferExpOutput.into {
