@@ -5,4 +5,4 @@ set -o pipefail
 
 gtfToGenePred ${annotation} -allErrors -ignoreGroupsWithoutExons ${prefix}.genePred 2> ${prefix}.genePred.err
 genePredToBed ${prefix}.genePred ${prefix}.bed
-grape_infer_experiment.py -i ${bam} -r ${prefix}.bed | tr -d '\\n'
+grape_infer_experiment.py -i ${bam} -r ${prefix}.bed --threshold ${threshold} | tr -d '\\n'

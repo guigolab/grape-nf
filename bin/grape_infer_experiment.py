@@ -76,6 +76,7 @@ def main():
     parser.add_option("-i","--input-file",action="store",type="string",dest="input_file",help="Input alignment file in SAM or BAM format")
     parser.add_option("-r","--refgene",action="store",type="string",dest="refgene_bed",help="Reference gene model in bed fomat.")
     parser.add_option("-s","--sample-size",action="store",type="int",dest="sample_size",default=200000, help="Number of reads sampled from SAM/BAM file. default=%default")
+    parser.add_option("-t","--threshold",action="store",type="float",dest="threshold",default=0.8, help="Threshold of the fraction to assign an experiment configuration. default=%default")
     (options,args)=parser.parse_args()
 
     if not (options.input_file and options.refgene_bed):
@@ -96,18 +97,18 @@ def main():
     if protocol == "PairEnd":
         print >>sys.stderr, "Fraction of reads explained by \"1++,1--,2+-,2-+\": %.4f" % sp1
         print >>sys.stderr, "Fraction of reads explained by \"1+-,1-+,2++,2--\": %.4f" % sp2
-        if sp1 > 0.8:
+        if sp1 > options.threshold:
             print "MATE1_SENSE"
-        elif sp2 > 0.8:
+        elif sp2 > options.threshold:
             print "MATE2_SENSE"
         else:
             print "NONE"
     elif protocol == "SingleEnd":
         print >>sys.stderr, "Fraction of reads explained by \"++,--\": %.4f" % sp1
         print >>sys.stderr, "Fraction of reads explained by \"+-,-+\": %.4f" % sp2
-        if sp1 > 0.8:
+        if sp1 > options.threshold:
             print "SENSE"
-        elif sp2 > 0.8:
+        elif sp2 > options.threshold:
             print "ANTISENSE"
         else:
             print "NONE"

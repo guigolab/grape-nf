@@ -40,6 +40,7 @@ params.rgPlatform = null
 params.sjOverHang = 100
 params.steps = 'mapping,bigwig,contig,quantification'
 params.wigRefPrefix = 'chr'
+params.inferExpThreshold = 0.8
 
 // Process channels
 Channel.empty().into {
@@ -563,6 +564,7 @@ process inferExp {
     script:
     prefix = "${annotation.name.split('\\.', 2)[0]}"
     command = "${task.process}/${params.inferExpTool}"
+    threshold = params.inferExpThreshold
 
     template(command)
 }
