@@ -42,7 +42,7 @@ params.rgLibrary = null
 params.rgPlatform = null
 params.sjOverHang = 100
 params.steps = 'mapping,bigwig,contig,quantification'
-params.wigRefPrefix = 'chr'
+params.wigRefPrefix = ''
 params.inferExpThreshold = 0.8
 
 // Process channels
@@ -142,7 +142,7 @@ if ('bigwig' in pipelineSteps) {
     log.info "Bigwig parameters"
     log.info "-----------------"
     // log.info "Tool                            : ${bigwigTool}"
-    log.info "References prefix               : ${params?.wigRefPrefix ?: 'all'}"
+    log.info "References prefix               : ${['','-'].contains(params.wigRefPrefix) ? 'all' : params.wigRefPrefix}"
     log.info ""
 }
 
@@ -651,7 +651,7 @@ process bigwig {
     cpus = task.cpus
     type = "bigWig"
     prefix = "${sample}"
-    wigRefPrefix = params.wigRefPrefix ?: ""
+    wigRefPrefix = params.wigRefPrefix != "-" ? params.wigRefPrefix : ""
     views = params.bigwigViews[readStrand]
     command = "${task.process}/${params.bigwigTool}-${readStrand}"
 
