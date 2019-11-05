@@ -313,7 +313,8 @@ inputFilesForFastqs.filter {
 
 inputFilesForBams.filter {
     it[3] == 'bam'
-}.map { id, sample, path, type, view ->
+}.transpose()
+.map { id, sample, path, type, view ->
     [id, sample, type, view, path, params.pairedEnd].flatten()
 }
 .set {
@@ -590,7 +591,7 @@ inferExpOutput.into {
 }
 
 bamFilesToTranscriptome.cross(bamFilesCrossTranscriptome).map { transcriptome, genome ->
-    transcriptome + genome[-1]
+    transcriptome[0..-2] + genome[-2..-1]
 }.into {
     bamFilesToTranscriptome
     quantificationInputTranscriptome
