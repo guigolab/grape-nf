@@ -7,7 +7,7 @@ PROCS := bigwig contig inferexp mapping quantification
 
 GLIBC_VER := 2.25
 
-BAMSTATS_VER := 0.3.2
+BAMSTATS_VER := 0.3.4
 BEDTOOLS_VER := 2.19.1
 FLUX_VER := 1.6.1
 GEMTOOLS_VER := 1.7.1

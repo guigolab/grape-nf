@@ -2,7 +2,7 @@
 #
 FROM grapenf/base
 
-ARG BAMSTATS_VER=0.3.2
+ARG BAMSTATS_VER=0.3.4
 
 LABEL author.name="Emilio Palumbo"
 LABEL author.email="emiliopalumbo@gmail.com"
