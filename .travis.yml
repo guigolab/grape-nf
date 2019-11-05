@@ -15,6 +15,7 @@ env:
   - PROFILE=starflux
   - PROFILE=markdup
   - PROFILE=rmdup
+  - PROFILE=testbam
 
 script:
   - ./test.sh
