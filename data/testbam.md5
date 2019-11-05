@@ -1,0 +1,9 @@
+c742a9205b199683c28917a8e48e6a3d  test1.Unique.minusRaw.bw
+8bdede3364f6d46d321d4835f6e4b743  test1.Unique.plusRaw.bw
+7258dee4fe608f4493b44fd9d7a78ebc  test1.UniqueMultiple.minusRaw.bw
+cc49b8dad09616bdf68776bf77250271  test1.UniqueMultiple.plusRaw.bw
+eb1bc7140d4f231a502c0bb3a47c0e93  test1.contigs.bed
+e95e358b9870bece1d0b7a26f50575d8  test1.genes.results
+887f96f92716842ebfc23f2a4bbd2429  test1.isoforms.results
+faf244c4a41ab187e8cc90879024cbdf  test1_m4_n10_toGenome.bam
+ffe6da2162dda0b076f6a6b9750565be  test1_m4_n10_toTranscriptome.bam

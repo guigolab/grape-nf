@@ -1,0 +1,2 @@
+sample1	test1	data/test1_m4_n10_toGenome.bam	bam	GenomeAlignments
+sample1	test1	data/test1_m4_n10_toTranscriptome.bam	bam TranscriptomeAlignments
