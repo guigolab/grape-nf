@@ -167,30 +167,24 @@ log.info ""
 
 // Get input data
 index = params.index ? file(params.index) : System.in
-data = ['samples': [], 'ids': []]
 
 Channel.from(index.readLines())
 .filter { it }  // get only non-empty lines
 .map { line ->
     def (sampleId, runId, fileName, format, readId) = line.split()
     def fetch = false
-    data.samples << sampleId
-    data.ids << runId
     if ( fileName.split(',').size() > 1 )
         fetch = true
     if ( ! fetch )
         fileName = resolveFile(fileName, index)
     [sampleId, runId, fileName, format, readId, fetch]
 }.tap { 
-    info
     inputFilesForFetch
     inputFiles
 }
 
-// Show input data summary
-info.subscribe{}
-ids=data['ids'].unique().size()
-samples=data['samples'].unique().size()
+(ids, samples, indexLines) = readTsv(index)
+
 log.info "Dataset information"
 log.info "-------------------"
 log.info "Number of sequenced samples     : ${samples}"
@@ -730,6 +724,23 @@ bamFilesToGenome.mix(bamFilesToTranscriptome, bamStatsFiles, bigwigFiles, contig
     log.info "-----------------------"
     log.info "Pipeline run completed."
     log.info "-----------------------"
+}
+
+/*
+ * Given the input index file returns the number of unique samples, 
+ * the number of unique runs, and the lines of the index.
+ * Params: 
+ * - tsvFile: a file object representing the TSV file
+ */
+def readTsv(tsvFile) {
+    def (samples, ids, lines) = [[], [], []]
+    tsvFile.eachLine { line ->
+        def (sampleId, runId, fileName, format, readId) = line.split()
+        samples << sampleId
+        ids << runId
+        lines << line
+    }
+    [ids.unique().size(), samples.unique().size(), lines]
 }
 
 /*
