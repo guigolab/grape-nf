@@ -1,5 +1,4 @@
 dist: trusty
-sudo: required
 
 services:
   - docker
@@ -10,12 +9,12 @@ jdk:
   - oraclejdk8
 
 env:
-  - PROFILE=gemflux
-  - PROFILE=starrsem
-  - PROFILE=starflux
-  - PROFILE=markdup
-  - PROFILE=rmdup
-  - PROFILE=testbam
+  - CI_PROFILE=gemflux
+  - CI_PROFILE=starrsem
+  - CI_PROFILE=starflux
+  - CI_PROFILE=markdup
+  - CI_PROFILE=rmdup
+  - CI_PROFILE=testbam
 
 script:
-  - ./test.sh
+  - . .circ && ci test
