@@ -24,7 +24,7 @@ import groovy.json.JsonSlurper
 
 //Set default values for params
 params.addXs = false
-params.bamSort = null
+params.mappingSortTool = null
 params.chunkSize = null
 params.dbFile = 'pipeline.db'
 params.genomeIndex = null
@@ -434,7 +434,6 @@ process mapping {
     taskMemory = task.memory ?: 1.GB
     totalMemory = taskMemory.toBytes()
     threadMemory = taskMemory.toBytes()/(2*task.cpus)
-    task.ext.sort = params.bamSort ?: task.ext.sort
     cpus = task.cpus
     halfCpus = (task.cpus > 1 ? task.cpus / 2 : task.cpus) as int
 
@@ -444,7 +443,7 @@ process mapping {
             command += "-${pairedEnd ? 'Paired-End' : 'Single-End'}"
             break
         case 'STAR':
-            command += (params.bamSort ? "-"+params.bamSort : '') + (params.quantificationMode ? "-"+params.quantificationMode : '') + (params.addXs ? "-XS" : '')
+            command += (params.mappingSortTool ? "-"+params.mappingSortTool : '') + (params.quantificationMode ? "-"+params.quantificationMode : '') + (params.addXs ? "-XS" : '')
             break
     }
     template(command)
@@ -469,7 +468,47 @@ bamFilesForSingle.filter {
 
 bamFilesForMergeBam.filter {
     it[4].size() > 1
+}.into {
+    bamFilesGenomeForMerge
+    bamFilesTranscriptomeForMerge
+}
+
+bamFilesGenomeForMerge.filter {
+    it[3] =~ /^Genome/
 }.set {
+    mergeBamGenomeInput
+}
+
+bamFilesTranscriptomeForMerge.filter {
+    it[3] =~ /^Transcriptome/
+}.transpose()
+.set {
+    bamFilesTranscriptomeMerge
+}
+
+process sortBam {
+    tag "${id}-${params.mergeBamTool}-${params.mergeBamToolVersion}"
+
+    input:
+    set id, sample, type, view, file(bam), pairedEnd from bamFilesTranscriptomeMerge
+
+    output:
+    set id, sample, type, view, file("${prefix}.bam"), pairedEnd into mergeBamTranscriptomeInput
+
+    script:
+    cpus = task.cpus
+    taskMemory = task.memory ?: 1.GB
+    totalMemory = taskMemory.toBytes()
+    threadMemory = totalMemory/cpus
+    prefix = "${bam.baseName}_sorted"
+    command = "${task.process}/${params.mergeBamTool}"
+    
+    template(command)
+}
+
+mergeBamGenomeInput.mix(
+    mergeBamTranscriptomeInput.groupTuple(by: [1, 2, 3, 5], sort: true)
+).set {
     mergeBamInput
 }
 
