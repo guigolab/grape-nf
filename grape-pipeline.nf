@@ -308,7 +308,7 @@ inputFilesForFastqs.filter {
 inputFilesForBams.filter {
     it[3] == 'bam'
 }.transpose()
-.map { id, sample, path, type, view ->
+.map { sample, id, path, type, view ->
     [id, sample, type, view, path, params.pairedEnd].flatten()
 }
 .set {
