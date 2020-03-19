@@ -1,6 +1,7 @@
 30245cd4c1b37b323a1428e6a79b6b46  sample1.contigs.bed
 94884593db9b76caa87bf2c3b09c4671  sample1.genes.gff
 c3cfd6d32e8bd3258bb1cb6127157a99  sample1.isoforms.gtf
+e1cf9e315706bf0eb08258d503a36274  sample1_m4_n10_toGenome.bam
 6936e714ac8f98c951ba52ec8fd0e441  sample1_stats.json
 37aa4ae5af33a81f8775440bbfd21fba  sample1.Unique.minusRaw.bw
 ffce7ba84865e21df6bf8fb849822545  sample1.UniqueMultiple.minusRaw.bw
@@ -18,10 +19,9 @@ c7ad3d6214f976735c7e621b9f78d323  sample2.UniqueMultiple.plusRaw.bw
 89f19344b1f1a346a105f2b3f9443f9e  sample3.contigs.bed
 74f9de8e31ff2c24bc45af5f8ec73530  sample3.genes.gff
 1a039c489fdeb3e0ab4ff768424b5997  sample3.isoforms.gtf
+7a342ac43535d6f56492ea081f956779  sample3_m4_n10_toGenome.bam
 77c72bef6f1410e33c90dbc01697fffc  sample3_stats.json
 1363d4e278c9024433c2901996ab730a  sample3.Unique.minusRaw.bw
 2deb1fd284c866ff5faec6ceba351d56  sample3.UniqueMultiple.minusRaw.bw
 f60e3c597e32fce7b5caf13843080bd6  sample3.UniqueMultiple.plusRaw.bw
 1b9adcfb8312cde4f51d48d5b0772d01  sample3.Unique.plusRaw.bw
-e1cf9e315706bf0eb08258d503a36274  test1_m4_n10_toGenome.bam
-7a342ac43535d6f56492ea081f956779  test4_m4_n10_toGenome.bam
