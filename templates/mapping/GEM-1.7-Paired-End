@@ -26,5 +26,5 @@ pigz -p ${cpus} -dc ${prefix}.filtered.map.gz \
                 -m ${threadMemory} \
                 - \
                 -T . \
-                -o ${prefix}.bam
-samtools index ${prefix}.bam
+                -o ${prefix}_toGenome.bam
+samtools index ${prefix}_toGenome.bam
