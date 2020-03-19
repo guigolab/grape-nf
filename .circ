@@ -92,17 +92,18 @@ _ci_run() {
 
 # Check pipeline results for CI
 _ci_check() {
-	mkdir -p $CI_OUTDIR && cd $CI_OUTDIR
+	(mkdir -p $CI_OUTDIR && cd $CI_OUTDIR
+	echo $CI_PROFILE > .ci_profile
 	cut -f 3 ../pipeline.db | while read f
-	do
+	do	
 		_ci_get_file $(_ci_canonicalize_path ..) $f
 	done
-	md5sum -c ${CI_DIR}/data/$CI_PROFILE.md5
+	md5sum -c ${CI_DIR}/data/$CI_PROFILE.md5)
 }
 
 # Cleanup CI result directory
 _ci_clean() {
-	rm -rf $CI_OUTDIR
+	rm --interactive=never -r $CI_OUTDIR
 }
 
 # Perform a ful CI test
