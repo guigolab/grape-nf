@@ -16,8 +16,6 @@ fd49b1c19e153c8ee112609e1ce757a0  sample2_stats.json
 74f9de8e31ff2c24bc45af5f8ec73530  sample3.genes.gff
 1a039c489fdeb3e0ab4ff768424b5997  sample3.isoforms.gtf
 7a342ac43535d6f56492ea081f956779  sample3_m4_n10_toGenome.bam
+db10a50bb7eebec0f3421f4460d4cae8  sample3.minusRaw.bw
+235e2d65c856c969048e432234c04ff4  sample3.plusRaw.bw
 77c72bef6f1410e33c90dbc01697fffc  sample3_stats.json
-1363d4e278c9024433c2901996ab730a  sample3.Unique.minusRaw.bw
-2deb1fd284c866ff5faec6ceba351d56  sample3.UniqueMultiple.minusRaw.bw
-f60e3c597e32fce7b5caf13843080bd6  sample3.UniqueMultiple.plusRaw.bw
-1b9adcfb8312cde4f51d48d5b0772d01  sample3.Unique.plusRaw.bw
