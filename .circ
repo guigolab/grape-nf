@@ -62,7 +62,7 @@ _ci_get_file() {
 	case "$filename" in
 		*.bam)
 			_ci_normalize_bam "$baseDir" "$filename" ;;
-		*.bed|*.bw|*.results|*.json)
+		*.bed|*.bw|*.results|*.json|*.g[tf]f)
 			ln -fs "$filename";;
 		*)
 			echo "'${filename##*.}' extension not supported";;
