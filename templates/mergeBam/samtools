@@ -11,5 +11,5 @@ set -u
 samtools merge -@ ${cpus} \
                -h header.txt \
                ${prefix}.bam \
-               ${bam} && \
+               *.bam && \
 samtools index ${prefix}.bam
