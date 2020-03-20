@@ -410,7 +410,7 @@ process mapping {
     script:
     type = 'bam'
     view = 'Alignments'
-    prefix = "${id}${pref}"
+    prefix = "${sample}${pref}"
     maxMultimaps = params.maxMultimaps
     maxMismatches = params.maxMismatches
 
@@ -517,7 +517,7 @@ process mergeBam {
     tag "${id.replace(':', '_')}-${params.mergeBamTool}-${params.mergeBamToolVersion}"
 
     input:
-    set id, sample, type, view, file(bam), pairedEnd from mergeBamInput
+    set id, sample, type, view, file("${sample}_??.bam"), pairedEnd from mergeBamInput
 
     output:
     set id, sample, type, view, file("${prefix}.bam"), pairedEnd into mergeBamOutput
