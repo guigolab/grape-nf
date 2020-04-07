@@ -14,6 +14,7 @@ env:
   - CI_PROFILE=starflux
   - CI_PROFILE=markdup
   - CI_PROFILE=rmdup
+  - CI_PROFILE=ihec
 
 script:
   - . .circ && ci test
