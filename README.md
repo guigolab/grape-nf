@@ -280,11 +280,11 @@ The pipeline can be also run natively by installing the required software on the
 
 The versions of the tools that have been tested so far with the `standard` pipeline profile are the following:
 
-- [STAR v2.4.0j](https://github.com/alexdobin/STAR/releases/tag/STAR_2.4.0j)
-- [samtools v1.2](https://github.com/samtools/samtools/releases/tag/1.2)
-- [sambamba v0.7.0](https://github.com/biod/sambamba/releases/tag/v0.7.0)
-- [RSEM v1.2.21](https://github.com/deweylab/RSEM/releases/tag/v1.2.21)
-- [RSeQC v2.6.4](http://rseqc.sourceforge.net/)
+- [bamstats v0.3.4](https://github.com/guigolab/bamstats/releases/tag/v0.3.4)
 - [bedtools v2.19.1](https://github.com/arq5x/bedtools2/releases/tag/v2.19.1)
 - [KentUtils v308](https://github.com/ucscGenomeBrowser/kent/releases/tag/v308_base)
-- [bamstats v0.3.2](https://github.com/guigolab/bamstats/releases/tag/v0.3.2)
+- [RSEM v1.2.21](https://github.com/deweylab/RSEM/releases/tag/v1.2.21)
+- [RSeQC v2.6.4](http://rseqc.sourceforge.net/)
+- [sambamba v0.7.0](https://github.com/biod/sambamba/releases/tag/v0.7.0)
+- [samtools v1.3](https://github.com/samtools/samtools/releases/tag/1.3.1)
+- [STAR v2.4.0j](https://github.com/alexdobin/STAR/releases/tag/STAR_2.4.0j)
