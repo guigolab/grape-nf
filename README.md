@@ -68,41 +68,6 @@ Starting in version 3.0, Singularity can bind paths to non-existent mount points
 
 Please see [here](https://www.sylabs.io/guides/3.2/user-guide/bind_paths_and_mounts.html) for further instructions on Singularity mounts.
 
-## IHEC
-
-### Pipeline profile
-
-A specific pipeline profile has been setup with the standard workflow recommended by the IHEC consortium for RNA-seq data. The profile is on continuous integration testing. In order to use the profile the option `-profile ihec` must be specified on the command line, e.g.:
-
-```
-nexflow run guigolab/grape-nf -profile ihec ...
-```
-
-### Data
-
-A reference RNA-seq test dataset is made available by the IHEC consortium. In order to run the pipeline using this data as input, the following command should be used:
-
-```
-nexflow run guigolab/grape-nf -profile ihec,ihecdata ...
-```
-
-**NOTE**: the `ihecdata` profile is a data-only profile and must be used in conjuction with a processing profile such as `starrsem`. In the example command above we used the `ihec` profile as the processing profile. Please check [Nextflow documentation](https://www.nextflow.io/docs/latest/config.html#config-profiles) for more information about configuration profiles.
-
-Processing this data requires a considerable amount of [resources](ihec-resources.config), therefore it is recommended to run the pipeline in an HPC environment or in the cloud. Please see the [configuration](#pipeline-configuration) section for more details.
-
-Once the data has been processed the following checksums can be used to verify that the pipeline ran fine and produced the correct output fies:
-
-```
-ea4075877567c6b36061370d50fde9e2 *A24901.contigs.bed
-4804ef82c86baf5af551c0ae03204448 *A24901.genes.results
-a111578132a844a34760a9f1ab308a05 *A24901.isoforms.results
-016ef39b20d8d98ce9bf0d789e7225f8 *A24901_stats.json
-3b1489a9452ebfaab2aae9b6e3c47523 *A24901.UniqueMultiple.raw.bw
-2deefb50d097d7f4d66458b40b7e80d3 *A24901.Unique.raw.bw
-5bace482e2c8907e1287d747d4eacb59 *C2A6RACXX_m4_n10_toGenome.markdup.bam
-c5f698ec8956be3a5fbe3a7325e5c4df *C2A6RACXX_m4_n10_toTranscriptome.bam
-```
-
 ## Pipeline parameters
 
 A usage message is provided and can be seen using the `--help` pipeline option in the command as follows:

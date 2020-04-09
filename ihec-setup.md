@@ -1,7 +1,7 @@
 # IHEC RNA-Seq pipleine
 
 The pipeline developed by [Guigo Lab](https://github.com/guigolab/grape-nf) has been adopted for the IHEC integrative analysis. 
-This document describes setting up and testing the pipleine to run on a single machine (or submitted as a batch job to run on a single compute node of a cluster).
+This document describes setting up and testing the pipeline to run on a single machine (or submitted as a batch job to run on a single compute node of a HPC cluster environement). To run the IHEC pipeline at scale on a HPC cluster environment taking advantage of a job scheduler please check [Nextflow documentation](https://www.nextflow.io/docs/latest/basic.html#execution-abstraction) or contact the pipeline developer.
 
 ## Setting up and running IHEC RNA-Seq pipeline
 
@@ -28,17 +28,19 @@ Create a pipeline working directory and move to it:
 
     mkdir pipeline-test && cd pipeline-test
 
-Run the basic testsuite with:
+A specific pipeline profile with the standard workflow recommended by the IHEC consortium for RNA-seq data is available. The profile is on continuous integration testing and can be used by specifying the option `-profile ihec` on the command line. To run the IHEC profile with a small test dataset type:
 
-    ../nextflow run ../grape-nf-IHEC -with-singularity 
+    ../nextflow run ../grape-nf-IHEC -profile ihec -with-singularity
 
-The first time Nextflow will pull and cache all the required Singularity images. By default images will be saved inside the pipeline `work` folder. A different (e.g. shared) location can be specified by either setting the `NXF_SINGULARITY_CACHEDIR` environment variable or creating a file called `nextflow.config` in the current working folder of your pipeline and including the following snippet (replace `<PATH/TO/SINGUALRITY/CACHE/DIR>` with the actual path containing the cached images):
+The first time Nextflow will pull and cache all the required Singularity image. By default it will be saved inside the pipeline `work` folder. A different (e.g. shared) location can be specified by either setting the `NXF_SINGULARITY_CACHEDIR` environment variable or creating a file called `nextflow.config` in the current working folder of your pipeline and including the following snippet (replace `<PATH/TO/SINGUALRITY/CACHE/DIR>` with the actual path containing the cached images):
 
     singularity {
         cacheDir = "<PATH/TO/SINGUALRITY/CACHE/DIR>"
     }
 
-Check that the run was successful by looking at status in `trace.txt`
+**NOTE**: As an option, the script `../grape-nf-IHEC/scripts/singularity-prefetch.sh` can be used to prefetch the singularity image in advance. Run `../grape-nf-IHEC/scripts/singularity-prefetch.sh -h` for usage.
+
+Check that the run was successful by looking at the `status` field in `trace.txt`:
 
     $ cat trace.txt
     task_id hash    native_id       name    status  exit    submit  duration        realtime        %cpu    peak_rss        peak_vmem       rchar   wchar
@@ -54,15 +56,17 @@ Check that the run was successful by looking at status in `trace.txt`
 
 ### Troubleshooting
 
-The following error (with IMAGE as e.g. `bamstats:bamstats-0.3.2`, and HASH as e.g. `cddb8cf488abc7102b1efd0dec0448cd9377ad09606f565013b52251ef9ea1dd`)
+The following error:
 
     FATAL:   Unable to pull docker://grapenf/<IMAGE>: conveyor failed to get: no descriptor found for reference "<HASH>"
 
-is a transient connection error that may happen when pulling Singualrity images from the Docker Hub. To solve this, just run the pipeline again until it completes without errors.
+is a transient connection error that may happen when pulling Singularity images from the Docker Hub. To solve this, just run the pipeline again until it completes without errors or use the script described in the [section above](#run-initial-pipeline-tests) to prefectch the image.
 
-## Run the IHEC testsuite defined in the `ihec` nextflow profile
+## Run the IHEC test dataset
 
-The pipeline can be run on the MCF10A IHEC RNA-Seq dataset specified in the `ihec` configuration profile. Please note that processing this data requires a considerable amount of [computational resources](https://github.com/guigolab/grape-nf/blob/IHEC/ihec-resources.config). Move back to the initial folder and create a new working directory for the pipeline run:
+A reference RNA-seq dataset (MCF10A) is made available by the IHEC consortium for testing. Please note that processing this data requires a considerable amount of [computational resources](https://github.com/IHEC/grape-nf/blob/master/config/resources/ihec.config).
+
+Move back to the initial folder and create a new working directory for the pipeline run:
 
     cd ..
     mkdir IHEC-pipeline-test && cd IHEC-pipeline-test
@@ -71,12 +75,25 @@ Copy the `nextflow.config` file from the initial test folder or create one as ne
 
 Use the following command to run the IHEC testsuite:
 
-    ../nextflow run ../grape-nf-IHEC -profile ihec -with-singularity
+    ../nextflow run ../grape-nf-IHEC -profile ihec,ihec-data -with-singularity
+
+**NOTE**: the `ihec-data` profile only contains configuration for the required input references and data. Thus it must be used in conjuction with a workflow profile such as `ihec`, as it can be seen in the example command above. Please check [Nextflow documentation](https://www.nextflow.io/docs/latest/config.html#config-profiles) for more information about configuration profiles.
+
+Once the data has been processed the following checksums can be used to verify that the pipeline ran fine and produced the correct output fies:
+
+    ea4075877567c6b36061370d50fde9e2 *A24901.contigs.bed
+    4804ef82c86baf5af551c0ae03204448 *A24901.genes.results
+    a111578132a844a34760a9f1ab308a05 *A24901.isoforms.results
+    016ef39b20d8d98ce9bf0d789e7225f8 *A24901_stats.json
+    3b1489a9452ebfaab2aae9b6e3c47523 *A24901.UniqueMultiple.raw.bw
+    2deefb50d097d7f4d66458b40b7e80d3 *A24901.Unique.raw.bw
+    5bace482e2c8907e1287d747d4eacb59 *A24901_m4_n10_toGenome.markdup.bam
+    c5f698ec8956be3a5fbe3a7325e5c4df *A24901_m4_n10_toTranscriptome.bam
 
 ## Run the IHEC pipeline on custom data
 
 In order to run the IHEC pipeline on custom data you need to prepare the input index file following the [Pipeline input](https://github.com/guigolab/grape-nf#pipeline-input) section of the readme. 
 
-Create a new folder for the run and move there. If needed, copy the `nextflow.config` file from the initial test folder or create a new one following the steps above. Once the index file is ready, and supposing you called it `input-files.tsv`, you can use the following command line to run the analysis:
+Create a new folder for the run and move there. If needed, copy the `nextflow.config` file from the initial test folder or create a new one following the steps above. Once the index file is ready, and assuming that you called it `input-files.tsv`, you can use the following command to run the workflow:
 
-    ../nexflow -bg run ../grape-nf-IHEC -profile ihec -with-singularity --index input-files.tsv > pipeline.log
+    ../nexflow -bg run ../grape-nf-IHEC -profile ihec,ihec-data -with-singularity --index input-files.tsv > pipeline.log
