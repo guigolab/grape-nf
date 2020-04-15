@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+set -u
+
+samtools faidx ${genome}

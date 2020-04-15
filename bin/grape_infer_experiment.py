@@ -38,6 +38,7 @@ import string
 import collections
 import math
 import sets
+import json
 from time import strftime
 
 #import third-party modules
@@ -76,6 +77,7 @@ def main():
     parser.add_option("-i","--input-file",action="store",type="string",dest="input_file",help="Input alignment file in SAM or BAM format")
     parser.add_option("-r","--refgene",action="store",type="string",dest="refgene_bed",help="Reference gene model in bed fomat.")
     parser.add_option("-s","--sample-size",action="store",type="int",dest="sample_size",default=200000, help="Number of reads sampled from SAM/BAM file. default=%default")
+    parser.add_option("-t","--threshold",action="store",type="float",dest="threshold",default=0.8, help="Threshold of the fraction to assign an experiment configuration. default=%default")
     (options,args)=parser.parse_args()
 
     if not (options.input_file and options.refgene_bed):
@@ -91,31 +93,32 @@ def main():
     obj = SAM.ParseBAM(options.input_file)
     (protocol,sp1,sp2,other)=obj.configure_experiment(refbed=options.refgene_bed, sample_size = options.sample_size)
     if other <0: other=0.0
+    result = {
+        'paired': protocol == "PairEnd",
+        'exp': 'NONE'
+    }
     print >>sys.stderr, '------ STATS ------'
     print >>sys.stderr, 'Protocol: ' + protocol
     if protocol == "PairEnd":
         print >>sys.stderr, "Fraction of reads explained by \"1++,1--,2+-,2-+\": %.4f" % sp1
         print >>sys.stderr, "Fraction of reads explained by \"1+-,1-+,2++,2--\": %.4f" % sp2
-        if sp1 > 0.8:
-            print "MATE1_SENSE"
-        elif sp2 > 0.8:
-            print "MATE2_SENSE"
-        else:
-            print "NONE"
+        if sp1 > options.threshold:
+            result['exp'] = "MATE1_SENSE"
+        elif sp2 > options.threshold:
+            result['exp'] = "MATE2_SENSE"
     elif protocol == "SingleEnd":
         print >>sys.stderr, "Fraction of reads explained by \"++,--\": %.4f" % sp1
         print >>sys.stderr, "Fraction of reads explained by \"+-,-+\": %.4f" % sp2
-        if sp1 > 0.8:
-            print "SENSE"
-        elif sp2 > 0.8:
-            print "ANTISENSE"
-        else:
-            print "NONE"
+        if sp1 > options.threshold:
+            result['exp'] = "SENSE"
+        elif sp2 > options.threshold:
+            result['exp'] = "ANTISENSE"
     else:
         print "Unknown Data type"
     print >>sys.stderr, 'Fraction of reads explained by other combinations: %.4f' % other
     print >>sys.stderr, '-------------------'
     #print mesg
+    json.dump(result, sys.stdout)
 
 if __name__ == '__main__':
     main()

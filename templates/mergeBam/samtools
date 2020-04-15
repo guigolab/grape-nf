@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+set -u
+
+(
+	samtools view -H *.bam | grep -v "@RG";
+	for f in *.bam; do 
+		samtools view -H \$f | grep "@RG";
+	done
+) > header.txt && \
+samtools merge -@ ${cpus} \
+               -h header.txt \
+               ${prefix}.bam \
+               *.bam && \
+samtools index ${prefix}.bam

@@ -4,5 +4,5 @@ set -u
 
 sambamba merge -t ${cpus} \
                ${prefix}.bam \
-               ${bam} && \
+               *.bam && \
 sambamba index ${prefix}.bam
