@@ -1,17 +1,17 @@
 # Dockerfile for samtools
 #
-FROM ubuntu:16.04 AS builder
+ARG ALPINE_VER=3.11
+FROM alpine:${ALPINE_VER} AS builder
 
 ARG SAMTOOLS_VER=1.3.1
 
 ENV _SAMTOOLS_VERSION ${SAMTOOLS_VER}
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    zlib1g-dev \
-    libncurses-dev \
-    curl \
-    ca-certificates
+RUN apk update && apk --no-cache add \
+    build-base \
+    zlib-dev \
+    ncurses-dev \
+    curl
 
 RUN mkdir -p build/samtools && \
     curl -L https://github.com/samtools/samtools/releases/download/$_SAMTOOLS_VERSION/samtools-$_SAMTOOLS_VERSION.tar.bz2 \
@@ -27,4 +27,3 @@ LABEL author.name="Emilio Palumbo"
 LABEL author.email="emiliopalumbo@gmail.com"
 
 COPY --from=builder /usr/local/bin/samtools /usr/local/bin
-COPY --from=builder /lib/x86_64-linux-gnu/libncurses.so.5 /lib/x86_64-linux-gnu/libtinfo.so.5 /usr/glibc-compat/lib/
