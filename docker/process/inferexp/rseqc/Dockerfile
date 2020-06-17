@@ -10,5 +10,6 @@ FROM grapenf/rseqc:${RSEQC_VER}
 LABEL author.name="Emilio Palumbo"
 LABEL author.email="emiliopalumbo@gmail.com"
 
+RUN apk add --no-cache mariadb-connector-c
+
 COPY --from=kentutils /usr/local/bin/* /usr/local/bin/
-COPY --from=kentutils /usr/glibc-compat/lib/* /usr/glibc-compat/lib/

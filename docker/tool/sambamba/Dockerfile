@@ -1,14 +1,30 @@
-# Dockerfile for sambamba
+# Dockerfile for sambamba, compiled from source
 #
-FROM grapenf/base
+ARG ALPINE_VER=3.11
+FROM alpine:${ALPINE_VER} AS builder
 
-ARG SAMBAMBA_VER=0.7.0
+RUN apk update && \
+    apk --no-cache add build-base \
+                       curl \
+                       git \
+                       python3 \
+                       libxml2 \
+                       zlib-dev \
+                       zlib-static
+
+RUN apk --no-cache add -X http://dl-cdn.alpinelinux.org/alpine/edge/main \
+                       -X http://dl-cdn.alpinelinux.org/alpine/edge/community \
+                       ldc
+
+ARG REVISION=v0.7.1
+
+RUN git clone --recursive https://github.com/biod/sambamba.git && \
+    cd sambamba && git checkout $REVISION && \
+    make static
+
+FROM grapenf/base
 
 LABEL author.name="Emilio Palumbo"
 LABEL author.email="emiliopalumbo@gmail.com"
 
-ENV _SAMBAMBA_VERSION ${SAMBAMBA_VER}
-
-RUN curl -fsSL https://github.com/biod/sambamba/releases/download/v$_SAMBAMBA_VERSION/sambamba-${_SAMBAMBA_VERSION}-linux-static.gz \
-    | pigz -dc > /usr/local/bin/sambamba && \
-    chmod +x /usr/local/bin/sambamba
+COPY --from=builder /sambamba/bin/sambamba-0.7.1 /usr/local/bin/sambamba

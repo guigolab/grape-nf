@@ -1,6 +1,6 @@
 # Dockerfile for the Flux Capacitor
 #
-FROM       grapenf/java
+FROM grapenf/java
 
 ARG FLUX_VER=1.6.1
 
