@@ -13,4 +13,3 @@ ARG SAMTOOLS_VER=1.3.1
 ENV _SAMTOOLS_VER ${SAMTOOLS_VER}
 
 COPY --from=samtools /usr/local/bin/samtools /usr/local/bin/
-COPY --from=samtools /usr/glibc-compat/lib/* /usr/glibc-compat/lib/

@@ -1,24 +1,27 @@
 # Dockerfile for Kent utils from UCSC
 #
-FROM ubuntu:16.04 AS builder
+ARG ALPINE_VER=3.11
+FROM alpine:${ALPINE_VER} AS builder
 
 ARG KENTUTILS_VER=308
 
 ENV _KENTUTILS_VERSION ${KENTUTILS_VER}
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
+RUN apk update && apk --no-cache add \
+    build-base \
     curl \
-    unzip \
-    libssl-dev \
+    zlib-dev \
+    openssl-dev \
     libpng-dev \
-    libmysqlclient-dev
+    mariadb-dev
 
 RUN mkdir build && \
     curl http://hgdownload.soe.ucsc.edu/admin/exe/userApps.archive/userApps.v$_KENTUTILS_VERSION.src.tgz \
     | tar xz -C build
 
-RUN cd build/userApps && make libs && \
+RUN cd build/userApps && \
+    sed -i '1i#include <stdint.h>' samtabix/knetfile.h && \
+    sed -i '11istruct _IO_FILE { char _x; };' kent/src/lib/fof.c && make libs && \
     cd kent/src && make destBin && \
     cd utils && make bedGraphToBigWig.userApps && \
     cd ../hg && make genePredToBed.userApp && \
@@ -29,7 +32,7 @@ FROM grapenf/base
 LABEL author.name="Emilio Palumbo"
 LABEL author.email="emiliopalumbo@gmail.com"
 
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libmysqlclient.so.20 /usr/glibc-compat/lib/
-COPY --from=builder /lib/x86_64-linux-gnu/libssl.so.1.0.0 /usr/glibc-compat/lib/
-COPY --from=builder /lib/x86_64-linux-gnu/libcrypto.so.1.0.0 /usr/glibc-compat/lib/
+RUN apk update && \
+    apk --no-cache add mariadb-connector-c
+
 COPY --from=builder /build/userApps/bin/* /usr/local/bin/

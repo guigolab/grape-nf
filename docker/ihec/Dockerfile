@@ -2,7 +2,7 @@
 #
 ARG STAR_VER=2.4.0j
 ARG KENTUTILS_VER=308
-ARG SAMBAMBA_VER=0.7.0
+ARG SAMBAMBA_VER=0.7.1
 ARG BAMSTATS_VER=0.3.4
 ARG RSEM_VER=1.2.21
 ARG RSEQC_VER=2.6.4
@@ -22,15 +22,12 @@ FROM grapenf/rseqc:${RSEQC_VER}
 LABEL author.name="Emilio Palumbo"
 LABEL author.email="emiliopalumbo@gmail.com"
 
-RUN apk add --no-cache perl R
+RUN apk add --no-cache perl R mariadb-connector-c
 
 COPY --from=star /usr/local/bin/STAR /usr/local/bin/
-COPY --from=star /usr/glibc-compat/lib/* /usr/glibc-compat/lib/
 COPY --from=samtools /usr/local/bin/samtools /usr/local/bin/
-COPY --from=samtools /usr/glibc-compat/lib/* /usr/glibc-compat/lib/
 COPY --from=bedtools /usr/local/bin/* /usr/local/bin/
 COPY --from=kentutils /usr/local/bin/* /usr/local/bin/
-COPY --from=kentutils /usr/glibc-compat/lib/* /usr/glibc-compat/lib/
 COPY --from=rsem /usr/local/bin/* /usr/local/bin/
 COPY --from=sambamba /usr/local/bin/sambamba /usr/local/bin/
 COPY --from=bamstats /usr/local/bin/bamstats /usr/local/bin/
