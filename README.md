@@ -18,10 +18,10 @@ Grape has been adopted for RNA-seq integrative analysis within the IHEC consorti
 
 ## Quickstart
 
-1. Install Nextflow by using the following command: 
+1. Install Nextflow by using the following command:
 
     ```
-    curl -s https://get.nextflow.io | bash 
+    curl -s https://get.nextflow.io | bash
     ```
 
 2. Make a test run:
@@ -230,7 +230,7 @@ nextflow -bg run grape-nf --index input-files.tsv --genome refs/hg38.AXYM.fa --a
 ```
 
 By default the pipeline execution will stop as far as one of the processes fails. This behaviour can be changed using the [errorStrategy](http://www.nextflow.io/docs/latest/process.html#errorstrategy) process directive, which can also be specified on the command line. For example, to ignore errors and keep processing you can use:
- 
+
 `-process.errorStrategy=ignore`.
 
 It is also possible to run a subset of the pipeline steps using the option ``--steps``. For example, the following command will only run ``mapping`` and ``quantification``:
@@ -241,7 +241,7 @@ nextflow -bg run grape-nf --steps mapping,quantification --index input-files.tsv
 
 ##  Tools versions
 
-The pipeline can be also run natively by installing the required software on the local system or by using [Environment Modules](http://www.nextflow.io/docs/latest/process.html?#module). 
+The pipeline can be also run natively by installing the required software on the local system or by using [Environment Modules](http://www.nextflow.io/docs/latest/process.html?#module).
 
 The versions of the tools that have been tested so far with the `standard` pipeline profile are the following:
 
@@ -250,6 +250,6 @@ The versions of the tools that have been tested so far with the `standard` pipel
 - [KentUtils v308](https://github.com/ucscGenomeBrowser/kent/releases/tag/v308_base)
 - [RSEM v1.2.21](https://github.com/deweylab/RSEM/releases/tag/v1.2.21)
 - [RSeQC v2.6.4](http://rseqc.sourceforge.net/)
-- [sambamba v0.7.0](https://github.com/biod/sambamba/releases/tag/v0.7.0)
+- [sambamba v0.7.1](https://github.com/biod/sambamba/releases/tag/v0.7.1)
 - [samtools v1.3](https://github.com/samtools/samtools/releases/tag/1.3.1)
 - [STAR v2.4.0j](https://github.com/alexdobin/STAR/releases/tag/STAR_2.4.0j)
