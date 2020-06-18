@@ -11,6 +11,18 @@ sambamba() {
     docker run --rm -v $PWD:$PWD -w $PWD grapenf/sambamba:0.7.1 sambamba -q "$@"
 }
 
+get_genome() {
+    local genome=$1
+    local prefix=$2
+    paste - - <$genome| awk '$1~/^>'$CHR_RE'/{print $1,$2}' OFS="\n" > $prefix.fa
+}
+
+get_annotation() {
+    local anno=$1
+    local prefix=$2
+    awk '$1~/^'$CHR_RE'/' $anno > $prefix.gtf
+}
+
 get_reads() {
     local bam=$1
     local reads=$2
@@ -56,8 +68,8 @@ write_fastq() {
 
     # AWK script
     read -r -d '' AWK_STR <<-'EOF'
-    func record() {
-        return "@"$1 OFS $10 OFS "+" OFS $11
+    func record(i) {
+        return "@"$1" "i":N:0:" OFS $10 OFS "+" OFS $11
     }
     NR == FNR  {
         reads[$1]++
@@ -65,10 +77,10 @@ write_fastq() {
     NR > FNR {
         if ($1 in reads) {
             if (and($2,64)==64) {
-                print record() > mate1
+                print record(1) > mate1
             }
             if (and($2,128)==128) {
-                print record() > mate2
+                print record(2) > mate2
             }
         }
     }
