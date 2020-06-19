@@ -11,7 +11,7 @@ FROM grapenf/base
 LABEL author.name="Emilio Palumbo"
 LABEL author.email="emiliopalumbo@gmail.com"
 
-RUN apk add --no-cache perl R
+RUN apk add --no-cache perl R python
 
 ARG SAMBAMBA_VER=0.7.1
 ENV _SAMBAMBA_VER ${SAMBAMBA_VER}

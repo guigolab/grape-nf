@@ -13,7 +13,7 @@ RUN apk update && apk --no-cache add \
     ncurses-dev \
     curl
 
-RUN mkdir -p build/rsem && curl -L http://deweylab.biostat.wisc.edu/rsem/src/rsem-$_RSEM_VERSION.tar.gz | tar xzf - --strip-components=1 -C build/rsem
+RUN mkdir -p build/rsem && curl -L https://github.com/deweylab/RSEM/archive/v$_RSEM_VERSION.tar.gz | tar xzf - --strip-components=1 -C build/rsem
 
 RUN cd build/rsem && \
     sed -i 's/return (in>>sid>>pos/return bool(in>>sid>>pos/' SingleHit.h PairedEndHit.h && \
@@ -24,7 +24,7 @@ FROM grapenf/base
 LABEL author.name="Emilio Palumbo"
 LABEL author.email="emiliopalumbo@gmail.com"
 
-RUN apk add --no-cache perl R
+RUN apk add --no-cache perl R python
 
 COPY --from=builder /build/rsem/rsem-extract-reference-transcripts /usr/local/bin
 COPY --from=builder /build/rsem/rsem-synthesis-reference-transcripts /usr/local/bin
@@ -53,3 +53,4 @@ COPY --from=builder /build/rsem/rsem-plot-model /usr/local/bin
 COPY --from=builder /build/rsem/rsem-plot-transcript-wiggles /usr/local/bin
 COPY --from=builder /build/rsem/rsem-prepare-reference /usr/local/bin
 COPY --from=builder /build/rsem/rsem-run-ebseq /usr/local/bin
+COPY --from=builder /build/rsem/rsem-gff3-to-gtf /usr/local/bin

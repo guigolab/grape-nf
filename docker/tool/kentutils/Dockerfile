@@ -25,7 +25,8 @@ RUN cd build/userApps && \
     cd kent/src && make destBin && \
     cd utils && make bedGraphToBigWig.userApps && \
     cd ../hg && make genePredToBed.userApp && \
-    cd utils && make gtfToGenePred.userApp
+    cd utils && make gtfToGenePred.userApp gff3ToGenePred.userApp
+
 
 FROM grapenf/base
 
