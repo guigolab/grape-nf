@@ -44,6 +44,8 @@ params.sjOverHang = 100
 params.steps = 'mapping,bigwig,contig,quantification'
 params.wigRefPrefix = ''
 params.inferExpThreshold = 0.8
+params.outDir = null
+params.outDirLevels = null
 
 // Process channels
 Channel.empty().into {
@@ -191,6 +193,7 @@ log.info "Number of sequenced samples     : ${samples}"
 log.info "Number of sequencing runs       : ${ids}"
 log.info "Merging                         : ${ ids != samples ? 'by sample' : 'none' }"
 log.info ""
+
 
 inputFilesForFetch
 .filter { it[5] }
@@ -393,11 +396,31 @@ process txIndex {
     template(command)
 
 }
+saveMapping = { fname -> 
+    if (view == "Alignments" && ids != samples) {
+        return null
+    }
+    saveFile = fname.replace(id, sample)
+    if (! params.mappingOutDir) {
+        return saveFile
+    }
+    switch(params.mappingOutDir) {
+        case 'view':
+            def res = fname =~ /to([^\.]+)/
+            saveFile = "${res.getAt(0)[1]}${view}/${saveFile}"
+            break
+        default:
+            saveFile = "${d[params.mappingOutDir]}/${saveFile}"
+            break
+    }
+    saveFile
+}
 
 process mapping {
 
     label "mapping"
     tag "${id.replace(':', '_')}-${params.mappingTool}-${params.mappingToolVersion}"
+    publishDir "${params.outDir}", mode: 'link', saveAs: saveMapping
 
     input:
     set id, sample, file(reads), qualityOffset from mappingInput
@@ -410,7 +433,15 @@ process mapping {
     script:
     type = 'bam'
     view = 'Alignments'
+<<<<<<< Updated upstream
     prefix = "${sample}${pref}"
+=======
+    prefix = "${id}${pref}"
+    d = [
+        view: view,
+        sample: sample
+    ]
+>>>>>>> Stashed changes
     maxMultimaps = params.maxMultimaps
     maxMismatches = params.maxMismatches
 
@@ -515,6 +546,7 @@ mergeBamGenomeInput.mix(
 process mergeBam {
 
     tag "${id.replace(':', '_')}-${params.mergeBamTool}-${params.mergeBamToolVersion}"
+    publishDir "${params.outDir}/${view}", mode: 'link'
 
     input:
     set id, sample, type, view, file("${sample}_??.bam"), pairedEnd from mergeBamInput
