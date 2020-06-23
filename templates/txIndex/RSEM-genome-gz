@@ -2,7 +2,7 @@
 set -e
 set -u
 
-mkdir txDir
+mkdir ${prefix}
 rsem-prepare-reference --gtf ${annotation} \
                        <(zcat ${genome}) \
-                       txDir/RSEMref
+                       ${prefix}/RSEMref

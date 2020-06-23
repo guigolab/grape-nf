@@ -2,12 +2,12 @@
 set -e
 set -u
 
-mkdir genomeDir
+mkdir ${prefix}
 pigz -p ${cpus} -dc ${annotation} > ${annotation.baseName}
 pigz -p ${cpus} -dc ${genome} > ${genome.baseName}
 STAR --runThreadN ${cpus} \
 		 --runMode genomeGenerate \
-		 --genomeDir genomeDir \
+		 --genomeDir ${prefix} \
 		 --genomeFastaFiles ${genome.baseName} \
 		 --sjdbGTFfile ${annotation.baseName} \
 		 --sjdbOverhang ${sjOverHang} \
