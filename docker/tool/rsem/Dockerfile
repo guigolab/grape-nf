@@ -13,7 +13,7 @@ RUN apk update && apk --no-cache add \
     ncurses-dev \
     curl
 
-RUN mkdir -p build/rsem && curl -L http://deweylab.biostat.wisc.edu/rsem/src/rsem-$_RSEM_VERSION.tar.gz | tar xzf - --strip-components=1 -C build/rsem
+RUN mkdir -p build/rsem && curl -L https://github.com/deweylab/RSEM/archive/v$_RSEM_VERSION.tar.gz | tar xzf - --strip-components=1 -C build/rsem
 
 RUN cd build/rsem && \
     sed -i 's/return (in>>sid>>pos/return bool(in>>sid>>pos/' SingleHit.h PairedEndHit.h && \

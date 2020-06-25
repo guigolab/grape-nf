@@ -10,7 +10,8 @@ ENV _STAR_VERSION ${STAR_VER}
 RUN apk update &&\
     apk --no-cache add curl
 
-RUN mkdir -p build/STAR && curl -L https://api.github.com/repos/alexdobin/STAR/tarball/STAR_$_STAR_VERSION | \
+RUN PREFIX=$([ "$(echo $_STAR_VERSION | awk -F. '{print $1,$2}' OFS=.)" = "2.4" ] && echo "STAR_"); \
+    mkdir -p build/STAR && curl -L https://api.github.com/repos/alexdobin/STAR/tarball/$PREFIX$_STAR_VERSION | \
     tar xz --strip-components=1 -C build/STAR
 
 FROM grapenf/base
