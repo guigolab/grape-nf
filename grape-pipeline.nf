@@ -431,7 +431,7 @@ process mapping {
     maxMismatches = params.maxMismatches
     genomeDir = refs[0]
     annotation = refs[1]
-    ref = genomeDir.baseName
+    ref = genomeDir.name
 
     // prepare BAM @RG tag information
     // def date = new Date().format("yyyy-MM-dd'T'HH:mmZ", TimeZone.getTimeZone("UTC"))
@@ -674,7 +674,7 @@ switch(params.quantificationMode) {
     case 'Transcriptome':
         quantificationInputTranscriptome.combine(
             txIndexOutput.map {
-                [it.baseName, it]
+                [it.name, it]
             }, by: 0
         )
         .map {
