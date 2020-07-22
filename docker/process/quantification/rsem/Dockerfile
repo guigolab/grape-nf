@@ -1,6 +1,6 @@
 # Dockerfile for the grape-nf RSEM quantification image
 #
-ARG SAMBAMBA_VER=0.7.0
+ARG SAMBAMBA_VER=0.7.1
 ARG RSEM_VER=1.2.21
 
 FROM grapenf/sambamba:${SAMBAMBA_VER} AS sambamba
@@ -13,7 +13,7 @@ LABEL author.email="emiliopalumbo@gmail.com"
 
 RUN apk add --no-cache perl R
 
-ARG SAMBAMBA_VER=0.7.0
+ARG SAMBAMBA_VER=0.7.1
 ENV _SAMBAMBA_VER ${SAMBAMBA_VER}
 
 COPY --from=rsem /usr/local/bin/* /usr/local/bin/

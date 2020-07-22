@@ -22,7 +22,7 @@ $(TOOLS): logs/tool
 	@[ $(PUSH) ] && docker push $(NS)/$@:$($(TOOL)_VER) || true
 	@[ $(VERBOSE) ] && [ "$(TAGS)" ] && echo Creating $(NS)/$@:$($(TOOL)_VER) image tags: $(TAGS) || true
 	@$(foreach t,$(TAGS),docker tag $(NS)/$@:$($(TOOL)_VER) $(t);)
-	@$(foreach t,$(TAGS),[ $(PUSH) ] && docker push $(t) || true;) 
+	@$(foreach t,$(TAGS),[ $(PUSH) ] && docker push $(t) || true;)
 
 $(PROC_TOOLS): INFO=$(subst _, ,$(subst .,,$@))
 $(PROC_TOOLS): PROC=$(word 1,$(INFO))
@@ -35,17 +35,22 @@ $(PROC_TOOLS): logs/process
 	@[ $(PUSH) ] && docker push $(NS)/$(PROC):$(PROC_TOOL)-$($(TOOL)_VER) || true
 	@[ $(VERBOSE) ] && [ "$(TAGS)" ] && echo Creating $(NS)/$(PROC):$(PROC_TOOL)-$($(TOOL)_VER) image tags: ${TAGS} || true
 	@$(foreach t,$(TAGS),docker tag $(NS)/$(PROC):$(PROC_TOOL)-$($(TOOL)_VER) $(t);)
-	@$(foreach t,$(TAGS),[ $(PUSH) ] && docker push $(t) || true;) 
+	@$(foreach t,$(TAGS),[ $(PUSH) ] && docker push $(t) || true;)
 
-base: ADDITIONAL_VER := GLIBC_$(GLIBC_VER)
 base: VER_CMD=docker run --rm $(NS)/$@:latest cat /etc/alpine-release
-base: BUILD_ARGS=--build-arg GLIBC_VER=$(GLIBC_VER)
+base: BUILD_ARGS=--build-arg ALPINE_VER=$(ALPINE_VER)
 
 java: base
 java: VER_CMD=docker run --rm $(NS)/$@:latest java -version 2>&1 | head -1
 
 python: base
 python: VER_CMD=docker run --rm $(NS)/$@:latest python --version 2>&1
+
+ihec: base
+ihec: logs
+	@[ $(VERBOSE) ] && echo -n Building container for $@ || true
+	@docker build $(BUILD_ARGS) -t $(NS)/$@:$${VER-latest} $@ > $</$@.log
+	@[ $(PUSH) ] && docker push $(NS)/$@:$${VER-latest} >> $</$@.log || true
 
 base java python: logs
 	@[ $(VERBOSE) ] && echo -n Building container for $@ || true

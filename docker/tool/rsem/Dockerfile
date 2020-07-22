@@ -1,21 +1,23 @@
 # Dockerfile for RSEM
 #
-FROM ubuntu:16.04 AS builder
+ARG ALPINE_VER=3.11
+FROM alpine:${ALPINE_VER} AS builder
 
 ARG RSEM_VER=1.2.21
 
 ENV _RSEM_VERSION ${RSEM_VER}
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    zlib1g-dev \
-    libncurses-dev \
-    curl \
-    ca-certificates
+RUN apk update && apk --no-cache add \
+    build-base \
+    zlib-dev \
+    ncurses-dev \
+    curl
 
 RUN mkdir -p build/rsem && curl -L http://deweylab.biostat.wisc.edu/rsem/src/rsem-$_RSEM_VERSION.tar.gz | tar xzf - --strip-components=1 -C build/rsem
 
-RUN cd build/rsem && make
+RUN cd build/rsem && \
+    sed -i 's/return (in>>sid>>pos/return bool(in>>sid>>pos/' SingleHit.h PairedEndHit.h && \
+    sed -i 's/success = (getline/success = bool(getline/' buildReadIndex.cpp && make
 
 FROM grapenf/base
 

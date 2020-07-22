@@ -11,4 +11,3 @@ LABEL author.name="Emilio Palumbo"
 LABEL author.email="emiliopalumbo@gmail.com"
 
 COPY --from=samtools /usr/local/bin/samtools /usr/local/bin/
-COPY --from=samtools /usr/glibc-compat/lib/* /usr/glibc-compat/lib/

@@ -178,7 +178,7 @@ Channel.from(index.readLines())
     if ( ! fetch )
         fileName = resolveFile(fileName, index)
     [sampleId, runId, fileName, format, readId, fetch]
-}.tap { 
+}.tap {
     inputFilesForFetch
     inputFiles
 }
@@ -196,8 +196,8 @@ inputFilesForFetch
 .filter { it[5] }
 .map { sampleId, runId, fileName, format, readId, fetch ->
     [sampleId, runId, fileName, format, readId]
-}.set { 
-    fetchInput 
+}.set {
+    fetchInput
 }
 
 inputFiles.filter { !it[5] }
@@ -228,12 +228,12 @@ refsForAnnotations.filter {
     it[1].name =~ /.gtf(.gz)?$/
 }.set{ Annotations }
 
-Genomes.into { 
+Genomes.into {
     genomesForFastaIndex
     genomesForIndex
     genomesForTxIndex
 }
-Annotations.into { 
+Annotations.into {
     annotationsForFastaIndex
     annotationsForIndex
     annotationsForMapping
@@ -432,8 +432,8 @@ process mapping {
     fqs = reads.toString().split(" ")
     pairedEnd = (fqs.size() == 2)
     taskMemory = task.memory ?: 1.GB
-    totalMemory = taskMemory.toBytes()
-    threadMemory = taskMemory.toBytes()/(2*task.cpus)
+    totalMemory = (taskMemory.toBytes()*2/3) as int
+    threadMemory = (totalMemory/task.cpus) as int
     cpus = task.cpus
     halfCpus = (task.cpus > 1 ? task.cpus / 2 : task.cpus) as int
 
@@ -502,7 +502,7 @@ process sortBam {
     threadMemory = totalMemory/cpus
     prefix = "${bam.baseName}_sorted"
     command = "${task.process}/${params.mergeBamTool}"
-    
+
     template(command)
 }
 
@@ -527,7 +527,7 @@ process mergeBam {
     id = id.sort().join(':')
     prefix = "${sample}${pref}_to${view.replace('Alignments','')}"
     command = "${task.process}/${params.mergeBamTool}"
-    
+
     template(command)
 
 }
@@ -766,9 +766,9 @@ bamFilesToGenome.mix(bamFilesToTranscriptome, bamStatsFiles, bigwigFiles, contig
 }
 
 /*
- * Given the input index file returns the number of unique samples, 
+ * Given the input index file returns the number of unique samples,
  * the number of unique runs, and the lines of the index.
- * Params: 
+ * Params:
  * - tsvFile: a file object representing the TSV file
  */
 def readTsv(tsvFile) {
@@ -784,9 +784,9 @@ def readTsv(tsvFile) {
 
 /*
  * Given a string path resolve it against the index file location.
- * Params: 
+ * Params:
  * - str: a string value represting the file pah to be resolved
- * - index: path location against which relative paths need to be resolved 
+ * - index: path location against which relative paths need to be resolved
  */
 def resolveFile( str, index ) {
   if( str.startsWith('/') || str =~ /^[\w\d]*:\// ) {
@@ -796,9 +796,9 @@ def resolveFile( str, index ) {
     return index.parent.resolve(str)
   }
   else {
-    return file(str) 
+    return file(str)
   }
-} 
+}
 
 def testResolveFile() {
   def index = file('/path/to/index')
