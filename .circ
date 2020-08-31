@@ -9,7 +9,7 @@ _ci_usage() {
 		clean        remove the temporary directory used for vaildation
 
 		Notes:
-		If '\$CI_DIR' is in the Nextflow asset folder the pipeline is run using the GitHub repository 
+		If '\$CI_DIR' is in the Nextflow asset folder the pipeline is run using the GitHub repository
 		to allow to change revision from the comand line, e.g.:
 
 		CI_DIR=~/.nextflow/assets/guigolab/grape-nf ci test -r v0.4.1
@@ -23,12 +23,12 @@ _ci_canonicalize_path() {
     else
         _ci_canonicalize_file_path "$1"
     fi
-}   
+}
 
 # Get canonical path of a directory
 _ci_canonicalize_dir_path() {
-    (cd "$1" 2>/dev/null && pwd -P) 
-}           
+    (cd "$1" 2>/dev/null && pwd -P)
+}
 
 # Get canonical path of a file
 _ci_canonicalize_file_path() {
@@ -38,11 +38,11 @@ _ci_canonicalize_file_path() {
     (cd "$dir" 2>/dev/null && printf '%s/%s\n' "$(pwd -P)" "$file")
 }
 
-# Check that Nextflow is installed and download it to the current 
+# Check that Nextflow is installed and download it to the current
 # folder otherwise
 _ci_setup_nxf() {
 	if ! nextflow &>/dev/null; then
-		export PATH=$PWD:$PATH 
+		export PATH=$PWD:$PATH
 		if [ ! -x nextflow ]; then
 			curl -fsSL get.nextflow.io | bash && chmod +x nextflow
 		fi
@@ -51,10 +51,10 @@ _ci_setup_nxf() {
 
 # Get the content of a BAM file for checksum
 _ci_normalize_bam() {
-	docker run --rm -v $1:$1 -w $PWD grapenf/samtools:1.3.1 bash -c "samtools view -h $2 | grep -v '@CO\|@PG' | samtools view -Sb - > $(basename $2) 2>/dev/null"
+	docker run --rm -v $CI_DIR:$CI_DIR -v $1:$1 -w $PWD grapenf/samtools:1.3.1 bash -c "samtools view -h $2 | grep -v '@CO\|@PG' | LC_ALL=C sort > $(basename $2) 2>/dev/null"
 }
 
-# Get file to the CI output directory either by creating a symlink 
+# Get file to the CI output directory either by creating a symlink
 # or normalizing a BAM file
 _ci_get_file() {
 	local baseDir=$1
@@ -95,7 +95,7 @@ _ci_check() {
 	(mkdir -p $CI_OUTDIR && cd $CI_OUTDIR
 	echo $CI_PROFILE > .ci_profile
 	cut -f 3 ../pipeline.db | while read f
-	do	
+	do
 		_ci_get_file $(_ci_canonicalize_path ..) $f
 	done
 	md5sum -c ${CI_DIR}/data/$CI_PROFILE.md5)
@@ -141,7 +141,7 @@ ci() {
 		test)
 			shift
 			(_ci_test "$@");;
-		*) 
+		*)
 			_ci_usage;;
 	esac
 }
