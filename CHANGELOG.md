@@ -1,5 +1,37 @@
 # GRAPE-nf Changelog
 
+## Version 1.0.0
+
+First IHEC release
+
+- Whole pipeline refactoring - #51
+- Fix wrong merging information - #55
+- Add ability to use regex for reference prefix in `bigwig` step - #17
+
+Additional improvements and fixes:
+
+- Use 2/3 of the process memory in `mapping`
+- Increase `quantification` memory in IHEC resources config file
+- Update `sambamba` version to `0.7.1`
+- Update `bamstats` version to `0.3.4`
+- Enable autoMounts for Singularity by default
+- Add script to prepare input `FASTQ` files from `BAM` files
+- Fix issue in field order when reading input `BAMs`
+- Add `gtf` and `gff` to supported file types in CI script
+- Sort transcriptome `BAMs` before merge
+- Remove `test.sh`, update CI tests and TravisCI configuration file
+- Fix workflow for input `BAMs` and add test profile
+- Add threshold option to infer experiment script and add corresponding pipeline parameter
+- Fix read group attributes in `mapping`
+
+IHEC specific changes:
+
+- Move all IHEC documentation to `ihec-setup.md`, update and clean up
+- Clean up pipeline config and use single IHEC image for the IHEC profile
+- Add script to pre-fetch the IHEC Singularity image
+- Add the IHEC profile to TravisCI config
+- Update test data and checksum, add checksums for the IHEC profile
+
 ## Version 0.4.1
 
 - Fix wrong comment in config file braking pipeline execution
