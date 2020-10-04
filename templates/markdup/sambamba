@@ -1,9 +1,0 @@
-#!/bin/bash
-set -e
-set -u
-
-sambamba markdup -t ${cpus} \
-                 --sort-buffer-size ${memory} \
-                 ${bam} \
-                 ${prefix}.bam && \
-sambamba index ${prefix}.bam

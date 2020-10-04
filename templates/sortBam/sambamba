@@ -1,8 +1,0 @@
-#!/bin/bash
-set -e
-set -u
-
-sambamba sort -t ${cpus} \
-              -m ${totalMemory} \
-              -o ${prefix}.bam \
-              ${bam}

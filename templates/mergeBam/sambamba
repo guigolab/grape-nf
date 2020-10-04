@@ -1,8 +1,0 @@
-#!/bin/bash
-set -e
-set -u
-
-sambamba merge -t ${cpus} \
-               ${prefix}.bam \
-               *.bam && \
-sambamba index ${prefix}.bam

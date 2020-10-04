@@ -1,2 +1,0 @@
-sed -i '/-o/ s/$/ -static/' Makefile
-sed -i '/getaddrinfo(h/ s:^://:' sam/knetfile.c
