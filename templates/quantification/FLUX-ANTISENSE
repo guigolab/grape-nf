@@ -1,0 +1,14 @@
+#!/bin/bash
+set -e
+set -u
+
+samtools index ${bam}
+#export FLUX_MEM=${memory}
+flux-capacitor -i ${bam} \
+               -a ${quantRef} \
+               -o ${prefix}.isoforms.gtf \
+               -m SINGLE_STRANDED \
+               --read-strand ANTISENSE
+TrtoGn_RPKM.sh -a ${quantRef} \
+               -i ${prefix}.isoforms.gtf \
+               -o ${prefix}.genes.gff

@@ -1,0 +1,8 @@
+sample1	test1	data/test1_2.fastq.gz	fastq	FqRd2
+sample1	test1	data/test1_1.fastq.gz	fastq	FqRd1
+sample2	test2	data/test2_2.fastq.gz	fastq	FqRd2
+sample2	test2	data/test2_1.fastq.gz	fastq	FqRd1
+sample2	test3	data/test3_2.fastq.gz	fastq	FqRd2
+sample2	test3	data/test3_1.fastq.gz	fastq	FqRd1
+sample3	test4	data/sample3_m4_n10_toGenome.bam	bam	GenomeAlignments
+sample3	test4	data/sample3_m4_n10_toTranscriptome.bam	bam TranscriptomeAlignments

@@ -1,0 +1,2 @@
+A24901	C2A6RACXX	http://www.epigenomes.ca/data/CEMT/raw/62907c3ce6566527cc12/MCF10A/RNA-Seq.A24901.134053.C2A6RACXX.5.1.fastq.gz,data/RNA-Seq.A24901.134053.C2A6RACXX.5.1.fastq.gz	fastq	FqRd1
+A24901	C2A6RACXX	http://www.epigenomes.ca/data/CEMT/raw/62907c3ce6566527cc12/MCF10A/RNA-Seq.A24901.134053.C2A6RACXX.5.2.fastq.gz,data/RNA-Seq.A24901.134053.C2A6RACXX.5.2.fastq.gz	fastq	FqRd2

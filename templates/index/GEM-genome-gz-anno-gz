@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+set -u
+
+mkdir genomeDir
+pigz -p ${cpus} -dc ${genome} | sed 's/ .*//' > genome_processed.fa
+gemtools index -i genome_processed.fa \
+							 -t ${cpus} \
+							 -o genomeDir/genome_index.gem
+gemtools t-index -i genomeDir/genome_index.gem \
+								 -a <(pigz -p ${cpus} -dc ${annotation}) \
+								 -t ${cpus} \
+								 -o genomeDir/transcript_index \
+								 -m ${readLength}
+rm genome_processed.fa

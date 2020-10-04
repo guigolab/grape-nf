@@ -1,0 +1,13 @@
+#!/bin/bash
+set -e
+set -u
+
+mkdir genomeDir
+pigz -p ${cpus} -dc ${genome} > ${genome.baseName}
+STAR --runThreadN ${cpus} \
+		 --runMode genomeGenerate \
+		 --genomeDir genomeDir \
+		 --genomeFastaFiles ${genome.baseName} \
+		 --sjdbGTFfile ${annotation} \
+		 --sjdbOverhang ${sjOverHang} \
+&& rm ${genome.baseName}

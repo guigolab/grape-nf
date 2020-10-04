@@ -1,0 +1,19 @@
+#!/bin/bash
+set -e
+set -u
+
+sambamba view -h -t ${cpus} ${bam} \
+  | awk '
+      BEGIN {OFS="\\t"} 
+      {if (\$1!~/^@/ && and(\$2,64)>0) {\$2=xor(\$2,0x10)}; print}
+    ' \
+  | sambamba view -S -f bam -l 0 /dev/stdin \
+  | tee >(
+      genomeCoverageBed -strand + -split -bg -ibam - \
+      > ${prefix}.plusRaw.bedgraph
+    ) \
+  | genomeCoverageBed -strand - -split -bg -ibam - \
+> ${prefix}.minusRaw.bedgraph
+
+bedGraphToBigWig ${prefix}.plusRaw.bedgraph ${genomeFai} ${prefix}.plusRaw.bw
+bedGraphToBigWig ${prefix}.minusRaw.bedgraph ${genomeFai} ${prefix}.minusRaw.bw

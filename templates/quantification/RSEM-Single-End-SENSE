@@ -1,0 +1,18 @@
+#!/bin/bash
+set -e
+set -u
+
+sambamba sort -t ${cpus} -m ${memory}MB -N -l 0 -o - ${bam} \
+  | rsem-calculate-expression --bam \
+                          --estimate-rspd  \
+                          --calc-ci \
+                          --no-bam-output \
+                          --seed 12345 \
+                          -p ${cpus} \
+                          --ci-memory ${memory} \
+                          --forward-prob 1 \
+                          - \
+                          ${quantRef}/RSEMref \
+                          ${prefix}
+
+rsem-plot-model ${prefix} ${prefix}.pdf

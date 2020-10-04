@@ -1,0 +1,24 @@
+#!/bin/bash
+set -e
+set -u
+
+mkdir Signal
+STAR --runThreadN ${cpus} \
+     --runMode inputAlignmentsFromBAM \
+     --inputBAMfile ${bam} \
+     --outWigType bedGraph \
+     --outWigStrand Unstranded \
+     --outFileNamePrefix ./Signal/
+
+cp ${genomeFai} chrSizes.txt
+if [ ! -z "${wigRefPrefix}" ]; then
+    sed  -ni '/^${wigRefPrefix}/p' chrSizes.txt Signal/*.bg
+fi
+
+bedGraphToBigWig Signal/Signal.UniqueMultiple.str1.out.bg \
+                 chrSizes.txt \
+                 ${prefix}.UniqueMultiple.raw.bw 
+
+bedGraphToBigWig Signal/Signal.Unique.str1.out.bg \
+                 chrSizes.txt \
+                 ${prefix}.Unique.raw.bw

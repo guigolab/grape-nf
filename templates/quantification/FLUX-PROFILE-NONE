@@ -1,0 +1,18 @@
+#!/bin/bash
+set -e
+set -u
+
+samtools index ${bam}
+#export FLUX_MEM=${memory}
+flux-capacitor --profile \
+               -i ${bam} \ 
+               -a ${quantRef} \
+               --profile-file ${prefix}_profile.json
+flux-capacitor -i ${bam} \ 
+               -a ${quantRef} \
+               --profile-file ${prefix}_profile.json \
+               -o ${prefix}.isoforms.gtf
+TrtoGn_RPKM.sh -a ${quantRef} \
+               -i ${prefix}.isoforms.gtf \
+               -o ${prefix}.genes.gff
+               

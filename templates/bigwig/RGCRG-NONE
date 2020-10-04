@@ -1,0 +1,6 @@
+#!/bin/bash
+set -e
+set -u
+
+genomeCoverageBed -split -bg -ibam ${bam} > ${prefix}.raw.bedgraph
+bedGraphToBigWig ${prefix}.raw.bedgraph ${genomeFai} ${prefix}.raw.bw

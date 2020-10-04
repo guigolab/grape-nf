@@ -1,0 +1,29 @@
+#!/bin/bash
+set -e
+set -u
+
+STAR --runThreadN ${cpus} \
+     --genomeDir ${genomeDir} \
+     --readFilesIn ${reads} \
+     --outSAMunmapped Within \
+     --outFilterType BySJout \
+     --outSAMattributes NH HI AS NM MD \
+     --outFilterMultimapNmax ${maxMultimaps} \
+     --outFilterMismatchNmax 999 \
+     --outFilterMismatchNoverReadLmax 0.0${maxMismatches} \
+     --alignIntronMin 20 \
+     --alignIntronMax 1000000 \
+     --alignMatesGapMax 1000000 \
+     --alignSJoverhangMin 8 \
+     --alignSJDBoverhangMin 1 \
+     --readFilesCommand pigz -p${cpus} -dc \
+     --outSAMtype BAM Unsorted \
+     --outStd BAM_Unsorted \
+     --quantMode TranscriptomeSAM \
+     --outSAMattrRGline ${readGroup} \
+| samtools sort -@ ${halfCpus} \
+                -m ${threadMemory} \
+                - \
+                ${prefix}_toGenome
+mv Aligned.toTranscriptome.out.bam ${prefix}_toTranscriptome.bam
+samtools index ${prefix}_toGenome.bam

@@ -1,0 +1,17 @@
+#!/bin/bash
+set -e
+set -u
+
+sambamba view  -f bam -F '[NH] == 1' ${bam} \
+  | tee >(
+      genomeCoverageBed -strand + -split -bg -ibam - \
+      > ${prefix}.plusRaw.bedgraph
+    ) \
+  | genomeCoverageBed -strand - -split -bg -ibam - \
+> ${prefix}.minusRaw.bedgraph
+
+contigsNew.py --chrFile ${genomeFai} \
+              --fileP ${prefix}.plusRaw.bedgraph \
+              --fileM ${prefix}.minusRaw.bedgraph \
+              --sortOut \
+              > ${prefix}.bed
