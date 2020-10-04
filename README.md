@@ -14,7 +14,7 @@ Grape has been adopted for RNA-seq integrative analysis within the IHEC consorti
 
 - Unix-like operationg system (Linux, MacOS, etc)
 - Java 8
-- [Docker](https://www.docker.com/) or [Singularity](http://singularity.lbl.gov) engine
+- [Docker](https://www.docker.com/)  or [Singularity](http://singularity.lbl.gov) engine
 
 ## Quickstart
 
