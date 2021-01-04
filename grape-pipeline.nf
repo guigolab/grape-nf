@@ -731,10 +731,9 @@ process quantification {
     script:
     cpus = task.cpus
     prefix = "${sample}"
-    refPrefix = quantRef.name.replace('.gtf','').capitalize()
     type = params.quantificationFileType
-    viewTx = "Transcript${refPrefix}"
-    viewGn = "Gene${refPrefix}"
+    viewTx = "TranscriptQuantifications"
+    viewGn = "GeneQuantifications"
     memory = (task.memory ?: 1.GB).toMega()
     command = "${task.process}/${params.quantificationTool}"
     if ( params.quantificationTool == 'RSEM') {
