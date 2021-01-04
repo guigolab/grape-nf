@@ -187,6 +187,64 @@ sample1   test1   /path/to/results/test1_m4_n10.bam       bam      GenomeAlignme
 sample1   test1   /path/to/results/sample1.minusRaw.bw    bigWig   MinusRawSignal         Paired-End   MATE2_SENSE
 ```
 
+### Output files
+
+The pipeline produces several output files during the workflow execution. Many files are to be considered temporary and can be removed once the pipeline completes. The following files are the ones reported in the `pipeline.db` file and are to be considered as the pipeline final output.
+
+#### Alignments to the reference genome
+
+|views|
+|-|
+|`GenomeAlignments`|
+
+This BAM file contains information on the alignments to the reference genome. It includes all the reads from the FASTQ input. Reads that do not align to the reference are set as unmapped in the bam file. The file can be the product of several steps of the pipeline depending on the given input parameters. It is initially produced by the `mapping` step, then it can be the result of merging of different runs from the same experiment and finally it can run through a marking duplicates process that can eventually remove reads that are marked as duplicates.
+
+#### Alignments to the reference transcriptome
+
+|views|
+|-|
+|`TranscriptomeAlignments`|
+
+This BAM file contains information on the alignments to the reference transcriptome. It is generally used only for expression abundance estimation, as input in the `quantification` process. The file is generally produced in the `mapping` process and can be the result of merging of different runs from the same experiment.
+
+#### Alignments statistics
+
+|views|
+|-|
+|`BamStats`|
+
+This JSON file contains alignment statistics computed with the [bamstats](https://github.com/guigolab/bamstats) program. It also reports RNA-Seq quality check metrics agreed within the IHEC consortium.
+
+#### Signal tracks
+
+|views|
+|-|
+|`RawSignal`|
+|`MultipleRawSignal`|
+|`MinusRawSignal`|
+|`PlusRawSignal`|
+|`MultipleMinusRawSignal`|
+|`MultiplePlusRawSignal`|
+
+These BigWig files (one or two, depending on the strandedness of the input data) represent the RNA-Seq signal.
+
+#### Contigs
+
+|views|
+|-|
+|`Contigs`|
+
+This BED file reports RNA-seq contigs computed from the pooled signal tracks.
+
+#### Quantifications
+
+|views|
+|-|
+|`Gene` + annotation name|
+|`Transcript` +  annotation name
+
+These two files report abundances for genes and transcripts in the processed RNA-seq samples. The format can be either GFF or TSV depending on the tool used to perform the quantification.
+
 ## Pipeline configuration
 
 ### Executors
