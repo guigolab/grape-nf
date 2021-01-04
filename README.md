@@ -174,7 +174,7 @@ The paths of the resulting output files and the corresponding metadata are store
 4 | `type`        | the type (e.g. `bam`)
 5 | `view`        | an attribute that specifies the content of the file (e.g. `GenomeAlignments`)
 6 | `readType`    | the input data type (either `Single-End` or `Paired-End`)
-7 | `readStrand`  | the inferred exepriment strandednes if any (it can be `NONE` for unstranded data, `SENSE` or `ANTISENSE` for single-end data, `MATE1_SENSE` or `MATE2_SENSE` for paired-end data.)
+7 | `readStrand`  | the inferred experiment strandedness if any (it can be `NONE` for unstranded data, `SENSE` or `ANTISENSE` for single-end data, `MATE1_SENSE` or `MATE2_SENSE` for paired-end data.)
 
 Here is an example from the test run:
 
