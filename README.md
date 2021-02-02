@@ -179,12 +179,12 @@ The paths of the resulting output files and the corresponding metadata are store
 Here is an example from the test run:
 
 ```
-sample1   test1   /path/to/results/sample1.contigs.bed    bed      Contigs                Paired-End   MATE2_SENSE
-sample1   test1   /path/to/results/sample1.isoforms.gtf   gtf      TranscriptAnnotation   Paired-End   MATE2_SENSE
-sample1   test1   /path/to/results/sample1.plusRaw.bw     bigWig   PlusRawSignal          Paired-End   MATE2_SENSE
-sample1   test1   /path/to/results/sample1.genes.gff      gtf      GeneAnnotation         Paired-End   MATE2_SENSE
-sample1   test1   /path/to/results/test1_m4_n10.bam       bam      GenomeAlignments       Paired-End   MATE2_SENSE
-sample1   test1   /path/to/results/sample1.minusRaw.bw    bigWig   MinusRawSignal         Paired-End   MATE2_SENSE
+sample1   test1   /path/to/results/sample1.contigs.bed    bed      Contigs                     Paired-End   MATE2_SENSE
+sample1   test1   /path/to/results/sample1.isoforms.gtf   gtf      TranscriptQuantifications   Paired-End   MATE2_SENSE
+sample1   test1   /path/to/results/sample1.plusRaw.bw     bigWig   PlusRawSignal               Paired-End   MATE2_SENSE
+sample1   test1   /path/to/results/sample1.genes.gff      gtf      GeneQuantifications         Paired-End   MATE2_SENSE
+sample1   test1   /path/to/results/test1_m4_n10.bam       bam      GenomeAlignments            Paired-End   MATE2_SENSE
+sample1   test1   /path/to/results/sample1.minusRaw.bw    bigWig   MinusRawSignal              Paired-End   MATE2_SENSE
 ```
 
 ### Output files
@@ -240,8 +240,8 @@ This BED file reports RNA-seq contigs computed from the pooled signal tracks.
 
 |views|
 |-|
-|`Gene` + annotation name|
-|`Transcript` +  annotation name
+|`GeneQuantifications`|
+|`TranscriptQuantifications`|
 
 These two files report abundances for genes and transcripts in the processed RNA-seq samples. The format can be either GFF or TSV depending on the tool used to perform the quantification.
 
