@@ -18,9 +18,8 @@ RUN apk --no-cache add -X http://dl-cdn.alpinelinux.org/alpine/edge/main \
 
 ARG REVISION=v0.7.1
 
-RUN git clone --recursive https://github.com/biod/sambamba.git && \
-    cd sambamba && git checkout $REVISION && \
-    make static
+RUN git clone --recursive https://github.com/biod/sambamba.git --branch $REVISION \
+    && cd sambamba && make static
 
 FROM grapenf/base
 

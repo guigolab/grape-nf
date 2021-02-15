@@ -25,9 +25,8 @@ ENV \
 
 ARG REVISION=v0.7.1
 
-RUN git clone --recursive https://github.com/biod/sambamba.git && \
-    cd sambamba && git checkout $REVISION && \
-    make
+RUN git clone --recursive https://github.com/biod/sambamba.git --branch $REVISION \
+    && cd sambamba && make
 
 FROM grapenf/base
 
