@@ -1,5 +1,13 @@
 # GRAPE-nf Changelog
 
+## Version 1.1.0
+
+- Fix issue with `sambamba` repo checkout in Dockerfile
+- Change quantification process view - #59
+- Add output files section in readme - #58
+- Switch CI to GitHub Actions
+
+
 ## Version 1.0.0
 
 First IHEC release
