@@ -359,6 +359,7 @@ process index {
 
     script:
     cpus = task.cpus
+    memory = (task.memory ?: 1.GB).toBytes()
     sjOverHang = params.sjOverHang
     readLength = params.readLength
     genomeCompressed = genome.extension in comprExts ? "-genome-${genome.extension}" : ''

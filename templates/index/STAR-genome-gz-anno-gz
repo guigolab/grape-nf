@@ -6,10 +6,11 @@ mkdir genomeDir
 pigz -p ${cpus} -dc ${annotation} > ${annotation.baseName}
 pigz -p ${cpus} -dc ${genome} > ${genome.baseName}
 STAR --runThreadN ${cpus} \
-		 --runMode genomeGenerate \
-		 --genomeDir genomeDir \
-		 --genomeFastaFiles ${genome.baseName} \
-		 --sjdbGTFfile ${annotation.baseName} \
-		 --sjdbOverhang ${sjOverHang} \
+	--runMode genomeGenerate \
+	--limitGenomeGenerateRAM ${memory} \
+	--genomeDir genomeDir \
+	--genomeFastaFiles ${genome.baseName} \
+	--sjdbGTFfile ${annotation.baseName} \
+	--sjdbOverhang ${sjOverHang} \
 && rm ${genome.baseName} \
 && rm ${annotation.baseName}
