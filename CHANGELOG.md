@@ -1,5 +1,12 @@
 # GRAPE-nf Changelog
 
+## Version 1.1.1
+
+- Update GitHub workflow
+- Set memory limit to STAR index process - fix #66
+- Merge pull request #61 from guigolab/dependabot/bundler/docs/addressable-2.8.0
+- Bump addressable from 2.4.0 to 2.8.0 in /docs
+
 ## Version 1.1.0
 
 - Fix issue with `sambamba` repo checkout in Dockerfile
