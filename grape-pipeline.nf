@@ -327,31 +327,7 @@ process fetch {
     """
 }
 
-inputFilesNotToFetch.mix(fetchOutput)
-.groupTuple(by: [0,1,3], sort: true)
-.set {
-    inputFiles
-}
-//.into {
-//    inputFilesForBams
-//    inputFilesForFastqs
-//}
 
-inputFiles.filter {
-    it[3] == 'fastq'
-}.map {
-    [it[1], it[0], it[2], fastq(it[2][0]).qualityScore()]
-}.set { mappingInput }
-
-inputFiles.filter {
-    it[3] == 'bam'
-}.transpose()
-.map { sample, id, path, type, view ->
-    [id, sample, type, view, path, params.pairedEnd].flatten()
-}
-.set {
-    inputBams
-}
 
 process fastaIndex {
 
@@ -374,21 +350,7 @@ process fastaIndex {
 
 }
 
-fastaIndexOutput.set {
-    fastaIndex
-}
-//fastaIndexOutput.into {
-//    fastaIndexForBigwig
-//    fastaIndexForContig
-//}
 
-if ( 'bigwig' in pipelineSteps ) {
-    fastaIndex.set { bigwigFastaIndex }
-}
-
-if ( 'contig' in pipelineSteps ) {
-    fastaIndex.set { contigFastaIndex }
-}
 
 process index {
 
@@ -418,9 +380,9 @@ process index {
 
 }
 
-if ( ! params.genomeIndex ) {
-    indexOutput.set { mappingIndex }
-}
+//if ( ! params.genomeIndex ) {
+//    indexOutput.set { mappingIndex }
+//}
 
 process txIndex {
 
@@ -506,47 +468,7 @@ process mapping {
 
 }
 
-mappingOutput.flatMap  { id, sample, type, view, path, pairedEnd ->
-    [path].flatten().collect { f ->
-        [id, sample, type, (f.name =~ /toTranscriptome/ ? 'Transcriptome' : 'Genome') + view, f, pairedEnd]
-    }
-}.mix(inputBams).groupTuple(by: [1, 2, 3, 5]) // group by sample, type, view, pairedEnd (to get unique values for keys)
-.set{
-    bamFiles
-}
-//.into {
-//    bamFilesForSingle
-//    bamFilesForMergeBam
-//}
 
-bamFiles.filter {
-    it[4].size() == 1
-}.set {
-    bamFilesSingle
-}
-
-bamFiles.filter {
-    it[4].size() > 1
-}.set {
-    bamFilesForMerge
-}
-//.into {
-//    bamFilesGenomeForMerge
-//    bamFilesTranscriptomeForMerge
-//}
-
-bamFilesForMerge.filter {
-    it[3] =~ /^Genome/
-}.set {
-    mergeBamGenomeInput
-}
-
-bamFilesForMerge.filter {
-    it[3] =~ /^Transcriptome/
-}.transpose()
-.set {
-    bamFilesTranscriptomeMerge
-}
 
 process sortBam {
     tag "${id}-${params.mergeBamTool}-${params.mergeBamToolVersion}"
@@ -570,11 +492,7 @@ process sortBam {
     template(command)
 }
 
-mergeBamGenomeInput.mix(
-    mergeBamTranscriptomeInput.groupTuple(by: [1, 2, 3, 5], sort: true)
-).set {
-    mergeBamInput
-}
+
 
 process mergeBam {
 
@@ -598,45 +516,7 @@ process mergeBam {
 
 }
 
-bamFilesSingle
-.mix(mergeBamOutput)
-.map {
-    it.flatten()
-}.set{
-    bamFilesForGenome
-}
 
-bamFilesSingle
-.mix(mergeBamOutput)
-.map {
-    it.flatten()
-}.set{
-    bamFilesForTranscriptome
-}
-
-bamFilesForTranscriptome.filter {
-    it[3] =~ /^Transcriptome/
-}.set{
-    bamFilesToTranscriptome
-}
-
-
-bamFilesForGenome.filter {
-    it[3] =~ /^Genome/
-}.set{
-    bamFilesForMarkdup
-}
-
-bamFilesForGenome.filter {
-    it[3] =~ /^Genome/
-}.set{
-    bamFilesToGenome
-}
-
-
-if ( params.markDuplicates || params.removeDuplicates ) {
-    bamFilesForMarkdup.set { markdupInput }
-}
 
 process markdup {
 
@@ -659,9 +539,7 @@ process markdup {
     template(command)
 }
 
-if ( params.markDuplicates || params.removeDuplicates ) {
-    bamFilesToGenome = markdupOutput
-}
+
 
 //bamFilesToGenome.into {
 //    inferExpInput
@@ -691,21 +569,21 @@ process inferExp {
     template(command)
 }
 
-inferExpOutputJSON.map {
-    j = new JsonSlurper()
-    d = j.parseText(it[-1])
-    it[0..-3] + [ d.paired, d.exp ]
-}.set {
-    inferExpOutput
-}
+// inferExpOutputJSON.map {
+//     j = new JsonSlurper()
+//     d = j.parseText(it[-1])
+//     it[0..-3] + [ d.paired, d.exp ]
+// }.set {
+//     inferExpOutput
+// }
 
-inferExpOutput.set { bigwigInput }
-inferExpOutput.set { contigInput }
-inferExpOutput.set { bamFilesCrossTranscriptome }
+// inferExpOutput.set { bigwigInput }
+// inferExpOutput.set { contigInput }
+// inferExpOutput.set { bamFilesCrossTranscriptome }
 
-inferExpOutput.set { bamFilesCrossBamStats }
-inferExpOutput.set { quantificationInputGenome }
-inferExpOutput.set { bamFilesToGenome }
+// inferExpOutput.set { bamFilesCrossBamStats }
+// inferExpOutput.set { quantificationInputGenome }
+// inferExpOutput.set { bamFilesToGenome }
 
 //inferExpOutput.into {
 //    bigwigInput
@@ -723,29 +601,29 @@ inferExpOutput.set { bamFilesToGenome }
 //    quantificationInputTranscriptome
 //}
 
-bamFilesToTranscriptome.cross(bamFilesCrossTranscriptome).map { transcriptome, genome ->
-    transcriptome[0..-2] + genome[-2..-1]
-}.set {
-    quantificationInputTranscriptome
-}
+// bamFilesToTranscriptome.cross(bamFilesCrossTranscriptome).map { transcriptome, genome ->
+//     transcriptome[0..-2] + genome[-2..-1]
+// }.set {
+//     quantificationInputTranscriptome
+// }
 
-bamFilesToTranscriptome.cross(bamFilesCrossTranscriptome).map { transcriptome, genome ->
-    transcriptome[0..-2] + genome[-2..-1]
-}.set {
-    bamFilesToTranscriptome
+// bamFilesToTranscriptome.cross(bamFilesCrossTranscriptome).map { transcriptome, genome ->
+//     transcriptome[0..-2] + genome[-2..-1]
+// }.set {
+//     bamFilesToTranscriptome
 
-}
+// }
 
-switch(params.quantificationMode) {
-    case 'Genome':
-        quantificationInputGenome.set { quantificationInput }
-        annotationsForQuantification.set { quantificationIndex }
-        break
-    case 'Transcriptome':
-        quantificationInputTranscriptome.set { quantificationInput }
-        txIndexOutput.set { quantificationIndex }
-        break
-}
+// switch(params.quantificationMode) {
+//     case 'Genome':
+//         quantificationInputGenome.set { quantificationInput }
+//         annotationsForQuantification.set { quantificationIndex }
+//         break
+//     case 'Transcriptome':
+//         quantificationInputTranscriptome.set { quantificationInput }
+//         txIndexOutput.set { quantificationIndex }
+//         break
+// }
 
 process bamStats {
 
@@ -773,11 +651,7 @@ process bamStats {
     template(command)
 }
 
-bamStatsOutput.cross(bamFilesCrossBamStats).map { stats, genome ->
-    stats + genome[-1]
-}.set {
-    bamStatsFiles
-}
+
 
 process bigwig {
 
@@ -865,24 +739,24 @@ process quantification {
 
 }
 
-bigwigOutput.flatMap { id, sample, type, views, files, pairedEnd, readStrand ->
-    [views, files].transpose().collect { view, f ->
-        [ id, sample, type, view, f, pairedEnd, readStrand ]
-    }
-}.set {
-    bigwigFiles
-}
+// bigwigOutput.flatMap { id, sample, type, views, files, pairedEnd, readStrand ->
+//     [views, files].transpose().collect { view, f ->
+//         [ id, sample, type, view, f, pairedEnd, readStrand ]
+//     }
+// }.set {
+//     bigwigFiles
+// }
 
-bamFilesToGenome.mix(bamFilesToTranscriptome, bamStatsFiles, bigwigFiles, contigOutput, quantificationIsoforms, quantificationGenes)
-.collectFile(name: pdb.name, storeDir: pdb.parent, newLine: true) { id, sample, type, view, file, pairedEnd, readStrand ->
-    [sample, id, file, type, view, pairedEnd ? 'Paired-End' : 'Single-End', readStrand].join("\t")
-}
-.subscribe {
-    log.info ""
-    log.info "-----------------------"
-    log.info "Pipeline run completed."
-    log.info "-----------------------"
-}
+// bamFilesToGenome.mix(bamFilesToTranscriptome, bamStatsFiles, bigwigFiles, contigOutput, quantificationIsoforms, quantificationGenes)
+// .collectFile(name: pdb.name, storeDir: pdb.parent, newLine: true) { id, sample, type, view, file, pairedEnd, readStrand ->
+//     [sample, id, file, type, view, pairedEnd ? 'Paired-End' : 'Single-End', readStrand].join("\t")
+// }
+// .subscribe {
+//     log.info ""
+//     log.info "-----------------------"
+//     log.info "Pipeline run completed."
+//     log.info "-----------------------"
+// }
 
 /*
  * Given the input index file returns the number of unique samples,
@@ -926,32 +800,255 @@ def testResolveFile() {
   assert resolveFile('s3://abs/file', index) == file('s3://abs/file')
 }
 
+
 workflow {
+
 
   fetchOutput = fetch( fetchInput )
 
+  inputFilesNotToFetch.mix(fetchOutput)
+  .groupTuple(by: [0,1,3], sort: true)
+  .set {
+      inputFiles
+  }
+//.into {
+//    inputFilesForBams
+//    inputFilesForFastqs
+//}
+
+  inputFiles.filter {
+      it[3] == 'fastq'
+  }.map {
+      [it[1], it[0], it[2], fastq(it[2][0]).qualityScore()]
+  }.set { mappingInput }
+
+  inputFiles.filter {
+      it[3] == 'bam'
+  }.transpose()
+  .map { sample, id, path, type, view ->
+      [id, sample, type, view, path, params.pairedEnd].flatten()
+  }
+  .set {
+      inputBams
+  }
+
   fastaIndexOutput = fastaIndex( fastaIndexGenomes , fastaIndexAnnotations )
 
-  indexOutput = index( indexGenomes , indexAnnotations )
+  fastaIndexOutput.set {
+    fastaIndex
+  }
+//fastaIndexOutput.into {
+//    fastaIndexForBigwig
+//    fastaIndexForContig
+//}
+
+  if ( 'bigwig' in pipelineSteps ) {
+      fastaIndex.set { bigwigFastaIndex }
+  }
+
+  if ( 'contig' in pipelineSteps ) {
+      fastaIndex.set { contigFastaIndex }
+  }
 
   txIndexOutput = txIndex( txIndexGenomes , txIndexAnnotations )
 
+  //Channel.empty().set { indexGenomes }
+  //Channel.empty().set { indexAnnotations }
+
+  if ( ! params.genomeIndex ) {
+      indexOutput = index( indexGenomes , indexAnnotations )
+      indexOutput.set { mappingIndex }
+  }
+
   mappingOutput = mapping( mappingInput , mappingAnnotations.first() , mappingIndex.first() )
+  //mappingOutput = mapping( mappingInput , mappingAnnotations, mappingIndex )
+  
 
-  mergeBamTranscriptomeInput = sortBam( bamFilesTranscriptomeMerge )
+  mappingOutput.flatMap  { id, sample, type, view, path, pairedEnd ->
+    [path].flatten().collect { f ->
+        [id, sample, type, (f.name =~ /toTranscriptome/ ? 'Transcriptome' : 'Genome') + view, f, pairedEnd]
+    }
+  }.mix(inputBams).groupTuple(by: [1, 2, 3, 5]) // group by sample, type, view, pairedEnd (to get unique values for keys)
+  .set{
+      bamFiles
+  }
+ 
+  
 
-  mergeBamOutput = mergeBam( mergeBamInput )
+  bamFiles.filter {
+      it[4].size() == 1
+  }.set {
+      bamFilesSingle
+  }
+  
+bamFilesSingle.view()
+// [[test4], sample3, bam, GenomeAlignments, [/Users/pmarangio/PycharmProjects/grape-nf/data/sample3_m4_n10_toGenome.bam], false]
+// [[test4], sample3, bam, TranscriptomeAlignments, [/Users/pmarangio/PycharmProjects/grape-nf/data/sample3_m4_n10_toTranscriptome.bam], false]
+// [[test1], sample1, bam, GenomeAlignments, [/Users/pmarangio/PycharmProjects/grape-nf/work/d0/0508029d577da1e5cccd7aa7f4ece5/sample1_m4_n10_toGenome.bam], true]
+// [[test1], sample1, bam, TranscriptomeAlignments, [/Users/pmarangio/PycharmProjects/grape-nf/work/d0/0508029d577da1e5cccd7aa7f4ece5/sample1_m4_n10_toTranscriptome.bam], true]
+  
+  bamFiles.filter {
+      it[4].size() > 1
+  }.set {
+       bamFilesForMerge
+  }
 
-  markdupOutput = markdup( markdupInput )
+  //bamFiles.filter {
+  //    it[4]
+  //}.view()
+// [[test4], sample3, bam, GenomeAlignments, [/Users/pmarangio/PycharmProjects/grape-nf/data/sample3_m4_n10_toGenome.bam], false]
+// [[test4], sample3, bam, TranscriptomeAlignments, [/Users/pmarangio/PycharmProjects/grape-nf/data/sample3_m4_n10_toTranscriptome.bam], false]
+// [[test1], sample1, bam, GenomeAlignments, [/Users/pmarangio/PycharmProjects/grape-nf/work/d0/0508029d577da1e5cccd7aa7f4ece5/sample1_m4_n10_toGenome.bam], true]
+// [[test1], sample1, bam, TranscriptomeAlignments, [/Users/pmarangio/PycharmProjects/grape-nf/work/d0/0508029d577da1e5cccd7aa7f4ece5/sample1_m4_n10_toTranscriptome.bam], true]
 
-  inferExpOutputJSON = inferExp( bamFilesToGenome , inferExpAnnotations.first() )
+  //bamFiles.filter {
+  //    it[4].size() > 1
+  //}.view()
+  
+  // empty
 
-  bamStatsOutput = bamStats( bamFilesToGenome , bamStatsAnnotations.first() )
+  bamFilesForMerge.filter {
+      it[3] =~ /^Genome/
+  }.set {
+      mergeBamGenomeInput
+  }
 
-  bigwigOutput = bigwig( bigwigInput , bigwigFastaIndex.first() )
+  bamFilesForMerge.filter {
+      it[3] =~ /^Transcriptome/
+  }.transpose()
+  .set {
+      bamFilesTranscriptomeMerge
+  }
+  
+//   mergeBamTranscriptomeInput = sortBam( bamFilesTranscriptomeMerge )
 
-  //contigOutput = contig( contigInput , contigFastaIndex.first() )
+//   mergeBamGenomeInput.mix(
+//     mergeBamTranscriptomeInput.groupTuple(by: [1, 2, 3, 5], sort: true)
+//   ).set {
+//       mergeBamInput
+//   }
 
-  //quantificationIsoforms , quantificationGenes = quantification( quantificationInput , quantificationIndex.first() )
+//   mergeBamOutput = mergeBam( mergeBamInput )
+
+//   bamFilesSingle
+//   .mix(mergeBamOutput)
+//   .map {
+//       it.flatten()
+//   }.set{
+//       bamFilesForGenome
+//   }
+
+//   bamFilesSingle
+//   .mix(mergeBamOutput)
+//   .map {
+//       it.flatten()
+//   }.set{
+//       bamFilesForTranscriptome
+//   }
+
+//   bamFilesForTranscriptome.filter {
+//       it[3] =~ /^Transcriptome/
+//   }.set{
+//       bamFilesToTranscriptome
+//   }
+
+
+//   bamFilesForGenome.filter {
+//       it[3] =~ /^Genome/
+//   }.set{
+//       bamFilesForMarkdup
+//   }
+
+//   bamFilesForGenome.filter {
+//       it[3] =~ /^Genome/
+//   }.set{
+//       bamFilesToGenome
+//   }
+
+
+//   if ( params.markDuplicates || params.removeDuplicates ) {
+//       bamFilesForMarkdup.set { markdupInput }
+//   }
+
+//   markdupOutput = markdup( markdupInput )
+
+//   if ( params.markDuplicates || params.removeDuplicates ) {
+//     bamFilesToGenome = markdupOutput
+//   }
+
+//   inferExpOutputJSON = inferExp( bamFilesToGenome , inferExpAnnotations.first() )
+
+//   inferExpOutputJSON.map {
+//     j = new JsonSlurper()
+//     d = j.parseText(it[-1])
+//     it[0..-3] + [ d.paired, d.exp ]
+//   }.set {
+//       inferExpOutput
+//   }
+
+//   inferExpOutput.set { bigwigInput }
+//   inferExpOutput.set { contigInput }
+//   inferExpOutput.set { bamFilesCrossTranscriptome }
+
+//   inferExpOutput.set { bamFilesCrossBamStats }
+//   inferExpOutput.set { quantificationInputGenome }
+//   inferExpOutput.set { bamFilesToGenome }
+
+//   bamFilesToTranscriptome.cross(bamFilesCrossTranscriptome).map { transcriptome, genome ->
+//     transcriptome[0..-2] + genome[-2..-1]
+//   }.set {
+//       quantificationInputTranscriptome
+//   }
+
+//   bamFilesToTranscriptome.cross(bamFilesCrossTranscriptome).map { transcriptome, genome ->
+//       transcriptome[0..-2] + genome[-2..-1]
+//   }.set {
+//       bamFilesToTranscriptome
+
+//   }
+
+//   switch(params.quantificationMode) {
+//       case 'Genome':
+//           quantificationInputGenome.set { quantificationInput }
+//           annotationsForQuantification.set { quantificationIndex }
+//           break
+//       case 'Transcriptome':
+//           quantificationInputTranscriptome.set { quantificationInput }
+//           txIndexOutput.set { quantificationIndex }
+//           break
+//   }
+
+//   bamStatsOutput = bamStats( bamFilesToGenome , bamStatsAnnotations.first() )
+
+//   bamStatsOutput.cross(bamFilesCrossBamStats).map { stats, genome ->
+//     stats + genome[-1]
+//   }.set {
+//     bamStatsFiles
+//   }
+
+//   bigwigOutput = bigwig( bigwigInput , bigwigFastaIndex.first() )
+
+//   contigOutput = contig( contigInput , contigFastaIndex.first() )
+
+//   quantificationIsoforms , quantificationGenes = quantification( quantificationInput , quantificationIndex.first() )
+
+//   bigwigOutput.flatMap { id, sample, type, views, files, pairedEnd, readStrand ->
+//     [views, files].transpose().collect { view, f ->
+//         [ id, sample, type, view, f, pairedEnd, readStrand ]
+//     }
+//   }.set {
+//       bigwigFiles
+//   }
+
+//   bamFilesToGenome.mix(bamFilesToTranscriptome, bamStatsFiles, bigwigFiles, contigOutput, quantificationIsoforms, quantificationGenes)
+//   .collectFile(name: pdb.name, storeDir: pdb.parent, newLine: true) { id, sample, type, view, file, pairedEnd, readStrand ->
+//       [sample, id, file, type, view, pairedEnd ? 'Paired-End' : 'Single-End', readStrand].join("\t")
+//   }
+//   .subscribe {
+//       log.info ""
+//       log.info "-----------------------"
+//       log.info "Pipeline run completed."
+//       log.info "-----------------------"
+//   }
 
 }
