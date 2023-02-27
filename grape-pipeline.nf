@@ -557,7 +557,7 @@ process inferExp {
     //set species, file(annotation) from inferExpAnnotations.first()
 
     output:
-    tuple val(id), val(sample), val(type), val(view), path(bam), val(pairedEnd), val(stdout)
+    tuple val(id), val(sample), val(type), val(view), path(bam), val(pairedEnd), stdout
     //set id, sample, type, view, file(bam), pairedEnd, stdout into inferExpOutputJSON
     
 
@@ -690,7 +690,7 @@ process contig {
     //set species, file(genomeFai) from contigFastaIndex.first()
 
     output:
-    tuple (id), val(sample), val(type), val(view), path('*.bed'), val(pairedEnd), val(readStrand)
+    tuple val(id), val(sample), val(type), val(view), path('*.bed'), val(pairedEnd), val(readStrand)
     //set id, sample, type, view, file('*.bed'), pairedEnd, readStrand into contigOutput
 
     script:
@@ -881,7 +881,7 @@ workflow {
       bamFilesSingle
   }
   
-bamFilesSingle.view()
+//bamFilesSingle.view()
 // [[test4], sample3, bam, GenomeAlignments, [/Users/pmarangio/PycharmProjects/grape-nf/data/sample3_m4_n10_toGenome.bam], false]
 // [[test4], sample3, bam, TranscriptomeAlignments, [/Users/pmarangio/PycharmProjects/grape-nf/data/sample3_m4_n10_toTranscriptome.bam], false]
 // [[test1], sample1, bam, GenomeAlignments, [/Users/pmarangio/PycharmProjects/grape-nf/work/d0/0508029d577da1e5cccd7aa7f4ece5/sample1_m4_n10_toGenome.bam], true]
@@ -892,7 +892,7 @@ bamFilesSingle.view()
   }.set {
        bamFilesForMerge
   }
-
+    //bamFilesSingle.view()
   //bamFiles.filter {
   //    it[4]
   //}.view()
@@ -919,136 +919,151 @@ bamFilesSingle.view()
   .set {
       bamFilesTranscriptomeMerge
   }
+  //bamFilesTranscriptomeMerge.view()
+  mergeBamTranscriptomeInput = sortBam( bamFilesTranscriptomeMerge )
+
+   mergeBamGenomeInput.mix(
+     mergeBamTranscriptomeInput.groupTuple(by: [1, 2, 3, 5], sort: true)
+   ).set {
+       mergeBamInput
+   }
+
+   mergeBamOutput = mergeBam( mergeBamInput )
+
+  bamFilesSingle
+  .mix(mergeBamOutput)
+  .map {
+      it.flatten()
+  }.set{
+      bamFilesForGenome
+  }
+
+  bamFilesSingle
+  .mix(mergeBamOutput)
+  .map {
+      it.flatten()
+  }.set{
+      bamFilesForTranscriptome
+  }
+
+  bamFilesForTranscriptome.filter {
+      it[3] =~ /^Transcriptome/
+  }.set{
+      bamFilesToTranscriptome
+  }
   
-//   mergeBamTranscriptomeInput = sortBam( bamFilesTranscriptomeMerge )
 
-//   mergeBamGenomeInput.mix(
-//     mergeBamTranscriptomeInput.groupTuple(by: [1, 2, 3, 5], sort: true)
-//   ).set {
-//       mergeBamInput
-//   }
+  bamFilesForGenome.filter {
+      it[3] =~ /^Genome/
+  }.set{
+      bamFilesForMarkdup
+  }
 
-//   mergeBamOutput = mergeBam( mergeBamInput )
+  bamFilesForGenome.filter {
+      it[3] =~ /^Genome/
+  }.set{
+      bamFilesToGenome
+  }
 
-//   bamFilesSingle
-//   .mix(mergeBamOutput)
-//   .map {
-//       it.flatten()
-//   }.set{
-//       bamFilesForGenome
-//   }
+  //bamFilesForMarkdup.view()
+  if ( params.markDuplicates || params.removeDuplicates ) {
+     bamFilesForMarkdup.set { markdupInput }
+  }
 
-//   bamFilesSingle
-//   .mix(mergeBamOutput)
-//   .map {
-//       it.flatten()
-//   }.set{
-//       bamFilesForTranscriptome
-//   }
+  //markdupInput.view()
+  markdupOutput = markdup( markdupInput )
 
-//   bamFilesForTranscriptome.filter {
-//       it[3] =~ /^Transcriptome/
-//   }.set{
-//       bamFilesToTranscriptome
-//   }
+  if ( params.markDuplicates || params.removeDuplicates ) {
+    bamFilesToGenome = markdupOutput
+  }
+  
+  inferExpOutputJSON = inferExp( bamFilesToGenome , inferExpAnnotations.first() )
+
+  
+  
+  inferExpOutputJSON.map {
+    j = new JsonSlurper()
+    d = j.parseText(it[-1])
+    it[0..-3] + [ d.paired, d.exp ]
+  }.set {
+      inferExpOutput
+  }
+
+  inferExpOutput.set { bigwigInput }
+  inferExpOutput.set { contigInput }
+  inferExpOutput.set { bamFilesCrossTranscriptome }
+
+  inferExpOutput.set { bamFilesCrossBamStats }
+  inferExpOutput.set { quantificationInputGenome }
+  //inferExpOutput.set { bamFilesToGenome }
+
+  bamFilesToTranscriptome.cross(bamFilesCrossTranscriptome).map { transcriptome, genome ->
+    transcriptome[0..-2] + genome[-2..-1]
+  }.set {
+      quantificationInputTranscriptome
+  }
+
+  bamFilesToTranscriptome.cross(bamFilesCrossTranscriptome).map { transcriptome, genome ->
+      transcriptome[0..-2] + genome[-2..-1]
+  }.set {
+      bamFilesToTranscriptome
+
+  }
+
+  switch(params.quantificationMode) {
+      case 'Genome':
+          quantificationInputGenome.set { quantificationInput }
+          annotationsForQuantification.set { quantificationIndex }
+          break
+      case 'Transcriptome':
+          quantificationInputTranscriptome.set { quantificationInput }
+          txIndexOutput.set { quantificationIndex }
+          break
+  }
 
 
-//   bamFilesForGenome.filter {
-//       it[3] =~ /^Genome/
-//   }.set{
-//       bamFilesForMarkdup
-//   }
+   bamStatsOutput = bamStats( bamFilesToGenome , bamStatsAnnotations.first() )
 
-//   bamFilesForGenome.filter {
-//       it[3] =~ /^Genome/
-//   }.set{
-//       bamFilesToGenome
-//   }
+   bamStatsOutput.cross(bamFilesCrossBamStats).map { stats, genome ->
+     stats + genome[-1]
+   }.set {
+     bamStatsFiles
+   }
+
+   bigwigOutput = bigwig( bigwigInput , bigwigFastaIndex.first() )
+   
+
+   contigOutput = contig( contigInput , contigFastaIndex.first() )
 
 
-//   if ( params.markDuplicates || params.removeDuplicates ) {
-//       bamFilesForMarkdup.set { markdupInput }
-//   }
 
-//   markdupOutput = markdup( markdupInput )
 
-//   if ( params.markDuplicates || params.removeDuplicates ) {
-//     bamFilesToGenome = markdupOutput
-//   }
+   (quantificationIsoforms, quantificationGenes) = quantification( quantificationInput , quantificationIndex.first() )
 
-//   inferExpOutputJSON = inferExp( bamFilesToGenome , inferExpAnnotations.first() )
+   
 
-//   inferExpOutputJSON.map {
-//     j = new JsonSlurper()
-//     d = j.parseText(it[-1])
-//     it[0..-3] + [ d.paired, d.exp ]
-//   }.set {
-//       inferExpOutput
-//   }
+  bigwigOutput.flatMap { id, sample, type, views, files, pairedEnd, readStrand ->
+    [views, files].transpose().collect { view, f ->
+        [ id, sample, type, view, f, pairedEnd, readStrand ]
+    }
+  }.set {
+      bigwigFiles
+  }
 
-//   inferExpOutput.set { bigwigInput }
-//   inferExpOutput.set { contigInput }
-//   inferExpOutput.set { bamFilesCrossTranscriptome }
 
-//   inferExpOutput.set { bamFilesCrossBamStats }
-//   inferExpOutput.set { quantificationInputGenome }
-//   inferExpOutput.set { bamFilesToGenome }
+  inferExpOutput.set { bamFilesToGenome }
 
-//   bamFilesToTranscriptome.cross(bamFilesCrossTranscriptome).map { transcriptome, genome ->
-//     transcriptome[0..-2] + genome[-2..-1]
-//   }.set {
-//       quantificationInputTranscriptome
-//   }
 
-//   bamFilesToTranscriptome.cross(bamFilesCrossTranscriptome).map { transcriptome, genome ->
-//       transcriptome[0..-2] + genome[-2..-1]
-//   }.set {
-//       bamFilesToTranscriptome
 
-//   }
-
-//   switch(params.quantificationMode) {
-//       case 'Genome':
-//           quantificationInputGenome.set { quantificationInput }
-//           annotationsForQuantification.set { quantificationIndex }
-//           break
-//       case 'Transcriptome':
-//           quantificationInputTranscriptome.set { quantificationInput }
-//           txIndexOutput.set { quantificationIndex }
-//           break
-//   }
-
-//   bamStatsOutput = bamStats( bamFilesToGenome , bamStatsAnnotations.first() )
-
-//   bamStatsOutput.cross(bamFilesCrossBamStats).map { stats, genome ->
-//     stats + genome[-1]
-//   }.set {
-//     bamStatsFiles
-//   }
-
-//   bigwigOutput = bigwig( bigwigInput , bigwigFastaIndex.first() )
-
-//   contigOutput = contig( contigInput , contigFastaIndex.first() )
-
-//   quantificationIsoforms , quantificationGenes = quantification( quantificationInput , quantificationIndex.first() )
-
-//   bigwigOutput.flatMap { id, sample, type, views, files, pairedEnd, readStrand ->
-//     [views, files].transpose().collect { view, f ->
-//         [ id, sample, type, view, f, pairedEnd, readStrand ]
-//     }
-//   }.set {
-//       bigwigFiles
-//   }
-
-//   bamFilesToGenome.mix(bamFilesToTranscriptome, bamStatsFiles, bigwigFiles, contigOutput, quantificationIsoforms, quantificationGenes)
-//   .collectFile(name: pdb.name, storeDir: pdb.parent, newLine: true) { id, sample, type, view, file, pairedEnd, readStrand ->
-//       [sample, id, file, type, view, pairedEnd ? 'Paired-End' : 'Single-End', readStrand].join("\t")
-//   }
-//   .subscribe {
-//       log.info ""
-//       log.info "-----------------------"
-//       log.info "Pipeline run completed."
-//       log.info "-----------------------"
-//   }
+  bamFilesToGenome.mix(bamFilesToTranscriptome, bamStatsFiles, bigwigFiles, contigOutput, quantificationIsoforms, quantificationGenes)
+  .collectFile(name: pdb.name, storeDir: pdb.parent, newLine: true) { id, sample, type, view, file, pairedEnd, readStrand ->
+      [sample, id, file, type, view, pairedEnd ? 'Paired-End' : 'Single-End', readStrand].join("\t")
+  }
+  .subscribe {
+      log.info ""
+      log.info "-----------------------"
+      log.info "Pipeline run completed."
+      log.info "-----------------------"
+  }
 
 }
