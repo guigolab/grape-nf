@@ -86,6 +86,22 @@ Channel.empty().set { quantificationGenes }
 
 
 
+
+include { fetch } from './modules/fetch.nf'
+include { fastaIndex } from './modules/fastaindex.nf'
+include { index } from './modules/index.nf'
+include { txIndex } from './modules/txIndex.nf'
+include { mapping } from './modules/mapping.nf'
+//include { sortBam } from './modules/sortBam.nf'
+//include { mergeBam } from './modules/mergeBam.nf'
+include { inferExp } from './modules/inferExp.nf'
+include { markdup } from './modules/markdup.nf'
+include { contig } from './modules/contig.nf'
+include { quantification } from './modules/quantification.nf'
+include { bamStats } from './modules/bamStats.nf'
+include { bigwig} from './modules/bigwig.nf'
+
+
 // Auxiliary variables
 def comprExts = ['gz', 'bz2', 'zip']
 def pref = "_m${params.maxMismatches}_n${params.maxMultimaps}"
@@ -294,154 +310,24 @@ if ( 'quantification' in pipelineSteps && params.quantificationMode == "Transcri
 }
 
 // Processes
-process fetch {
-    tag { outPath.name }
-    storeDir { outPath.parent }
-
-    input:
-    tuple val(sample), val(id), path(path), val(type), val(view)
-
-    output:
-    tuple val(sample), val(id), path("${outPath.name}"), val(type), val(view)
-
-    script:
-    def paths = path.split(',')
-    outPath = workflow.launchDir.resolve(paths[-1])
-    urls = paths.size() > 1 ? paths[0..-2].join(' ') : ''
-    """
-    for url in $urls; do
-        if wget \${url}; then
-            exit 0
-        fi
-    done
-    """
-}
 
 
 
-process fastaIndex {
-
-    tag "${species}-${params.fastaIndexTool}-${params.fastaIndexToolVersion}"
-
-    input:
-    tuple val (species), path(genome)
-    tuple val (species), path(annotation)
-
-    output:
-    tuple val(species), path { "${genome.name.replace('.gz','')}.fai" }
-
-    script:
-    compressed = genome.extension in comprExts ? "-${genome.extension}" : ''
-    command = "${task.process}/${params.fastaIndexTool}${compressed}"
-    template(command)
-
-}
 
 
 
-process index {
-
-    label "mapping"
-    tag "${species}-${params.mappingTool}-${params.mappingToolVersion}"
-
-    input:
-    tuple val(species), path(genome)
-    tuple val(species), path(annotation)
-
-    output:
-    tuple val(species), path("genomeDir")
-
-    script:
-    cpus = task.cpus
-    memory = (task.memory ?: 1.GB).toBytes()
-    sjOverHang = params.sjOverHang
-    readLength = params.readLength
-    genomeCompressed = genome.extension in comprExts ? "-genome-${genome.extension}" : ''
-    annoCompressed = annotation.extension in comprExts ? "-anno-${annotation.extension}" : ''
-    command = "${task.process}/${params.mappingTool}${genomeCompressed}${annoCompressed}"
-
-    template(command)
-
-}
 
 
 
-process txIndex {
 
-    label 'quantification'
-    tag "${species}-${params.quantificationTool}-${params.quantificationToolVersion}"
 
-    input:
-    tuple val(species), path(genome)
-    tuple val(species), path(annotation)
 
-    output:
-    tuple val(species), path('txDir')
 
-    script:
-    genomeCompressed = genome.extension in comprExts ? "-genome-${genome.extension}" : ''
-    annoCompressed = annotation.extension in comprExts ? "-anno-${annotation.extension}" : ''
-    command = "${task.process}/${params.quantificationTool}${genomeCompressed}${annoCompressed}"
 
-    template(command)
 
-}
 
-process mapping {
 
-    label "mapping"
-    tag "${id.replace(':', '_')}-${params.mappingTool}-${params.mappingToolVersion}"
 
-    input:
-    tuple val(id), val(sample), path(reads), val(qualityOffset)
-    tuple val(species), path(annotation)
-    tuple val(species), path(genomeDir)
-
-    output:
-    tuple val(id), val(sample), val(type), val(view), path("*.bam"), val(pairedEnd)
-
-    script:
-    type = 'bam'
-    view = 'Alignments'
-    prefix = "${sample}${pref}"
-    maxMultimaps = params.maxMultimaps
-    maxMismatches = params.maxMismatches
-
-    // prepare BAM @RG tag information
-    // def date = new Date().format("yyyy-MM-dd'T'HH:mmZ", TimeZone.getTimeZone("UTC"))
-    date = ""
-    readGroupList = []
-    readGroupList << ["ID", "${id}"]
-    readGroupList << ["PU", "${id}"]
-    readGroupList << ["SM", "${sample}"]
-    if ( date ) readGroupList << ["DT", "${date}"]
-    if ( params.rgPlatform ) readGroupList << ["PL", "${params.rgPlatform}"]
-    if ( params.rgLibrary ) readGroupList << ["LB", "${params.rgLibrary}"]
-    if ( params.rgCenterName ) readGroupList << ["CN", "${params.rgCenterName}"]
-    if ( params.rgDesc ) readGroupList << ["DS", "${params.rgDesc}"]
-    (s,t) = params.mappingReadGroupSeparators
-    readGroup = readGroupList.collect { it.join(s) }.join(t)
-
-    fqs = reads.toString().split(" ")
-    pairedEnd = (fqs.size() == 2)
-    taskMemory = task.memory ?: 1.GB
-    totalMemory = (taskMemory.toBytes()*2/3) as int
-    threadMemory = (totalMemory/task.cpus) as int
-    cpus = task.cpus
-    halfCpus = (task.cpus > 1 ? task.cpus / 2 : task.cpus) as int
-
-    command = "${task.process}/${params.mappingTool}-${params.mappingToolVersion.split("\\.")[0..1].join(".")}"
-    switch(params.mappingTool) {
-        case 'GEM':
-            command += "-${pairedEnd ? 'Paired-End' : 'Single-End'}"
-            break
-        case 'STAR':
-            command += (params.mappingSortTool ? "-"+params.mappingSortTool : '') + (params.quantificationMode ? "-"+params.quantificationMode : '') + (params.addXs ? "-XS" : '')
-            break
-    }
-    template(command)
-
-}
 
 
 
@@ -466,7 +352,6 @@ process sortBam {
 }
 
 
-
 process mergeBam {
 
     tag "${id.replace(':', '_')}-${params.mergeBamTool}-${params.mergeBamToolVersion}"
@@ -489,160 +374,25 @@ process mergeBam {
 
 
 
-process markdup {
-
-    tag "${id.replace(':', '_')}-${params.markdupTool}-${params.markdupToolVersion}"
-
-    input:
-    tuple val(id), val(sample), val(type), val(view), path(bam), val(pairedEnd)
-
-
-    output:
-    tuple val(id), val(sample), val(type), val(view), path("${prefix}.bam"), val(pairedEnd)
-
-    script:
-    cpus = task.cpus
-    memory = (task.memory ?: 2.GB).toMega()
-    prefix = "${bam.baseName}.markdup"
-
-    command = "${task.process}/${params.markdupTool}${params.removeDuplicates ? '-remove' : ''}"
-    template(command)
-}
 
 
 
 
 
-process inferExp {
-
-    tag "${id.replace(':', '_')}-${params.inferExpTool}-${params.inferExpToolVersion}"
-
-    input:
-    tuple val(id), val(sample), val(type), val(view), path(bam), val(pairedEnd)
-    tuple val(species), path(annotation)
-
-    output:
-    tuple val(id), val(sample), val(type), val(view), path(bam), val(pairedEnd), stdout
-    
-
-    script:
-    prefix = "${annotation.name.split('\\.', 2)[0]}"
-    command = "${task.process}/${params.inferExpTool}"
-    threshold = params.inferExpThreshold
-
-    template(command)
-}
 
 
 
-process bamStats {
-
-    tag "${id.replace(':', '_')}-${params.bamStatsTool}-${params.bamStatsToolVersion}"
-
-    input:
-    tuple val(id), val(sample), val(type), val(view), path(bam), val(pairedEnd)
-    tuple val(species), path(annotation)
-
-
-    output:
-    tuple val(id), val(sample), val(type), val(views), path('*.json'), val(pairedEnd)
- 
-
-    script:
-    cpus = task.cpus
-    type = "json"
-    prefix = "${sample}"
-    views = "BamStats"
-    maxBuf = params.bamStatsMaxBuf
-    logLevel = params.bamStatsLogLevel
-    command = "${task.process}/${params.bamStatsTool}"
-
-    template(command)
-}
 
 
 
-process bigwig {
-
-    tag "${id.replace(':', '_')}-${params.bigwigTool}-${params.bigwigToolVersion}"
-
-    input:
-    tuple val(id), val(sample), val(type), val(view), path(bam), val(pairedEnd), val(readStrand)
-    tuple val(species), path(genomeFai)
-
-
-    output:
-    tuple val(id), val(sample), val(type), val(views), path('*.bw'), val(pairedEnd), val(readStrand)
-
-
-    script:
-    cpus = task.cpus
-    type = "bigWig"
-    prefix = "${sample}"
-    wigRefPrefix = params.wigRefPrefix != "-" ? params.wigRefPrefix : ""
-    views = params.bigwigViews[readStrand]
-    command = "${task.process}/${params.bigwigTool}-${readStrand}"
-
-    template(command)
-
-}
-
-process contig {
-
-    tag "${id.replace(':', '_')}-${params.contigTool}-${params.contigToolVersion}"
-
-    input:
-    tuple val(id), val(sample), val(type), val(view), path(bam), val(pairedEnd), val(readStrand)
-    tuple val(species), path(genomeFai)
-
-
-    output:
-    tuple val(id), val(sample), val(type), val(view), path('*.bed'), val(pairedEnd), val(readStrand)
-
-
-    script:
-    cpus = task.cpus
-    type = 'bed'
-    view = 'Contigs'
-    prefix = "${sample}.contigs"
-    command = "${task.process}/${params.contigTool}-${readStrand}"
-
-    template(command)
-
-}
-
-process quantification {
-
-    label 'quantification'
-    tag "${id.replace(':', '_')}-${params.quantificationTool}-${params.quantificationToolVersion}"
-
-    input:
-    tuple val(id), val(sample), val(type), val(view), path(bam), val(pairedEnd), val(readStrand)
-    tuple val(species), val(quantRef)
-
-
-    output:
-    tuple val(id), val(sample), val(type), val(viewTx), path("*isoforms*"), val(pairedEnd), val(readStrand)
-    tuple val(id), val(sample), val(type), val(viewGn), path("*genes*"), val(pairedEnd), val(readStrand)
 
 
 
-    script:
-    cpus = task.cpus
-    prefix = "${sample}"
-    type = params.quantificationFileType
-    viewTx = "TranscriptQuantifications"
-    viewGn = "GeneQuantifications"
-    memory = (task.memory ?: 1.GB).toMega()
-    command = "${task.process}/${params.quantificationTool}"
-    if ( params.quantificationTool == 'RSEM') {
-        command += "-${pairedEnd ? 'Paired-End' : 'Single-End'}"
-    }
-    command += "-${readStrand}"
 
-    template(command)
 
-}
+
+
+
 
 
 
