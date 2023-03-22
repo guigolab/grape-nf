@@ -48,33 +48,25 @@ params.wigRefPrefix = ''
 params.inferExpThreshold = 0.8
 
 // Process channels
+
 Channel.empty().set { fetchInput }
 Channel.empty().set { fastaIndexGenomes }
 Channel.empty().set { fastaIndexAnnotations }
 Channel.empty().set { indexGenomes }
 
-Channel.empty().set { indexAnnotationst }
-Channel.empty().set { mappingInput }
-Channel.empty().set { mappingIndex }
-Channel.empty().set { mappingAnnotations }
-
 Channel.empty().set { txIndexGenomes }
 Channel.empty().set { txIndexAnnotations }
 Channel.empty().set { mergeBamInput }
+
 Channel.empty().set { markdupInput }
 
-Channel.empty().set { inferExpAnnotations }
-Channel.empty().set { bamStatsInput }
-Channel.empty().set { bamStatsAnnotations }
-Channel.empty().set { bigwigInput }
-
 Channel.empty().set { bigwigFastaIndex }
-Channel.empty().set { contigInput }
+
 Channel.empty().set { contigFastaIndex }
 Channel.empty().set { quantificationInput }
-Channel.empty().set { quantificationTxIndex }
 
 Channel.empty().set { fetchOutput }
+
 Channel.empty().set { fastaIndexOutput }
 Channel.empty().set { indexOutput }
 Channel.empty().set { txIndexOutput }
@@ -291,9 +283,9 @@ if ( 'mapping' in pipelineSteps ) {
         Genomes.set { indexGenomes }
         Annotations.set { indexAnnotations }
     }
-    Annotations.set { mappingAnnotations }
-    Annotations.set { inferExpAnnotations }
-    Annotations.set { bamStatsAnnotations }
+    //Annotations.set { mappingAnnotations }
+    //Annotations.set { inferExpAnnotations }
+    //Annotations.set { bamStatsAnnotations }
 }
 
 if ( 'quantification' in pipelineSteps && params.quantificationMode == "Transcriptome" ) {
@@ -308,11 +300,9 @@ process fetch {
 
     input:
     tuple val(sample), val(id), path(path), val(type), val(view)
-    //set sample, id, path, type, view from fetchInput
 
     output:
     tuple val(sample), val(id), path("${outPath.name}"), val(type), val(view)
-    //set sample, id, file("${outPath.name}"), type, view into fetchOutput
 
     script:
     def paths = path.split(',')
@@ -336,12 +326,9 @@ process fastaIndex {
     input:
     tuple val (species), path(genome)
     tuple val (species), path(annotation)
-    //set species, file(genome) from fastaIndexGenomes
-    //set species, file(annotation) from fastaIndexAnnotations
 
     output:
     tuple val(species), path { "${genome.name.replace('.gz','')}.fai" }
-    //set species, file { "${genome.name.replace('.gz','')}.fai" } into fastaIndexOutput
 
     script:
     compressed = genome.extension in comprExts ? "-${genome.extension}" : ''
@@ -360,12 +347,9 @@ process index {
     input:
     tuple val(species), path(genome)
     tuple val(species), path(annotation)
-    //set species, file(genome) from indexGenomes
-    //set species, file(annotation) from indexAnnotations
 
     output:
     tuple val(species), path("genomeDir")
-    //set species, file("genomeDir") into indexOutput
 
     script:
     cpus = task.cpus
@@ -380,9 +364,7 @@ process index {
 
 }
 
-//if ( ! params.genomeIndex ) {
-//    indexOutput.set { mappingIndex }
-//}
+
 
 process txIndex {
 
@@ -392,12 +374,9 @@ process txIndex {
     input:
     tuple val(species), path(genome)
     tuple val(species), path(annotation)
-    //set species, file(genome) from txIndexGenomes
-    //set species, file(annotation) from txIndexAnnotations
 
     output:
     tuple val(species), path('txDir')
-    //set species, file('txDir') into txIndexOutput
 
     script:
     genomeCompressed = genome.extension in comprExts ? "-genome-${genome.extension}" : ''
@@ -417,13 +396,9 @@ process mapping {
     tuple val(id), val(sample), path(reads), val(qualityOffset)
     tuple val(species), path(annotation)
     tuple val(species), path(genomeDir)
-    //set id, sample, file(reads), qualityOffset from mappingInput
-    //set species, file(annotation) from mappingAnnotations.first()
-    //set species, file(genomeDir) from mappingIndex.first()
 
     output:
     tuple val(id), val(sample), val(type), val(view), path("*.bam"), val(pairedEnd)
-    //set id, sample, type, view, file("*.bam"), pairedEnd into mappingOutput
 
     script:
     type = 'bam'
@@ -475,11 +450,9 @@ process sortBam {
 
     input:
     tuple val(id), val(sample), val(type), val(view), path(bam), val(pairedEnd)
-    //set id, sample, type, view, file(bam), pairedEnd from bamFilesTranscriptomeMerge
 
     output:
     tuple val(id), val(sample), val(type), val(view), path("${prefix}.bam"), val(pairedEnd)
-    //set id, sample, type, view, file("${prefix}.bam"), pairedEnd into mergeBamTranscriptomeInput
 
     script:
     cpus = task.cpus
@@ -500,11 +473,9 @@ process mergeBam {
 
     input:
     tuple val(id), val(sample), val(type), val(view), path("${sample}_??.bam"), val(pairedEnd)
-    //set id, sample, type, view, file("${sample}_??.bam"), pairedEnd from mergeBamInput
 
     output:
     tuple val(id), val(sample), val(type), val(view), path("${prefix}.bam"), val(pairedEnd)
-    //set id, sample, type, view, file("${prefix}.bam"), pairedEnd into mergeBamOutput
 
     script:
     cpus = task.cpus
@@ -524,11 +495,10 @@ process markdup {
 
     input:
     tuple val(id), val(sample), val(type), val(view), path(bam), val(pairedEnd)
-    //set id, sample, type, view, file(bam), pairedEnd from markdupInput
+
 
     output:
     tuple val(id), val(sample), val(type), val(view), path("${prefix}.bam"), val(pairedEnd)
-    //set id, sample, type, view, file("${prefix}.bam"), pairedEnd into markdupOutput
 
     script:
     cpus = task.cpus
@@ -541,10 +511,7 @@ process markdup {
 
 
 
-//bamFilesToGenome.into {
-//    inferExpInput
-//    bamStatsInput
-//}
+
 
 process inferExp {
 
@@ -553,12 +520,9 @@ process inferExp {
     input:
     tuple val(id), val(sample), val(type), val(view), path(bam), val(pairedEnd)
     tuple val(species), path(annotation)
-    //set id, sample, type, view, file(bam), pairedEnd from inferExpInput
-    //set species, file(annotation) from inferExpAnnotations.first()
 
     output:
     tuple val(id), val(sample), val(type), val(view), path(bam), val(pairedEnd), stdout
-    //set id, sample, type, view, file(bam), pairedEnd, stdout into inferExpOutputJSON
     
 
     script:
@@ -569,61 +533,7 @@ process inferExp {
     template(command)
 }
 
-// inferExpOutputJSON.map {
-//     j = new JsonSlurper()
-//     d = j.parseText(it[-1])
-//     it[0..-3] + [ d.paired, d.exp ]
-// }.set {
-//     inferExpOutput
-// }
 
-// inferExpOutput.set { bigwigInput }
-// inferExpOutput.set { contigInput }
-// inferExpOutput.set { bamFilesCrossTranscriptome }
-
-// inferExpOutput.set { bamFilesCrossBamStats }
-// inferExpOutput.set { quantificationInputGenome }
-// inferExpOutput.set { bamFilesToGenome }
-
-//inferExpOutput.into {
-//    bigwigInput
-//    contigInput
-//    bamFilesCrossTranscriptome
-//    bamFilesCrossBamStats
-//    quantificationInputGenome
-//    bamFilesToGenome
-//}
-
-//bamFilesToTranscriptome.cross(bamFilesCrossTranscriptome).map { transcriptome, genome ->
-//    transcriptome[0..-2] + genome[-2..-1]
-//}.into {
-//    bamFilesToTranscriptome
-//    quantificationInputTranscriptome
-//}
-
-// bamFilesToTranscriptome.cross(bamFilesCrossTranscriptome).map { transcriptome, genome ->
-//     transcriptome[0..-2] + genome[-2..-1]
-// }.set {
-//     quantificationInputTranscriptome
-// }
-
-// bamFilesToTranscriptome.cross(bamFilesCrossTranscriptome).map { transcriptome, genome ->
-//     transcriptome[0..-2] + genome[-2..-1]
-// }.set {
-//     bamFilesToTranscriptome
-
-// }
-
-// switch(params.quantificationMode) {
-//     case 'Genome':
-//         quantificationInputGenome.set { quantificationInput }
-//         annotationsForQuantification.set { quantificationIndex }
-//         break
-//     case 'Transcriptome':
-//         quantificationInputTranscriptome.set { quantificationInput }
-//         txIndexOutput.set { quantificationIndex }
-//         break
-// }
 
 process bamStats {
 
@@ -632,12 +542,11 @@ process bamStats {
     input:
     tuple val(id), val(sample), val(type), val(view), path(bam), val(pairedEnd)
     tuple val(species), path(annotation)
-    //set id, sample, type, view, file(bam), pairedEnd from bamStatsInput
-    //set species, file(annotation) from bamStatsAnnotations.first()
+
 
     output:
     tuple val(id), val(sample), val(type), val(views), path('*.json'), val(pairedEnd)
-    //set id, sample, type, views, file('*.json'), pairedEnd into bamStatsOutput
+ 
 
     script:
     cpus = task.cpus
@@ -660,12 +569,11 @@ process bigwig {
     input:
     tuple val(id), val(sample), val(type), val(view), path(bam), val(pairedEnd), val(readStrand)
     tuple val(species), path(genomeFai)
-    //set id, sample, type, view, file(bam), pairedEnd, readStrand from bigwigInput
-    //set species, file(genomeFai) from bigwigFastaIndex.first()
+
 
     output:
     tuple val(id), val(sample), val(type), val(views), path('*.bw'), val(pairedEnd), val(readStrand)
-    //set id, sample, type, views, file('*.bw'), pairedEnd, readStrand into bigwigOutput
+
 
     script:
     cpus = task.cpus
@@ -686,12 +594,11 @@ process contig {
     input:
     tuple val(id), val(sample), val(type), val(view), path(bam), val(pairedEnd), val(readStrand)
     tuple val(species), path(genomeFai)
-    //set id, sample, type, view, file(bam), pairedEnd, readStrand from contigInput
-    //set species, file(genomeFai) from contigFastaIndex.first()
+
 
     output:
     tuple val(id), val(sample), val(type), val(view), path('*.bed'), val(pairedEnd), val(readStrand)
-    //set id, sample, type, view, file('*.bed'), pairedEnd, readStrand into contigOutput
+
 
     script:
     cpus = task.cpus
@@ -712,14 +619,12 @@ process quantification {
     input:
     tuple val(id), val(sample), val(type), val(view), path(bam), val(pairedEnd), val(readStrand)
     tuple val(species), val(quantRef)
-    //set id, sample, type, view, file(bam), pairedEnd, readStrand from quantificationInput
-    //set species, file(quantRef) from quantificationIndex.first()
+
 
     output:
     tuple val(id), val(sample), val(type), val(viewTx), path("*isoforms*"), val(pairedEnd), val(readStrand)
     tuple val(id), val(sample), val(type), val(viewGn), path("*genes*"), val(pairedEnd), val(readStrand)
-    //set id, sample, type, viewTx, file("*isoforms*"), pairedEnd, readStrand into quantificationIsoforms
-    //set id, sample, type, viewGn, file("*genes*"), pairedEnd, readStrand into quantificationGenes
+
 
 
     script:
@@ -739,24 +644,7 @@ process quantification {
 
 }
 
-// bigwigOutput.flatMap { id, sample, type, views, files, pairedEnd, readStrand ->
-//     [views, files].transpose().collect { view, f ->
-//         [ id, sample, type, view, f, pairedEnd, readStrand ]
-//     }
-// }.set {
-//     bigwigFiles
-// }
 
-// bamFilesToGenome.mix(bamFilesToTranscriptome, bamStatsFiles, bigwigFiles, contigOutput, quantificationIsoforms, quantificationGenes)
-// .collectFile(name: pdb.name, storeDir: pdb.parent, newLine: true) { id, sample, type, view, file, pairedEnd, readStrand ->
-//     [sample, id, file, type, view, pairedEnd ? 'Paired-End' : 'Single-End', readStrand].join("\t")
-// }
-// .subscribe {
-//     log.info ""
-//     log.info "-----------------------"
-//     log.info "Pipeline run completed."
-//     log.info "-----------------------"
-// }
 
 /*
  * Given the input index file returns the number of unique samples,
@@ -834,34 +722,28 @@ workflow {
 
   fastaIndexOutput = fastaIndex( fastaIndexGenomes , fastaIndexAnnotations )
 
-  fastaIndexOutput.set {
-    fastaIndex
-  }
-//fastaIndexOutput.into {
-//    fastaIndexForBigwig
-//    fastaIndexForContig
-//}
+
+
 
   if ( 'bigwig' in pipelineSteps ) {
-      fastaIndex.set { bigwigFastaIndex }
+      fastaIndexOutput.set { bigwigFastaIndex }
   }
 
   if ( 'contig' in pipelineSteps ) {
-      fastaIndex.set { contigFastaIndex }
+      fastaIndexOutput.set { contigFastaIndex }
   }
 
   txIndexOutput = txIndex( txIndexGenomes , txIndexAnnotations )
 
-  //Channel.empty().set { indexGenomes }
-  //Channel.empty().set { indexAnnotations }
+
 
   if ( ! params.genomeIndex ) {
       indexOutput = index( indexGenomes , indexAnnotations )
       indexOutput.set { mappingIndex }
   }
 
-  mappingOutput = mapping( mappingInput , mappingAnnotations.first() , mappingIndex.first() )
-  //mappingOutput = mapping( mappingInput , mappingAnnotations, mappingIndex )
+  mappingOutput = mapping( mappingInput , Annotations.first() , mappingIndex.first() )
+  
   
 
   mappingOutput.flatMap  { id, sample, type, view, path, pairedEnd ->
@@ -881,31 +763,12 @@ workflow {
       bamFilesSingle
   }
   
-//bamFilesSingle.view()
-// [[test4], sample3, bam, GenomeAlignments, [/Users/pmarangio/PycharmProjects/grape-nf/data/sample3_m4_n10_toGenome.bam], false]
-// [[test4], sample3, bam, TranscriptomeAlignments, [/Users/pmarangio/PycharmProjects/grape-nf/data/sample3_m4_n10_toTranscriptome.bam], false]
-// [[test1], sample1, bam, GenomeAlignments, [/Users/pmarangio/PycharmProjects/grape-nf/work/d0/0508029d577da1e5cccd7aa7f4ece5/sample1_m4_n10_toGenome.bam], true]
-// [[test1], sample1, bam, TranscriptomeAlignments, [/Users/pmarangio/PycharmProjects/grape-nf/work/d0/0508029d577da1e5cccd7aa7f4ece5/sample1_m4_n10_toTranscriptome.bam], true]
-  
+
   bamFiles.filter {
       it[4].size() > 1
   }.set {
        bamFilesForMerge
   }
-    //bamFilesSingle.view()
-  //bamFiles.filter {
-  //    it[4]
-  //}.view()
-// [[test4], sample3, bam, GenomeAlignments, [/Users/pmarangio/PycharmProjects/grape-nf/data/sample3_m4_n10_toGenome.bam], false]
-// [[test4], sample3, bam, TranscriptomeAlignments, [/Users/pmarangio/PycharmProjects/grape-nf/data/sample3_m4_n10_toTranscriptome.bam], false]
-// [[test1], sample1, bam, GenomeAlignments, [/Users/pmarangio/PycharmProjects/grape-nf/work/d0/0508029d577da1e5cccd7aa7f4ece5/sample1_m4_n10_toGenome.bam], true]
-// [[test1], sample1, bam, TranscriptomeAlignments, [/Users/pmarangio/PycharmProjects/grape-nf/work/d0/0508029d577da1e5cccd7aa7f4ece5/sample1_m4_n10_toTranscriptome.bam], true]
-
-  //bamFiles.filter {
-  //    it[4].size() > 1
-  //}.view()
-  
-  // empty
 
   bamFilesForMerge.filter {
       it[3] =~ /^Genome/
@@ -919,7 +782,7 @@ workflow {
   .set {
       bamFilesTranscriptomeMerge
   }
-  //bamFilesTranscriptomeMerge.view()
+  
   mergeBamTranscriptomeInput = sortBam( bamFilesTranscriptomeMerge )
 
    mergeBamGenomeInput.mix(
@@ -938,6 +801,19 @@ workflow {
       bamFilesForGenome
   }
 
+  bamFilesForGenome.filter {
+      it[3] =~ /^Genome/
+  }.set{
+      bamFilesForMarkdup
+  }
+
+  bamFilesForGenome.filter {
+      it[3] =~ /^Genome/
+  }.set{
+      bamFilesToGenome
+  }
+
+
   bamFilesSingle
   .mix(mergeBamOutput)
   .map {
@@ -953,31 +829,21 @@ workflow {
   }
   
 
-  bamFilesForGenome.filter {
-      it[3] =~ /^Genome/
-  }.set{
-      bamFilesForMarkdup
-  }
 
-  bamFilesForGenome.filter {
-      it[3] =~ /^Genome/
-  }.set{
-      bamFilesToGenome
-  }
 
-  //bamFilesForMarkdup.view()
+  
   if ( params.markDuplicates || params.removeDuplicates ) {
      bamFilesForMarkdup.set { markdupInput }
   }
 
-  //markdupInput.view()
+  
   markdupOutput = markdup( markdupInput )
 
   if ( params.markDuplicates || params.removeDuplicates ) {
     bamFilesToGenome = markdupOutput
   }
   
-  inferExpOutputJSON = inferExp( bamFilesToGenome , inferExpAnnotations.first() )
+  inferExpOutputJSON = inferExp( bamFilesToGenome , Annotations.first() )
 
   
   
@@ -989,51 +855,38 @@ workflow {
       inferExpOutput
   }
 
-  inferExpOutput.set { bigwigInput }
-  inferExpOutput.set { contigInput }
-  inferExpOutput.set { bamFilesCrossTranscriptome }
 
-  inferExpOutput.set { bamFilesCrossBamStats }
-  inferExpOutput.set { quantificationInputGenome }
-  //inferExpOutput.set { bamFilesToGenome }
 
-  bamFilesToTranscriptome.cross(bamFilesCrossTranscriptome).map { transcriptome, genome ->
-    transcriptome[0..-2] + genome[-2..-1]
-  }.set {
-      quantificationInputTranscriptome
-  }
-
-  bamFilesToTranscriptome.cross(bamFilesCrossTranscriptome).map { transcriptome, genome ->
+  bamFilesToTranscriptome.cross(inferExpOutput).map { transcriptome, genome ->
       transcriptome[0..-2] + genome[-2..-1]
   }.set {
       bamFilesToTranscriptome
-
   }
 
   switch(params.quantificationMode) {
       case 'Genome':
-          quantificationInputGenome.set { quantificationInput }
+          inferExpOutput.set { quantificationInput }
           annotationsForQuantification.set { quantificationIndex }
           break
       case 'Transcriptome':
-          quantificationInputTranscriptome.set { quantificationInput }
+          bamFilesToTranscriptome.set { quantificationInput }
           txIndexOutput.set { quantificationIndex }
           break
   }
 
 
-   bamStatsOutput = bamStats( bamFilesToGenome , bamStatsAnnotations.first() )
+   bamStatsOutput = bamStats( bamFilesToGenome , Annotations.first() )
 
-   bamStatsOutput.cross(bamFilesCrossBamStats).map { stats, genome ->
+   bamStatsOutput.cross(inferExpOutput).map { stats, genome ->
      stats + genome[-1]
    }.set {
      bamStatsFiles
    }
 
-   bigwigOutput = bigwig( bigwigInput , bigwigFastaIndex.first() )
+   bigwigOutput = bigwig( inferExpOutput , bigwigFastaIndex.first() )
    
 
-   contigOutput = contig( contigInput , contigFastaIndex.first() )
+   contigOutput = contig( inferExpOutput , contigFastaIndex.first() )
 
 
 
@@ -1051,11 +904,9 @@ workflow {
   }
 
 
-  inferExpOutput.set { bamFilesToGenome }
 
 
-
-  bamFilesToGenome.mix(bamFilesToTranscriptome, bamStatsFiles, bigwigFiles, contigOutput, quantificationIsoforms, quantificationGenes)
+  inferExpOutput.mix(bamFilesToTranscriptome, bamStatsFiles, bigwigFiles, contigOutput, quantificationIsoforms, quantificationGenes)
   .collectFile(name: pdb.name, storeDir: pdb.parent, newLine: true) { id, sample, type, view, file, pairedEnd, readStrand ->
       [sample, id, file, type, view, pairedEnd ? 'Paired-End' : 'Single-End', readStrand].join("\t")
   }
