@@ -92,8 +92,8 @@ include { fastaIndex } from './modules/fastaindex.nf'
 include { index } from './modules/index.nf'
 include { txIndex } from './modules/txIndex.nf'
 include { mapping } from './modules/mapping.nf'
-//include { sortBam } from './modules/sortBam.nf'
-//include { mergeBam } from './modules/mergeBam.nf'
+include { sortBam } from './modules/sortBam.nf'
+include { mergeBam } from './modules/mergeBam.nf'
 include { inferExp } from './modules/inferExp.nf'
 include { markdup } from './modules/markdup.nf'
 include { contig } from './modules/contig.nf'
@@ -269,20 +269,7 @@ refs.filter {
     it[1].name =~ /.gtf(.gz)?$/
 }.set{ Annotations }
 
-//Genomes.into {
-//    genomesForFastaIndex
-//    genomesForIndex
-//    genomesForTxIndex
-//}
-//Annotations.into {
-//    annotationsForFastaIndex
-//    annotationsForIndex
-//    annotationsForMapping
-//    annotationsForTxIndex
-//    annotationsForInferExp
-//    annotationsForBamStats
-//    annotationsForQuantification
-//}
+
 
 if ( 'bigwig' in pipelineSteps || 'contig' in pipelineSteps) {
     Genomes.set { fastaIndexGenomes }
@@ -299,101 +286,12 @@ if ( 'mapping' in pipelineSteps ) {
         Genomes.set { indexGenomes }
         Annotations.set { indexAnnotations }
     }
-    //Annotations.set { mappingAnnotations }
-    //Annotations.set { inferExpAnnotations }
-    //Annotations.set { bamStatsAnnotations }
 }
 
 if ( 'quantification' in pipelineSteps && params.quantificationMode == "Transcriptome" ) {
     Genomes.set { txIndexGenomes }
     Annotations.set { txIndexAnnotations }
 }
-
-// Processes
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-process sortBam {
-    tag "${id}-${params.mergeBamTool}-${params.mergeBamToolVersion}"
-
-    input:
-    tuple val(id), val(sample), val(type), val(view), path(bam), val(pairedEnd)
-
-    output:
-    tuple val(id), val(sample), val(type), val(view), path("${prefix}.bam"), val(pairedEnd)
-
-    script:
-    cpus = task.cpus
-    taskMemory = task.memory ?: 1.GB
-    totalMemory = taskMemory.toBytes()
-    threadMemory = totalMemory/cpus
-    prefix = "${bam.baseName}_sorted"
-    command = "${task.process}/${params.mergeBamTool}"
-
-    template(command)
-}
-
-
-process mergeBam {
-
-    tag "${id.replace(':', '_')}-${params.mergeBamTool}-${params.mergeBamToolVersion}"
-
-    input:
-    tuple val(id), val(sample), val(type), val(view), path("${sample}_??.bam"), val(pairedEnd)
-
-    output:
-    tuple val(id), val(sample), val(type), val(view), path("${prefix}.bam"), val(pairedEnd)
-
-    script:
-    cpus = task.cpus
-    id = id.sort().join(':')
-    prefix = "${sample}${pref}_to${view.replace('Alignments','')}"
-    command = "${task.process}/${params.mergeBamTool}"
-
-    template(command)
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 /*
@@ -449,10 +347,7 @@ workflow {
   .set {
       inputFiles
   }
-//.into {
-//    inputFilesForBams
-//    inputFilesForFastqs
-//}
+
 
   inputFiles.filter {
       it[3] == 'fastq'
