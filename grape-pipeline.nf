@@ -49,43 +49,9 @@ params.inferExpThreshold = 0.8
 
 // Process channels
 
-Channel.empty().set { fetchInput }
-Channel.empty().set { fastaIndexGenomes }
-Channel.empty().set { fastaIndexAnnotations }
-Channel.empty().set { indexGenomes }
-
-Channel.empty().set { txIndexGenomes }
-Channel.empty().set { txIndexAnnotations }
-Channel.empty().set { mergeBamInput }
-
 Channel.empty().set { markdupInput }
 
-Channel.empty().set { bigwigFastaIndex }
-
-Channel.empty().set { contigFastaIndex }
-Channel.empty().set { quantificationInput }
-
-Channel.empty().set { fetchOutput }
-
-Channel.empty().set { fastaIndexOutput }
-Channel.empty().set { indexOutput }
-Channel.empty().set { txIndexOutput }
-
-Channel.empty().set { mappingOutput }
-
-Channel.empty().set { mergeBamTranscriptomeInput }
-Channel.empty().set { mergeBamOutput }
-Channel.empty().set { markdupOutput }
-Channel.empty().set { inferExpOutputJSON }
-
-Channel.empty().set { bamStatsOutput }
-Channel.empty().set { bigwigOutput }
-Channel.empty().set { contigOutput }
-Channel.empty().set { quantificationIsoforms }
-Channel.empty().set { quantificationGenes }
-
-
-
+// Import modules
 
 include { fetch } from './modules/fetch.nf'
 include { fastaIndex } from './modules/fastaindex.nf'
