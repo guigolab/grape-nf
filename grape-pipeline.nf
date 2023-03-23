@@ -102,10 +102,6 @@ include { bamStats } from './modules/bamStats.nf'
 include { bigwig} from './modules/bigwig.nf'
 
 
-// Auxiliary variables
-def comprExts = ['gz', 'bz2', 'zip']
-def pref = "_m${params.maxMismatches}_n${params.maxMultimaps}"
-
 // Clear pipeline.db file
 pdb = file(params.dbFile)
 pdb.write('')
