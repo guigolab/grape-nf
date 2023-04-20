@@ -54,7 +54,7 @@ Channel.empty().set { markdupInput }
 // Import modules
 
 include { fetch } from './modules/fetch.nf'
-include { fastaIndex } from './modules/fastaindex.nf'
+include { fastaIndex } from './modules/fastaIndex.nf'
 include { index } from './modules/index.nf'
 include { txIndex } from './modules/txIndex.nf'
 include { mapping } from './modules/mapping.nf'
