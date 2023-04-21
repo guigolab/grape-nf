@@ -65,7 +65,12 @@ include { markdup } from './modules/markdup.nf'
 include { contig } from './modules/contig.nf'
 include { quantification } from './modules/quantification.nf'
 include { bamStats } from './modules/bamStats.nf'
-include { bigwig} from './modules/bigwig.nf'
+include { bigwig } from './modules/bigwig.nf'
+include { kallisto_chrom_length } from './modules/kallisto_chrom_length.nf'
+include { kallisto_prep_gtf } from './modules/kallisto_prep_gtf.nf'
+include { kallisto_transcript_fasta } from './modules/kallisto_transcript_fasta.nf'
+include { kallisto_index } from './modules/kallisto_index.nf'
+include { kallisto_quantification } from './modules/kallisto_quantification.nf'
 
 
 // Clear pipeline.db file
@@ -329,194 +334,21 @@ workflow {
 
   fastaIndexOutput = fastaIndex( fastaIndexGenomes , fastaIndexAnnotations )
 
+  kallisto_chroms = kallisto_chrom_length(fastaIndexOutput)
+  kallisto_gtf_output = kallisto_prep_gtf( fastaIndexAnnotations )
 
+  kallisto_tran_fa = kallisto_transcript_fasta(kallisto_gtf_output)
 
+  kallisto_index_output = kallisto_index(kallisto_tran_fa)
 
-  if ( 'bigwig' in pipelineSteps ) {
-      fastaIndexOutput.set { bigwigFastaIndex }
-  }
+  Channel.empty().set { kallisto_fastq }
+  mappingInput.map { it[2]}.set {kallisto_fastq}
 
-  if ( 'contig' in pipelineSteps ) {
-      fastaIndexOutput.set { contigFastaIndex }
-  }
-
-  txIndexOutput = txIndex( txIndexGenomes , txIndexAnnotations )
-
-
-
-  if ( ! params.genomeIndex ) {
-      indexOutput = index( indexGenomes , indexAnnotations )
-      indexOutput.set { mappingIndex }
-  }
-
-  mappingOutput = mapping( mappingInput , Annotations.first() , mappingIndex.first() )
-  
-  
-
-  mappingOutput.flatMap  { id, sample, type, view, path, pairedEnd ->
-    [path].flatten().collect { f ->
-        [id, sample, type, (f.name =~ /toTranscriptome/ ? 'Transcriptome' : 'Genome') + view, f, pairedEnd]
-    }
-  }.mix(inputBams).groupTuple(by: [1, 2, 3, 5]) // group by sample, type, view, pairedEnd (to get unique values for keys)
-  .set{
-      bamFiles
-  }
- 
-  
-
-  bamFiles.filter {
-      it[4].size() == 1
-  }.set {
-      bamFilesSingle
-  }
-  
-
-  bamFiles.filter {
-      it[4].size() > 1
-  }.set {
-       bamFilesForMerge
-  }
-
-  bamFilesForMerge.filter {
-      it[3] =~ /^Genome/
-  }.set {
-      mergeBamGenomeInput
-  }
-
-  bamFilesForMerge.filter {
-      it[3] =~ /^Transcriptome/
-  }.transpose()
-  .set {
-      bamFilesTranscriptomeMerge
-  }
-  
-  mergeBamTranscriptomeInput = sortBam( bamFilesTranscriptomeMerge )
-
-   mergeBamGenomeInput.mix(
-     mergeBamTranscriptomeInput.groupTuple(by: [1, 2, 3, 5], sort: true)
-   ).set {
-       mergeBamInput
-   }
-
-   mergeBamOutput = mergeBam( mergeBamInput )
-
-  bamFilesSingle
-  .mix(mergeBamOutput)
-  .map {
-      it.flatten()
-  }.set{
-      bamFilesForGenome
-  }
-
-  bamFilesForGenome.filter {
-      it[3] =~ /^Genome/
-  }.set{
-      bamFilesForMarkdup
-  }
-
-  bamFilesForGenome.filter {
-      it[3] =~ /^Genome/
-  }.set{
-      bamFilesToGenome
-  }
-
-
-  bamFilesSingle
-  .mix(mergeBamOutput)
-  .map {
-      it.flatten()
-  }.set{
-      bamFilesForTranscriptome
-  }
-
-  bamFilesForTranscriptome.filter {
-      it[3] =~ /^Transcriptome/
-  }.set{
-      bamFilesToTranscriptome
-  }
+  kallisto_quantification_output = kallisto_quantification(kallisto_index_output.first(), kallisto_chroms.first(), kallisto_gtf_output.first(), kallisto_fastq)
   
 
 
 
-  
-  if ( params.markDuplicates || params.removeDuplicates ) {
-     bamFilesForMarkdup.set { markdupInput }
-  }
-
-  
-  markdupOutput = markdup( markdupInput )
-
-  if ( params.markDuplicates || params.removeDuplicates ) {
-    bamFilesToGenome = markdupOutput
-  }
-  
-  inferExpOutputJSON = inferExp( bamFilesToGenome , Annotations.first() )
-
-  
-  
-  inferExpOutputJSON.map {
-    j = new JsonSlurper()
-    d = j.parseText(it[-1])
-    it[0..-3] + [ d.paired, d.exp ]
-  }.set {
-      inferExpOutput
-  }
-
-
-
-  bamFilesToTranscriptome.cross(inferExpOutput).map { transcriptome, genome ->
-      transcriptome[0..-2] + genome[-2..-1]
-  }.set {
-      bamFilesToTranscriptome
-  }
-
-  switch(params.quantificationMode) {
-      case 'Genome':
-          inferExpOutput.set { quantificationInput }
-          annotationsForQuantification.set { quantificationIndex }
-          break
-      case 'Transcriptome':
-          bamFilesToTranscriptome.set { quantificationInput }
-          txIndexOutput.set { quantificationIndex }
-          break
-  }
-
-
-   bamStatsOutput = bamStats( bamFilesToGenome , Annotations.first() )
-
-   bamStatsOutput.cross(inferExpOutput).map { stats, genome ->
-     stats + genome[-1]
-   }.set {
-     bamStatsFiles
-   }
-
-   bigwigOutput = bigwig( inferExpOutput , bigwigFastaIndex.first() )
-   
-
-   contigOutput = contig( inferExpOutput , contigFastaIndex.first() )
-
-
-
-
-   (quantificationIsoforms, quantificationGenes) = quantification( quantificationInput , quantificationIndex.first() )
-
-   
-
-  bigwigOutput.flatMap { id, sample, type, views, files, pairedEnd, readStrand ->
-    [views, files].transpose().collect { view, f ->
-        [ id, sample, type, view, f, pairedEnd, readStrand ]
-    }
-  }.set {
-      bigwigFiles
-  }
-
-
-
-
-  inferExpOutput.mix(bamFilesToTranscriptome, bamStatsFiles, bigwigFiles, contigOutput, quantificationIsoforms, quantificationGenes)
-  .collectFile(name: pdb.name, storeDir: pdb.parent, newLine: true) { id, sample, type, view, file, pairedEnd, readStrand ->
-      [sample, id, file, type, view, pairedEnd ? 'Paired-End' : 'Single-End', readStrand].join("\t")
-  }
   .subscribe {
       log.info ""
       log.info "-----------------------"

@@ -1,0 +1,7 @@
+name: kallisto
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - kallisto==0.48.0
+  - hdf5==1.10.6
