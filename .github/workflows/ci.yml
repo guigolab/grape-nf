@@ -36,5 +36,6 @@ jobs:
         java-version: 1.16
     - name: Run pipeline
       env:
+        NXF_VER: 22.10.8
         NXF_DEFAULT_DSL: 1
       run: . .circ && ci test

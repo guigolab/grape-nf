@@ -1,6 +1,6 @@
 # Grape
 
-[![Nextflow version: >=0.30.2](https://img.shields.io/badge/nextflow-%E2%89%A50.30.2-brightgreen.svg)](http://nextflow.io)
+[![Nextflow version: <=22.10.8](https://img.shields.io/badge/nextflow-%E2%89%A422.10.8-brightgreen.svg)](http://nextflow.io)
 [![Singularity version: >=3.x](https://img.shields.io/badge/singularity-3.x-blue.svg)](http://sylabs.io/singularity)
 [![CI status](https://github.com/guigolab/grape-nf/workflows/Pipeline%20CI/badge.svg)](https://github.com/guigolab/grape-nf/actions)
 
