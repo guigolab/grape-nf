@@ -624,7 +624,7 @@ inferExpOutput.into {
     bamFilesToGenome
 }
 
-bamFilesToTranscriptome.cross(bamFilesCrossTranscriptome).map { transcriptome, genome ->
+bamFilesToTranscriptome.cross(bamFilesCrossTranscriptome, { it[1] + it[0] }).map { transcriptome, genome ->
     transcriptome[0..-2] + genome[-2..-1]
 }.into {
     bamFilesToTranscriptome
@@ -665,7 +665,7 @@ process bamStats {
     template(command)
 }
 
-bamStatsOutput.cross(bamFilesCrossBamStats).map { stats, genome ->
+bamStatsOutput.cross(bamFilesCrossBamStats, { it[1] + it[0] }).map { stats, genome ->
     stats + genome[-1]
 }.set {
     bamStatsFiles
