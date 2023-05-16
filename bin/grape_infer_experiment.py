@@ -92,7 +92,7 @@ def main():
         print >>sys.stderr, "Warn: Sample Size too small to give a accurate estimation"
     obj = SAM.ParseBAM(options.input_file)
     (protocol,sp1,sp2,other)=obj.configure_experiment(refbed=options.refgene_bed, sample_size = options.sample_size)
-    if other <0: other=0.0
+    if other is 'NA' or other <0: other=0.0
     result = {
         'paired': protocol == "PairEnd",
         'exp': 'NONE'
@@ -114,10 +114,9 @@ def main():
         elif sp2 > options.threshold:
             result['exp'] = "ANTISENSE"
     else:
-        print "Unknown Data type"
+        print >>sys.stderr, "Unknown Data type"
     print >>sys.stderr, 'Fraction of reads explained by other combinations: %.4f' % other
     print >>sys.stderr, '-------------------'
-    #print mesg
     json.dump(result, sys.stdout)
 
 if __name__ == '__main__':
