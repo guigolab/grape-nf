@@ -3,12 +3,12 @@ process bigwig {
     tag "${id.replace(':', '_')}-${params.bigwigTool}-${params.bigwigToolVersion}"
 
     input:
-    tuple val(id), val(sample), val(type), val(view), path(bam), val(pairedEnd), val(readStrand)
-    tuple val(species), path(genomeFai)
+    path(genomeFai)
+    tuple val(sample), val(id), path(bam), val(type), val(view), val(pairedEnd), val(readStrand)
 
 
     output:
-    tuple val(id), val(sample), val(type), val(views), path('*.bw'), val(pairedEnd), val(readStrand)
+    tuple val(sample), val(id), path('*.bw'), val(type), val(views), val(pairedEnd), val(readStrand)
 
 
     script:
@@ -17,7 +17,7 @@ process bigwig {
     prefix = "${sample}"
     wigRefPrefix = params.wigRefPrefix != "-" ? params.wigRefPrefix : ""
     views = params.bigwigViews[readStrand]
-    command = "${task.process}/${params.bigwigTool}-${readStrand}"
+    command = "${params.bigwigTool}-${readStrand}"
 
     template(command)
 

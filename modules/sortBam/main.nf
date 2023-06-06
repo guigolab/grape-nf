@@ -2,10 +2,10 @@ process sortBam {
     tag "${id}-${params.mergeBamTool}-${params.mergeBamToolVersion}"
 
     input:
-    tuple val(id), val(sample), val(type), val(view), path(bam), val(pairedEnd)
+    tuple val(sample), val(id), path(bam), val(type), val(view), val(pairedEnd)
 
     output:
-    tuple val(id), val(sample), val(type), val(view), path("${prefix}.bam"), val(pairedEnd)
+    tuple val(sample), val(id), path("${prefix}.bam"), val(type), val(view), val(pairedEnd)
 
     script:
     cpus = task.cpus
@@ -13,7 +13,7 @@ process sortBam {
     totalMemory = taskMemory.toBytes()
     threadMemory = totalMemory/cpus
     prefix = "${bam.baseName}_sorted"
-    command = "${task.process}/${params.mergeBamTool}"
+    command = "${params.mergeBamTool}"
 
     template(command)
 }

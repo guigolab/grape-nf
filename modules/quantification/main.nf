@@ -4,15 +4,13 @@ process quantification {
     tag "${id.replace(':', '_')}-${params.quantificationTool}-${params.quantificationToolVersion}"
 
     input:
-    tuple val(id), val(sample), val(type), val(view), path(bam), val(pairedEnd), val(readStrand)
-    tuple val(species), val(quantRef)
+    tuple val(sample), val(id),  path(bam), val(type), val(view), val(pairedEnd), val(readStrand)
+    path(quantRef)
 
 
     output:
-    tuple val(id), val(sample), val(type), val(viewTx), path("*isoforms*"), val(pairedEnd), val(readStrand)
-    tuple val(id), val(sample), val(type), val(viewGn), path("*genes*"), val(pairedEnd), val(readStrand)
-
-
+    tuple val(sample), val(id), path("*isoforms*"), val(type), val(viewTx), val(pairedEnd), val(readStrand), emit: isoforms
+    tuple val(sample), val(id), path("*genes*"), val(type), val(viewGn), val(pairedEnd), val(readStrand), emit: genes
 
     script:
     cpus = task.cpus
@@ -21,7 +19,7 @@ process quantification {
     viewTx = "TranscriptQuantifications"
     viewGn = "GeneQuantifications"
     memory = (task.memory ?: 1.GB).toMega()
-    command = "${task.process}/${params.quantificationTool}"
+    command = "${params.quantificationTool}"
     if ( params.quantificationTool == 'RSEM') {
         command += "-${pairedEnd ? 'Paired-End' : 'Single-End'}"
     }

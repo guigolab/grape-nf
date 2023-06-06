@@ -6,12 +6,16 @@ process mapping {
     tag "${id.replace(':', '_')}-${params.mappingTool}-${params.mappingToolVersion}"
 
     input:
-    tuple val(id), val(sample), path(reads), val(qualityOffset)
-    tuple val(species), path(annotation)
-    tuple val(species), path(genomeDir)
+    path(annotation)
+    path(genomeDir)
+    tuple val(sample), val(id), path(reads), val(type), val(view), val(qualityOffset)
 
     output:
-    tuple val(id), val(sample), val(type), val(view), path("*.bam"), val(pairedEnd)
+    tuple val(sample), val(id), path("*toGenome.bam"), val(type), val("Genome${view}"), val(pairedEnd), emit: genomeAlignments
+    tuple val(sample), val(id), path("*toTranscriptome.bam"), val(type), val("Transcriptome${view}"), val(pairedEnd), optional: true, emit: transcriptomeAlignments
+    tuple val(sample), val(id), path("*toGenome.bam.bai"), val('bai'), val("Genome${view}Index"), val(pairedEnd), emit: genomeAlignmentsIndices
+    tuple val(sample), val(id), path("Log.final.out"), val('txt'), val("STARstats"), val(pairedEnd), optional: true, emit: stats
+    tuple val(sample), val(id), path("SJ.out.tab"), val('tsv'), val("STARjunctions"), val(pairedEnd), optional: true, emit: junctions
 
     script:
     type = 'bam'
@@ -43,7 +47,7 @@ process mapping {
     cpus = task.cpus
     halfCpus = (task.cpus > 1 ? task.cpus / 2 : task.cpus) as int
 
-    command = "${task.process}/${params.mappingTool}-${params.mappingToolVersion.split("\\.")[0..1].join(".")}"
+    command = "${params.mappingTool}-${params.mappingToolVersion.split("\\.")[0..1].join(".")}"
     switch(params.mappingTool) {
         case 'GEM':
             command += "-${pairedEnd ? 'Paired-End' : 'Single-End'}"

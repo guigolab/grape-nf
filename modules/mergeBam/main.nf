@@ -5,16 +5,16 @@ process mergeBam {
     tag "${id.replace(':', '_')}-${params.mergeBamTool}-${params.mergeBamToolVersion}"
 
     input:
-    tuple val(id), val(sample), val(type), val(view), path("${sample}_??.bam"), val(pairedEnd)
+    tuple val(sample), val(id), path("${sample}_??.bam"), val(type), val(view), val(pairedEnd)
 
     output:
-    tuple val(id), val(sample), val(type), val(view), path("${prefix}.bam"), val(pairedEnd)
+    tuple val(sample), val(id), path("${prefix}.bam"), val(type), val(view), val(pairedEnd)
 
     script:
     cpus = task.cpus
     id = id.sort().join(':')
     prefix = "${sample}${pref}_to${view.replace('Alignments','')}"
-    command = "${task.process}/${params.mergeBamTool}"
+    command = "${params.mergeBamTool}"
 
     template(command)
 
