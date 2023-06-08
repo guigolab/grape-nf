@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
         profile:
             - gemflux
@@ -23,10 +24,6 @@ jobs:
             - markdup
             - rmdup
             - ihec
-
-    env:
-      NXF_DEFAULT_DSL: 1
-      CI_PROFILE: ${{ matrix.profile }}
 
     steps:
     - uses: actions/checkout@v3
@@ -38,7 +35,6 @@ jobs:
         java-package: jre
 
     - name: Run pipeline
-      env:
-        NXF_VER: 22.10.8
-        NXF_DEFAULT_DSL: 1
       run: . .circ && ci test
+      env:
+        CI_PROFILE: ${{ matrix.profile }}

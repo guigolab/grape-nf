@@ -147,8 +147,8 @@ ci() {
 }
 
 # Define CI environment variables
-CI_DIR=$(_ci_get_script_dir $0)
-CI_LOG=pipeline-ci.log
-CI_PROFILE="starrsem"
-CI_OUTDIR="checksum"
-CI_RUNOPTS=("-process.errorStrategy=terminate" "-with-docker")
+CI_DIR=${CI_DIR-"$(_ci_get_script_dir $0)"}
+CI_LOG=${CI_LOG-"pipeline-ci.log"}
+CI_PROFILE=${CI_PROFILE-"starrsem"}
+CI_OUTDIR=${CI_OUTDIR-"checksum"}
+CI_RUNOPTS=("-process.errorStrategy=terminate" "-with-docker" "-ansi-log" "false")
