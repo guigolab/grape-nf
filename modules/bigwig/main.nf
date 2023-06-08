@@ -1,6 +1,6 @@
 process bigwig {
 
-    tag "${id.replace(':', '_')}-${params.bigwigTool}-${params.bigwigToolVersion}"
+    tag params.tag
 
     input:
     path(genomeFai)
@@ -15,6 +15,7 @@ process bigwig {
     cpus = task.cpus
     type = "bigWig"
     prefix = "${sample}"
+    tagSuffix = "-${params.bigwigTool}-${params.bigwigToolVersion}"
     wigRefPrefix = params.wigRefPrefix != "-" ? params.wigRefPrefix : ""
     views = params.bigwigViews[readStrand]
     command = "${params.bigwigTool}-${readStrand}"

@@ -2,7 +2,7 @@ def pref = "_m${params.maxMismatches}_n${params.maxMultimaps}"
 
 process mergeBam {
 
-    tag "${id.replace(':', '_')}-${params.mergeBamTool}-${params.mergeBamToolVersion}"
+    tag params.tag
 
     input:
     tuple val(sample), val(id), path("${sample}_??.bam"), val(type), val(view), val(pairedEnd)
@@ -14,6 +14,7 @@ process mergeBam {
     cpus = task.cpus
     id = id.sort().join(':')
     prefix = "${sample}${pref}_to${view.replace('Alignments','')}"
+    tagSuffix = "-${params.mergeBamTool}-${params.mergeBamToolVersion}"
     command = "${params.mergeBamTool}"
 
     template(command)

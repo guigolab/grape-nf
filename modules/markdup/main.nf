@@ -1,6 +1,6 @@
 process markdup {
 
-    tag "${id.replace(':', '_')}-${params.markdupTool}-${params.markdupToolVersion}"
+    tag params.tag
 
     input:
     tuple val(sample), val(id), path(bam), val(type), val(view), val(pairedEnd)
@@ -14,6 +14,7 @@ process markdup {
     cpus = task.cpus
     memory = (task.memory ?: 2.GB).toMega()
     prefix = "${bam.baseName}.markdup"
+    tagSuffix = "-${params.markdupTool}-${params.markdupToolVersion}"
     command = "${params.markdupTool}${params.removeDuplicates ? '-remove' : ''}"
     
     template(command)

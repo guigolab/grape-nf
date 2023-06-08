@@ -3,7 +3,7 @@ def pref = "_m${params.maxMismatches}_n${params.maxMultimaps}"
 process mapping {
 
     label "mapping"
-    tag "${id.replace(':', '_')}-${params.mappingTool}-${params.mappingToolVersion}"
+    tag params.tag
 
     input:
     path(annotation)
@@ -21,6 +21,7 @@ process mapping {
     type = 'bam'
     view = 'Alignments'
     prefix = "${sample}${pref}"
+    tagSuffix = "-${params.mappingTool}-${params.mappingToolVersion}"
     maxMultimaps = params.maxMultimaps
     maxMismatches = params.maxMismatches
 

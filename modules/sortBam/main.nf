@@ -1,5 +1,5 @@
 process sortBam {
-    tag "${id}-${params.mergeBamTool}-${params.mergeBamToolVersion}"
+    tag params.tag
 
     input:
     tuple val(sample), val(id), path(bam), val(type), val(view), val(pairedEnd)
@@ -13,6 +13,7 @@ process sortBam {
     totalMemory = taskMemory.toBytes()
     threadMemory = totalMemory/cpus
     prefix = "${bam.baseName}_sorted"
+    tagSuffix = "-${params.mergeBamTool}-${params.mergeBamToolVersion}"
     command = "${params.mergeBamTool}"
 
     template(command)

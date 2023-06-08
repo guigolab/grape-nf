@@ -1,7 +1,7 @@
 process quantification {
 
     label 'quantification'
-    tag "${id.replace(':', '_')}-${params.quantificationTool}-${params.quantificationToolVersion}"
+    tag params.tag
 
     input:
     tuple val(sample), val(id),  path(bam), val(type), val(view), val(pairedEnd), val(readStrand)
@@ -15,6 +15,7 @@ process quantification {
     script:
     cpus = task.cpus
     prefix = "${sample}"
+    tagSuffix = "-${params.quantificationTool}-${params.quantificationToolVersion}"
     type = params.quantificationFileType
     viewTx = "TranscriptQuantifications"
     viewGn = "GeneQuantifications"

@@ -1,6 +1,6 @@
 process contig {
 
-    tag "${id.replace(':', '_')}-${params.contigTool}-${params.contigToolVersion}"
+    tag params.tag
 
     input:
     path(genomeFai)
@@ -16,6 +16,7 @@ process contig {
     type = 'bed'
     view = 'Contigs'
     prefix = "${sample}.contigs"
+    tagSuffix = "-${params.contigTool}-${params.contigToolVersion}"
     command = "${params.contigTool}-${readStrand}"
 
     template(command)

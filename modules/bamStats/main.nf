@@ -1,6 +1,6 @@
 process bamStats {
 
-    tag "${id.replace(':', '_')}-${params.bamStatsTool}-${params.bamStatsToolVersion}"
+    tag params.tag
 
     input:
     path(annotation)
@@ -15,6 +15,7 @@ process bamStats {
     cpus = task.cpus
     type = "json"
     prefix = "${sample}"
+    tagSuffix = "-${params.bamStatsTool}-${params.bamStatsToolVersion}"
     views = "BamStats"
     maxBuf = params.bamStatsMaxBuf
     logLevel = params.bamStatsLogLevel

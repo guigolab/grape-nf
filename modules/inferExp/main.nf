@@ -1,6 +1,6 @@
 process inferExp {
 
-    tag "${id.replace(':', '_')}-${params.inferExpTool}-${params.inferExpToolVersion}"
+    tag params.tag
 
     input:
     path(annotation)
@@ -11,6 +11,7 @@ process inferExp {
 
     script:
     prefix = "${annotation.name.split('\\.', 2)[0]}"
+    tagSuffix = "-${params.inferExpTool}-${params.inferExpToolVersion}"
     command = "${params.inferExpTool}"
     threshold = params.inferExpThreshold
 

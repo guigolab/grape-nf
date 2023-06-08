@@ -44,6 +44,7 @@ params.steps = 'mapping,bigwig,contig,quantification'
 params.stepList = params.steps.split(',').collect { it.trim() }
 params.wigRefPrefix = ''
 params.inferExpThreshold = 0.8
+params.tag = { "${sample}-${id.replace(':', '_')}${tagSuffix ?: ''}" }
 
 // Import functions
 include { readTsv; resolveFile; printUsage; printLog } from './modules/functions'
