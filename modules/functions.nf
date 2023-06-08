@@ -99,7 +99,7 @@ def readTsv(tsvFile, boolean printLog = true) {
     tsvFile.eachLine { line ->
         def (sampleId, runId, fileName, format, readId) = line.split()
         samples << sampleId
-        ids << runId // TODO: fix wrong number of runs
+        ids << "${sampleId}${runId}"
         lines << line
     }
     nIds = ids.unique().size()
