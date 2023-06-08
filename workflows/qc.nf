@@ -20,6 +20,11 @@ workflow QC {
         it[0..-2]
       }
       .join( inferExpOut, by: [0,1] )
+      .join( bamStats.out.map { it[0..2] }, by: [0,1] )
+      .filter { it[-1].size() > 0 }
+      .map {
+        it[0..-2]
+      }
       .set { genomeAlignmentsInferred }
 
     transcriptomeAlignments
@@ -27,9 +32,17 @@ workflow QC {
         it[0..-2]
       }
       .join( inferExpOut, by: [0,1] )
+      .join( bamStats.out.map { it[0..2] }, by: [0,1] )
+      .filter { it[-1].size() > 0 }
+      .map {
+        it[0..-2]
+      }
       .set { transcriptomeAlignmentsInferred }
 
     bamStats.out
+      .filter {
+        it[2].size() > 0
+      }
       .map {
         it[0..-2]
       }
