@@ -1,20 +1,21 @@
 # Grape
 
-[![Nextflow version: <=22.10.8](https://img.shields.io/badge/nextflow-%E2%89%A422.10.8-brightgreen.svg)](http://nextflow.io)
-[![Singularity version: >=3.x](https://img.shields.io/badge/singularity-3.x-blue.svg)](http://sylabs.io/singularity)
 [![CI status](https://github.com/guigolab/grape-nf/workflows/Pipeline%20CI/badge.svg)](https://github.com/guigolab/grape-nf/actions)
+[![Nextflow version: >=23.04.0](https://tinyurl.com/35z2mr3u)](https://docs.nextflow.io)
+[![run with docker](https://img.shields.io/badge/run%20with-docker-2496ed?labelColor=282e2f&logo=docker)](https://docs.docker.com/)
+[![run with singularity](https://tinyurl.com/m47cz6hw)](https://apptainer.org/docs)
 
-Grape provides an extensive pipeline for RNA-Seq analyses. It allows the creation of an automated and integrated workflow to manage and analyse RNA-Seq data.
+Grape provides an extensive pipeline for RNA-Seq analyses. It allows the creation of an automated and integrated workflow to manage and analyze RNA-Seq data.
 
-It uses [Nextflow](http://www.nextflow.io) as the execution backend. Please check [Nextflow documentation](http://www.nextflow.io/docs/latest/index.html) for more information.
+It uses [Nextflow](https://www.nextflow.io) as the execution backend. Please check [Nextflow documentation](https://www.nextflow.io/docs/latest/index.html) for more information.
 
 Grape has been adopted for RNA-seq integrative analysis within the IHEC consortium. Check the [IHEC setup document](ihec-setup.md) to run the pipeline following IHEC recommendations.
 
 ## Requirements
 
 - Unix-like operationg system (Linux, MacOS, etc)
-- Java 8
-- [Docker](https://www.docker.com/) or [Singularity](http://singularity.lbl.gov) engine
+- Java 11 or later
+- [Docker](https://www.docker.com/) or [Singularity](https://apptainer.org) engine
 
 ## Quickstart
 
@@ -36,17 +37,9 @@ Grape has been adopted for RNA-seq integrative analysis within the IHEC consorti
 
 The preferred way to run the pipeline is to use Docker or Singularity to provision the programs needed for the execution. Just use the `-with-docker` or `-with-singularity` option in the pipeline command. Pre-built Grape containers are publicly available at the [Grape page in Docker Hub](https://hub.docker.com/r/grape/).
 
-Alternatively, a Conda [environment file](conda/grape-env.yml) is available to create a Conda environment with all the required software. It can either be used to create the environemnt in advance with:
-
-```
-conda env create -f conda/grape-env.yml
-```
-
-or to delegate Nextflow to prepare the environment using the conda configuration [directive](https://www.nextflow.io/docs/latest/conda.html?highlight=conda#use-conda-environment-files).
-
 ### Using Singularity
 
-Singularity is the preferred container engine for running the pipeline in an HPC environment. In order to minimize the amount of issues that could arise we recommend the use of Singularity version 3.0 or higher. At the time of writing of this document the latest Singularity release is 3.2.
+Singularity is the preferred container engine for running the pipeline in an HPC environment. In order to minimize the amount of issues that could arise we recommend the use of Singularity version 3.0 or higher.
 
 #### Image cache dir
 
@@ -266,7 +259,7 @@ process {
 ### Pipeline profiles
 
 The Grape pipeline can be run using different configuration profiles. The profiles essentially allow the user to run the analyses using
-different tools and configurations. To specify a profile you can use the [`-profiles` Nextflow option](http://www.nextflow.io/docs/latest/config.html#config-profiles).
+different tools and configurations. To specify a profile you can use the [`-profiles` Nextflow option](https://www.nextflow.io/docs/latest/config.html#config-profiles).
 
 The following profiles are available at present:
 
@@ -284,10 +277,12 @@ The default profile is `starrsem`.
 Here is a simple example of how you can run the pipeline:
 
 ```
-nextflow -bg run grape-nf --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume > pipeline.log
+nextflow -bg run grape-nf -r v1.1.4 --index input-files.tsv --genome refs/hg38.AXYM.fa --annotation refs/gencode.v21.annotation.AXYM.gtf --rg-platform ILLUMINA --rg-center-name CRG -resume > pipeline.log
 ```
 
-By default the pipeline execution will stop as far as one of the processes fails. This behaviour can be changed using the [errorStrategy](http://www.nextflow.io/docs/latest/process.html#errorstrategy) process directive, which can also be specified on the command line. For example, to ignore errors and keep processing you can use:
+It is strongly recommended to run one of the pipeline [released versions](https://github.com/guigolab/grape-nf/releases) unless you have a very good reason not to do so. This is done via the `-r` command line option as shown in the command above. Please see [this section](https://www.nextflow.io/docs/latest/sharing.html#handling-revisions) of Nextflow documentation for more details on this.
+
+By default the pipeline execution will stop as far as one of the processes fails. This behaviour can be changed using the [errorStrategy](https://www.nextflow.io/docs/latest/process.html#errorstrategy) process directive, which can also be specified on the command line. For example, to ignore errors and keep processing you can use:
 
 `-process.errorStrategy=ignore`.
 
@@ -299,7 +294,7 @@ nextflow -bg run grape-nf --steps mapping,quantification --index input-files.tsv
 
 ##  Tools versions
 
-The pipeline can be also run natively by installing the required software on the local system or by using [Environment Modules](http://www.nextflow.io/docs/latest/process.html?#module).
+The pipeline can be also run natively by installing the required software on the local system or by using [Environment Modules](https://www.nextflow.io/docs/latest/process.html?#module).
 
 The versions of the tools that have been tested so far with the `standard` pipeline profile are the following:
 
@@ -307,7 +302,7 @@ The versions of the tools that have been tested so far with the `standard` pipel
 - [bedtools v2.19.1](https://github.com/arq5x/bedtools2/releases/tag/v2.19.1)
 - [KentUtils v308](https://github.com/ucscGenomeBrowser/kent/releases/tag/v308_base)
 - [RSEM v1.2.21](https://github.com/deweylab/RSEM/releases/tag/v1.2.21)
-- [RSeQC v2.6.4](http://rseqc.sourceforge.net/)
+- [RSeQC v2.6.4](https://rseqc.sourceforge.net/)
 - [sambamba v0.7.1](https://github.com/biod/sambamba/releases/tag/v0.7.1)
 - [samtools v1.3](https://github.com/samtools/samtools/releases/tag/1.3.1)
 - [STAR v2.4.0j](https://github.com/alexdobin/STAR/releases/tag/STAR_2.4.0j)
