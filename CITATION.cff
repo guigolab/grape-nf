@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+title: grape-nf
+abstract: An automated Nextflow pipeline for RNA-seq data
+authors:
+  - given-names: Emilio
+    family-names: Palumbo
+    affiliation: Centre for Genomic Regulation
+    orcid: https://orcid.org/0000-0003-4599-8161
+keywords:
+  - guigolab
+  - nextflow
+  - ngs
+  - rnaseq
+version: 1.1.4
+date-released: '2023-05-16'
+license: GPL-3.0
+repository-code: 'https://github.com/guigolab/grape-nf'
