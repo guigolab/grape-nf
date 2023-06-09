@@ -140,6 +140,8 @@ The pipeline reads the paths of the `FASTQ`/`BAM` files to be processed and the 
 4 | `type`   | the type (e.g. `fastq`)
 5 | `view`   | an attribute that specifies the content of the file (e.g. `FqRd` for single-end data or `FqRd1`/`FqRd2` for paired-end data)
 
+**NOTE**: Please [do not use Excel/Libreoffice or similar programs](https://www.nature.com/articles/d41586-021-02211-4) to create this file. You can use [this online TSV editor](https://edit-csv.net/), also available as a [VSCode](https://code.visualstudio.com/) [extension](https://github.com/janisdd/vscode-edit-csv).
+
 **NOTE**: Fastq files from paired-end data will be grouped together by `runID`.
 
 Here is an example from the test run:
