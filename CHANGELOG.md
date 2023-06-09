@@ -1,5 +1,9 @@
 # GRAPE-nf Changelog
 
+## Version 1.1.4
+
+- Update cross key to get bamFilesToTranscriptome and bamStatsFiles - fixes #72
+
 ## Version 1.1.3
 
 - Handle other == NA in infer experiment script - fix #71
