@@ -4,6 +4,7 @@
 [![Nextflow version: >=23.04.0](https://tinyurl.com/35z2mr3u)](https://docs.nextflow.io)
 [![run with docker](https://img.shields.io/badge/run%20with-docker-2496ed?labelColor=282e2f&logo=docker)](https://docs.docker.com/)
 [![run with singularity](https://tinyurl.com/m47cz6hw)](https://apptainer.org/docs)
+[![DOI](https://zenodo.org/badge/38367804.svg)](https://zenodo.org/badge/latestdoi/38367804)
 
 Grape provides an extensive pipeline for RNA-Seq analyses. It allows the creation of an automated and integrated workflow to manage and analyze RNA-Seq data.
 
