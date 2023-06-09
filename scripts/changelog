@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -e
+set -u
+
+get_version_log() {
+    VERSION_NUMBER=$(echo $VER | sed 's/^v//')
+    echo ''
+    echo "## Version ${VERSION_NUMBER} "
+    echo ''
+    echo -e "$(git log --oneline --format='- %s' ${VER}...${PREV})"
+}
+
+
+if [ $# -eq 0 ]; then
+    VER=$(git describe --tags --abbrev=0)
+    PREV=$(git describe --tags --abbrev=0 ${VER}^)
+
+    get_version_log
+else
+    for VER in "$@"; do
+        PREV=$(git describe --tags --abbrev=0 ${VER}^)
+
+        get_version_log
+    done
+fi
