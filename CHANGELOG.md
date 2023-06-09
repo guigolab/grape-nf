@@ -1,5 +1,9 @@
 # GRAPE-nf Changelog
 
+## Version 1.1.2
+
+- Update numeric type for mapping memory - fixes #70
+
 ## Version 1.1.1
 
 - Update GitHub workflow
