@@ -15,6 +15,7 @@ keywords:
   - ngs
   - rnaseq
 version: 1.1.4
+doi: 10.5281/zenodo.8020869
 date-released: '2023-05-16'
 license: GPL-3.0
 repository-code: 'https://github.com/guigolab/grape-nf'
