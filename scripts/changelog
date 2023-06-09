@@ -3,11 +3,13 @@ set -e
 set -u
 
 get_version_log() {
-    VERSION_NUMBER=$(echo $VER | sed 's/^v//')
-    echo ''
-    echo "## Version ${VERSION_NUMBER} "
-    echo ''
-    echo -e "$(git log --oneline --format='- %s' ${VER}...${PREV})"
+    if [ ! -z "${PREV}" ]; then
+        VERSION_NUMBER=$(echo $VER | sed 's/^v//')
+        echo ''
+        echo "## Version ${VERSION_NUMBER} "
+        echo ''
+        echo -e "$(git log --oneline --format='* %s' ${VER}...${PREV})"
+    fi
 }
 
 
@@ -18,8 +20,8 @@ if [ $# -eq 0 ]; then
     get_version_log
 else
     for VER in "$@"; do
-        PREV=$(git describe --tags --abbrev=0 ${VER}^)
-
+        PREV=$(git describe --tags --abbrev=0 ${VER}^ 2>/dev/null || true)
+        
         get_version_log
     done
 fi
