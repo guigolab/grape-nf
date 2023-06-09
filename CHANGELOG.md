@@ -1,5 +1,9 @@
 # GRAPE-nf Changelog
 
+## Version 1.1.3
+
+- Handle other == NA in infer experiment script - fix #71
+
 ## Version 1.1.2
 
 - Update numeric type for mapping memory - fixes #70
