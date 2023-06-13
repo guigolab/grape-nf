@@ -14,8 +14,8 @@ keywords:
   - nextflow
   - ngs
   - rnaseq
-version: 1.2
-doi: 10.5281/zenodo.8020869
-date-released: 2023-06-09
+version: 1.2.1
+doi: 10.5281/zenodo.8031765
+date-released: 2023-06-13
 license: GPL-3.0
 repository-code: 'https://github.com/guigolab/grape-nf'
