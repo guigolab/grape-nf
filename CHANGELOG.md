@@ -6,13 +6,13 @@
 
 ## Version 1.2 
 
-* Add CFF file for citattion - resolve #75
+* Add CFF file for citation - resolve #75
 * Update ci script and GH actions workflow
 * Skip QC downstream steps for bams with no alignments - fix #76
 * Add sample information in process tags - resolve #73
 * Correct reported number of sequencing runs for non-unique ids - fix #74
 * Update trace file path in main config
-* Improve DSL2 refactoring - #78 #62
+* DSL2 refactoring - #78 #62
 
 ## Version 1.1.4
 
