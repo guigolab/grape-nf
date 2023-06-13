@@ -1,5 +1,9 @@
 # GRAPE-nf Changelog
 
+## Version 1.2.1 
+
+* Update numeric type for memory in mapping module - fix regression
+
 ## Version 1.2 
 
 * Add CFF file for citattion - resolve #75
