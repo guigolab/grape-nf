@@ -433,7 +433,7 @@ process mapping {
     fqs = reads.toString().split(" ")
     pairedEnd = (fqs.size() == 2)
     taskMemory = task.memory ?: 1.GB
-    totalMemory = (taskMemory.toBytes()*2/3) as long
+    totalMemory = Math.min(taskMemory.toBytes(), (task.cpus * 2.GB.toBytes()) as long)
     threadMemory = (totalMemory/task.cpus) as long
     cpus = task.cpus
     halfCpus = (task.cpus > 1 ? task.cpus / 2 : task.cpus) as int
