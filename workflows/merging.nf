@@ -1,7 +1,7 @@
-include { markdup } from '../modules/markdup'
-include { sortBam as sortTranscriptome } from '../modules/sortBam'
-include { mergeBam as mergeGenome } from '../modules/mergeBam' 
-include { mergeBam as mergeTranscriptome } from '../modules/mergeBam'
+include { markdup } from "../modules/markdup/${params.markdupTool}"
+include { sortBam as sortTranscriptome } from "../modules/sortBam/${params.mergeBamTool}"
+include { mergeBam as mergeGenome } from "../modules/mergeBam/${params.mergeBamTool}"
+include { mergeBam as mergeTranscriptome } from "../modules/mergeBam/${params.mergeBamTool}"
 
 def markDuplicates = params.markDuplicates || params.removeDuplicates
 
@@ -34,7 +34,7 @@ workflow merging {
           merge: it[2].size() > 1
           single: it[2].size() == 1
         }.set { transcriptomeAlignments }
-
+      
       sortTranscriptome( transcriptomeAlignments.merge.transpose() )
       mergeTranscriptome( sortTranscriptome.out.groupTuple(by: [0, 3, 4, 5]) )
 

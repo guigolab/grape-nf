@@ -1,6 +1,6 @@
-include { fastaIndex } from '../modules/fastaIndex'
-include { contig } from '../modules/contig'
-include { bigwig } from '../modules/bigwig'
+include { fastaIndex } from "../modules/fastaIndex/${params.fastaIndexTool}"
+include { contig } from "../modules/contig/${params.contigTool.toLowerCase()}"
+include { bigwig } from "../modules/bigwig/${params.bigwigTool.toLowerCase()}"
 
 doBigwig = ( 'bigwig' in params.stepList )
 doContig = ( 'contig' in params.stepList )

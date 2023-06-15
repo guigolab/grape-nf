@@ -1,8 +1,0 @@
-#!/bin/bash
-set -e
-set -u
-
-samtools sort -@ ${cpus} \
-              -m ${threadMemory} \
-              -o ${prefix}.bam \
-              ${bam}

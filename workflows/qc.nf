@@ -1,6 +1,6 @@
-include { parseJSON } from '../modules/functions'
-include { inferExp } from '../modules/inferExp'
-include { bamStats } from '../modules/bamStats'
+include { parseJSON } from "../modules/functions"
+include { inferExp } from "../modules/inferExp/${params.inferExpTool.toLowerCase()}"
+include { bamStats } from "../modules/bamStats/${params.bamStatsTool}"
 
 workflow QC {
   take:

@@ -1,6 +1,4 @@
-include { index } from '../modules/index'
-include { mapping as map } from '../modules/mapping'
-
+include { index; map } from "../modules/mapping/${params.mappingTool.toLowerCase()}"
 workflow mapping {
   take:
     genome

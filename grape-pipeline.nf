@@ -21,9 +21,8 @@
 
 nextflow.enable.dsl = 2
 
-//Set default values for params
+// Set default values for params
 params.addXs = false
-params.mappingSortTool = null
 params.chunkSize = null
 params.dbFile = 'pipeline.db'
 params.genomeIndex = null
@@ -33,7 +32,6 @@ params.removeDuplicates = false
 params.maxMismatches = 4
 params.maxMultimaps = 10
 params.pairedEnd = false
-params.readLength = 150
 params.readStrand = null
 params.rgCenterName = null
 params.rgDesc = null
@@ -42,9 +40,9 @@ params.rgPlatform = null
 params.sjOverHang = 100
 params.steps = 'mapping,bigwig,contig,quantification'
 params.stepList = params.steps.split(',').collect { it.trim() }
-params.wigRefPrefix = ''
 params.inferExpThreshold = 0.8
-params.tag = { "${sample}-${id.replace(':', '_')}${tagSuffix ?: ''}" }
+params.mappingSortTools = [ 'samtools', 'sambamba' ]
+params.comprExts = ['gz', 'bz2', 'zip']
 
 // Import functions
 include { readTsv; resolveFile; printUsage; printLog } from './modules/functions'
@@ -72,7 +70,7 @@ params.merge = merge
 
 include { mapping } from './workflows/mapping'
 include { merging } from './workflows/merging'
-include { quantification } from './workflows/quantification'
+include { quantification } from "./workflows/quantification/${params.quantificationTool.toLowerCase()}"
 include { QC } from './workflows/qc'
 include { signal } from './workflows/signal'
 
@@ -97,7 +95,7 @@ workflow {
       it << fastq(it[2][0]).qualityScore()
     }.set { mappingInput }
 
-  mapping( params.genome, params.annotation, mappingInput )
+  mapping( file(params.genome), file(params.annotation), mappingInput )
 
   inputFiles
     .filter {
@@ -147,7 +145,7 @@ workflow {
 
 }
 
-workflow.onComplete = {
+workflow.onComplete {
   log.info ""
   log.info "-----------------------"
   log.info "Pipeline run completed."

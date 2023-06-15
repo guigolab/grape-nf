@@ -1,7 +1,0 @@
-#!/bin/bash
-set -e
-set -u
-
-gzip -dc ${genome} > ${genome.baseName}
-samtools faidx ${genome.baseName} \
-&& rm ${genome.baseName}
