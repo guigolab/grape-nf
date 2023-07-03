@@ -3,7 +3,7 @@ params.container = "quay.io/biocontainers/samtools:${params.samtoolsVersion}"
 
 process fastaIndex {
 
-    tag "${genome}"
+    tag "${genome.simpleName}"
     container params.container
 
     input:
@@ -14,15 +14,16 @@ process fastaIndex {
 
     script:
     def compressed = genome.extension in params.comprExts
+    def genomeFile = genome.name
     
     def cmd = []
     if ( compressed ) { 
-        cmd << "gzip -dc ${genome} > ${genome.baseName}"
-        genome = genome.baseName
+        genomeFile = genome.baseName
+        cmd << "gzip -dc ${genome} > ${genomeFile}"
     }
-    cmd << "samtools faidx ${genome}"
+    cmd << "samtools faidx ${genomeFile}"
     if ( compressed ) {
-        cmd << "rm ${genome}"
+        cmd << "rm ${genomeFile}"
     }
     cmd.join('\n')
 }
