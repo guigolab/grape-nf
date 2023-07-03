@@ -90,7 +90,7 @@ process map {
     def txQuant = ( params.quantificationTool.toLowerCase() == 'rsem' )
     def pigzCpus = Math.min(task.cpus, 4)
     def memory = (task.memory ?: 1.GB).toBytes()
-    def totalMemory = (memory * 2 / 3) as long
+    def totalMemory = Math.min(memory, (task.cpus * 2.GB.toBytes()) as long)
     def threadMemory = (totalMemory / task.cpus) as long
     def halfCpus = (task.cpus > 1 ? task.cpus / 2 : task.cpus) as int
 
