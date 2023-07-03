@@ -24,14 +24,14 @@ process index {
             mkfifo ${genome.baseName}
             zcat ${genome} > ${genome.baseName} &
         """.stripIndent()
-        genome = ${genome.baseName}
+        genome = genome.baseName
     }
     if ( annotation.extension in params.comprExts ) {
         cmd << """\
             mkfifo ${annotation.baseName}
             zcat ${annotation} > ${annotation.baseName} &
         """.stripIndent()
-        annotation = ${annotation.baseName}
+        annotation = annotation.baseName
     }
     cmd << """\
         rsem-prepare-reference --gtf ${annotation} \\
