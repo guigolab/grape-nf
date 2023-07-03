@@ -5,7 +5,7 @@ params.rsemPlotModel = false
 
 process index {
 
-    tag "${genome}-${annotation}"
+    tag "${genome.simpleName}-${annotation.simpleName}"
     container params.container
 
     input:
@@ -17,25 +17,27 @@ process index {
 
     script:
     def cmd = []
+    def genomeFile = genome.name
+    def annotationFile = annotation.name
 
     cmd << "mkdir txDir"
     if ( genome.extension in params.comprExts ) {
+        genomeFile = genome.baseName
         cmd << """\
-            mkfifo ${genome.baseName}
-            zcat ${genome} > ${genome.baseName} &
+            mkfifo ${genomeFile}
+            zcat ${genome} > ${genomeFile} &
         """.stripIndent()
-        genome = genome.baseName
     }
     if ( annotation.extension in params.comprExts ) {
+        annotationFile = annotation.baseName
         cmd << """\
-            mkfifo ${annotation.baseName}
-            zcat ${annotation} > ${annotation.baseName} &
+            mkfifo ${annotationFile}
+            zcat ${annotation} > ${annotationFile} &
         """.stripIndent()
-        annotation = annotation.baseName
     }
     cmd << """\
-        rsem-prepare-reference --gtf ${annotation} \\
-                               ${genome} \\
+        rsem-prepare-reference --gtf ${annotationFile} \\
+                               ${genomeFile} \\
                                txDir/RSEMref""".stripIndent()
     cmd.join('\n')
 }

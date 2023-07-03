@@ -75,6 +75,8 @@ include { QC } from './workflows/qc'
 include { signal } from './workflows/signal'
 
 workflow {
+  def genome = file(params.genome)
+  def annotation = file(params.annotation)
 
   Channel.from(indexLines)
     .filter { it }  // get only non-empty lines
@@ -95,7 +97,7 @@ workflow {
       it << fastq(it[2][0]).qualityScore()
     }.set { mappingInput }
 
-  mapping( file(params.genome), file(params.annotation), mappingInput )
+  mapping( genome, annotation, mappingInput )
 
   inputFiles
     .filter {
@@ -117,9 +119,9 @@ workflow {
 
   QC(merging.out)
 
-  signal(params.genome, QC.out.genomeAlignments)
+  signal(genome, QC.out.genomeAlignments)
 
-  quantification(params.genome, params.annotation, QC.out.genomeAlignments, QC.out.transcriptomeAlignments)
+  quantification(genome, annotation, QC.out.genomeAlignments, QC.out.transcriptomeAlignments)
   
   // Mix results
   QC.out.genomeAlignments.mix(

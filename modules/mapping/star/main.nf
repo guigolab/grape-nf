@@ -5,7 +5,7 @@ params.mappingSortTool = 'sambamba'
 process index {
 
     container params.container
-    tag "${genome}-${annotation}"
+    tag "${genome.simpleName}-${annotation.simpleName}"
 
     input:
     path(genome)
@@ -19,29 +19,31 @@ process index {
     def memory = (task.memory ?: 1.GB).toBytes()
     def compressedGenome = genome.extension in params.comprExts
     def compressedAnnotation = annotation.extension in params.comprExts
+    def genomeFile = genome.name
+    def annotationFile = annotation.name
 
     def cmd = [ 'mkdir genomeDir' ]
     if ( compressedGenome ) {
-        cmd << "pigz -p ${pigzCpus} -dc ${genome} > ${genome.baseName}"
-        genome = genome.baseName
+        genomeFile = genome.baseName
+        cmd << "pigz -p ${pigzCpus} -dc ${genome} > ${genomeFile}"
     }
     if ( compressedAnnotation ) {
-        cmd << "pigz -p ${pigzCpus} -dc ${annotation} > ${annotation.baseName}"
-        annotation = annotation.baseName
+        annotationFile = annotation.baseName
+        cmd << "pigz -p ${pigzCpus} -dc ${annotation} > ${annotationFile}"
     }
     cmd << """\
         STAR --runThreadN ${task.cpus} \\
              --runMode genomeGenerate \\
              --limitGenomeGenerateRAM ${memory} \\
              --genomeDir genomeDir \\
-             --genomeFastaFiles ${genome} \\
-             --sjdbGTFfile ${annotation} \\
+             --genomeFastaFiles ${genomeFile} \\
+             --sjdbGTFfile ${annotationFile} \\
              --sjdbOverhang ${params.sjOverHang}""".stripIndent()
     if ( compressedGenome ) {
-        cmd << "rm ${genome}"
+        cmd << "rm ${genomeFile}"
     }
     if ( compressedAnnotation ) {
-        cmd << "rm ${annotation}"
+        cmd << "rm ${annotationFile}"
     }
     cmd.join('\n')
 

@@ -20,32 +20,34 @@ process index {
     def memory = (task.memory ?: 1.GB).toBytes()
     def compressedGenome = genome.extension in params.comprExts
     def compressedAnnotation = annotation.extension in params.comprExts
+    def genomeFile = genome.name
+    def annotationFile = annotation.name
 
     def cmd = [ 'mkdir genomeDir' ]
     if ( compressedGenome ) {
-        cmd << "pigz -p ${pigzCpus} -dc ${genome} | sed 's/ .*//' > ${genome.baseName}"
-        genome = genome.baseName
+        genomeFile = genome.baseName
+        cmd << "pigz -p ${pigzCpus} -dc ${genome} | sed 's/ .*//' > ${genomeFile}"
     }
     if ( compressedAnnotation ) {
-        cmd << "mkfifo ${annotation.baseName}"
-        cmd << "pigz -p ${pigzCpus} -dc ${annotation} > ${annotation.baseName} &"
-        annotation = annotation.baseName
+        annotationFile = annotation.baseName
+        cmd << "mkfifo ${annotationFile}"
+        cmd << "pigz -p ${pigzCpus} -dc ${annotation} > ${annotationFile} &"
     }
     cmd << """\
-        gemtools index -i ${genome} \\
+        gemtools index -i ${genomeFile} \\
                        -t ${task.cpus} \\
                        -o genomeDir/genome_index.gem""".stripIndent()
     cmd << """\
         gemtools t-index -i genomeDir/genome_index.gem \\
-                         -a ${annotation} \\
+                         -a ${annotationFile} \\
                          -t ${task.cpus} \\
                          -o genomeDir/transcript_index \\
                          -m ${params.readLength}""".stripIndent()
     if ( compressedGenome ) {
-        cmd << "rm ${genome}"
+        cmd << "rm ${genomeFile}"
     }
     if ( compressedAnnotation ) {
-        cmd << "rm ${annotation}"
+        cmd << "rm ${annotationFile}"
     }
     cmd.join('\n')
 
