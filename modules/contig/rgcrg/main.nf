@@ -61,14 +61,14 @@ process contig {
                 ) \\
             | genomeCoverageBed -strand - -split -bg -ibam - \\
             > ${prefix}.${str2Prefix}.bedgraph""".stripIndent()
+        cmd << """\
+            contigsNew.py --chrFile ${genomeFai} \
+                        --fileP ${prefix}.plusRaw.bedgraph \
+                        --fileM ${prefix}.minusRaw.bedgraph \
+                        --sortOut \
+            > ${prefix}.bed""".stripIndent()
     }
 
-    cmd << """\
-        contigsNew.py --chrFile ${genomeFai} \
-                      --fileP ${prefix}.plusRaw.bedgraph \
-                      --fileM ${prefix}.minusRaw.bedgraph \
-                      --sortOut \
-        > ${prefix}.bed""".stripIndent()
 
     cmd.join('\n')
 }
