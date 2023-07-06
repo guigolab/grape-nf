@@ -27,6 +27,7 @@ params.chunkSize = null
 params.dbFile = 'pipeline.db'
 params.genomeIndex = null
 params.help = false
+params.helpAll = false
 params.markDuplicates = false
 params.removeDuplicates = false
 params.maxMismatches = 4
