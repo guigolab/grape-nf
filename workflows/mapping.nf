@@ -6,9 +6,13 @@ workflow mapping {
     input
   main:
     if ( ! params.genomeIndex ) {
-      index( genome, annotation )
+      genomeIndex = index( genome, annotation )
+    } else {
+      genomeIndex = file(params.genomeIndex)
+      log.info "[INFO] Using precomputed genome index ${genomeIndex}"
+      log.info ""
     }
-    map( annotation, index.out, input )
+    map( annotation, genomeIndex, input )
   emit:
     genomeAlignments = map.out.genomeAlignments
     transcriptomeAlignments = map.out.transcriptomeAlignments
