@@ -23,7 +23,6 @@ nextflow.enable.dsl = 2
 
 // Set default values for params
 params.addXs = false
-params.chunkSize = null
 params.dbFile = 'pipeline.db'
 params.genomeIndex = null
 params.help = false
@@ -64,9 +63,9 @@ if ('quantification' in params.stepList && !params.annotation) {
 printLog()
 
 // Init I/O files
-pdb = file(params.dbFile)
-index = params.index ? file(params.index) : System.in
-(merge, indexLines) = readTsv(index)
+def pdb = file(params.dbFile)
+def index = params.index ? file(params.index) : System.in
+def (merge, indexLines) = readTsv(index)
 params.merge = merge
 
 include { mapping } from './workflows/mapping'
