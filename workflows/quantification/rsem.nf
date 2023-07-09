@@ -1,6 +1,7 @@
-include { index;  quantify } from "${baseDir}/modules/quantification/rsem"
+include { index;  quantify; makeTable } from "${baseDir}/modules/quantification/rsem"
 
-def doQuantify = ( 'quantification' in params.stepList ) 
+params.rsemTableUnits = ['TPM','expected_count']
+def doQuantify = ( 'quantification' in params.stepList )
 
 workflow quantification {
   take:
@@ -12,6 +13,16 @@ workflow quantification {
     if ( doQuantify ) {
         quantificationIndex = index( genome, annotation )
         quantify( quantificationIndex, transcriptomeAlignments )
+
+        geneResults = quantify.out.genes
+          .map { it[2] }
+          .collect()
+          .map { [ 'genes', it ] }
+        txResults = quantify.out.isoforms
+          .map { it[2] }
+          .collect()
+          .map { [ 'isoforms', it ] }
+        makeTable(params.rsemTableUnits, geneResults.mix(txResults))
     }
   emit:
     genes = ( doQuantify ) ? quantify.out.genes : Channel.empty()
