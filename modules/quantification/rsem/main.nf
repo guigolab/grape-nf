@@ -61,6 +61,8 @@ process quantify {
     viewTx = "TranscriptQuantifications"
     viewGn = "GeneQuantifications"
     def memory = (task.memory ?: 1.GB).toMega()
+    def sortMemFrac = params.rsemSkipCi ? 0.75 : 0.5
+    def sortMemory = Math.max(1024, (memory * sortMemFrac) as long)
     def forwardProb = null
 
     switch (readStrand) {
@@ -73,7 +75,7 @@ process quantify {
     }
     
     def cmd = []
-    cmd << "sambamba sort -t ${task.cpus} -m ${memory}MB -N -M -l 0 -o - ${bam} \\"
+    cmd << "sambamba sort -t ${task.cpus} -m ${sortMemory}MB -N -M -l 0 -o - ${bam} \\"
     cmd << """\
         | rsem-calculate-expression -p ${task.cpus} \\
                                     --bam \\
@@ -89,9 +91,10 @@ process quantify {
                             --forward-prob ${forwardProb} \\"""
     }
     if ( ! params.rsemSkipCi ) {
+        def ciMemory = Math.max(1024, (memory / 4) as long)
         cmd << """\
                             --calc-ci \\
-                            --ci-memory ${memory} \\"""
+                            --ci-memory ${ciMemory} \\"""
     }
     cmd << """\
                             - \\
