@@ -736,6 +736,8 @@ process quantification {
     viewTx = "TranscriptQuantifications"
     viewGn = "GeneQuantifications"
     memory = (task.memory ?: 1.GB).toMega()
+    sortMemory = Math.max(1024, (memory / 2) as long)
+    ciMemory = Math.max(1024, (memory / 4) as long)
     command = "${task.process}/${params.quantificationTool}"
     if ( params.quantificationTool == 'RSEM') {
         command += "-${pairedEnd ? 'Paired-End' : 'Single-End'}"

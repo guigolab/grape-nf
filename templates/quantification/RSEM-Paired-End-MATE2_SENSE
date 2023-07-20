@@ -2,14 +2,14 @@
 set -e
 set -u
 
-sambamba sort -t ${cpus} -m ${memory}MB -N -M -l 0 -o - ${bam} \
+sambamba sort -t ${cpus} -m ${sortMemory}MB -N -M -l 0 -o - ${bam} \
   | rsem-calculate-expression --bam \
                           --estimate-rspd  \
                           --calc-ci \
                           --no-bam-output \
                           --seed 12345 \
                           -p ${cpus} \
-                          --ci-memory ${memory} \
+                          --ci-memory ${ciMemory} \
                           --paired-end \
                           --forward-prob 0 \
                           - \
