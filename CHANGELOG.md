@@ -1,5 +1,17 @@
 # GRAPE-nf Changelog
 
+## Version 1.3.0
+
+* Reduce memory usage in RSEM quantification process [78fd890]
+* Fix regression - allow usage of precomputed genome index [4a885e3]
+* Minor changes to main pipeline script [a41b5dc]
+* Fix issue with contig step on unstranded data [87d7db7]
+* Fix file issue in fastaIndex process [36f3469]
+* Update memory for mapping [e00579a]
+* Fix file issues in steps for mapping and quantification indices [574a115]
+* Fix syntax errors in rsem module [a7b549e]
+* Refactor modules and workflows [df1731f]
+
 ## Version 1.2.1 
 
 * Update numeric type for memory in mapping module - fix regression
