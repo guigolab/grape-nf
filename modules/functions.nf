@@ -189,3 +189,13 @@ def parseJSON(data) {
     j = new JsonSlurper()
     j.parseText(data)
 }
+
+def checkParams(params) {
+  if (!params.genomeIndex && !params.genome) {
+    exit 1, "Reference genome not specified"
+  }
+
+  if ('quantification' in params.stepList && !params.annotation) {
+    exit 1, "Annotation not specified"
+  }
+}

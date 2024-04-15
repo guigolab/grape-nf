@@ -45,19 +45,13 @@ params.mappingSortTools = [ 'samtools', 'sambamba' ]
 params.comprExts = ['gz', 'bz2', 'zip']
 
 // Import functions
-include { readTsv; resolveFile; printUsage; printLog } from './modules/functions'
+include { checkParams; readTsv; resolveFile; printUsage; printLog } from './modules/functions'
 
 // Print pipeline usage if `--help` is passed
 printUsage()
 
 // Check mandatory options
-if (!params.genomeIndex && !params.genome) {
-    exit 1, "Reference genome not specified"
-}
-
-if ('quantification' in params.stepList && !params.annotation) {
-    exit 1, "Annotation not specified"
-}
+checkParams(params)
 
 // Print pipeline log
 printLog()
