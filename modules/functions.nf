@@ -198,4 +198,8 @@ def checkParams(params) {
   if ('quantification' in params.stepList && !params.annotation) {
     exit 1, "Annotation not specified"
   }
+
+  if (params.stepList.size == 1 && ! params.stepList.contains("mapping")) {
+    exit 1, "Invalid pipeline steps: ${params.stepList.join(" ")}"
+  }
 }
