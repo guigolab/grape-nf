@@ -5,9 +5,12 @@
 *.db
 trace.txt*
 work/
+trace/
 tmp/
 nextflow
 pipeline.db
 checksum/
 singularity/
 download/
+.nf-test
+.vscode
