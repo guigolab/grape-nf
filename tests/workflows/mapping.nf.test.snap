@@ -1,0 +1,100 @@
+{
+    "Should run STAR mapping sorting with samtools": {
+        "content": [
+            [
+                [
+                    "sample1",
+                    "test1",
+                    "sample1_m4_n10_toGenome_sorted.bam:md5,162f23dcd62197a2c1409294ef99e690",
+                    "bam",
+                    "GenomeAlignments",
+                    true
+                ]
+            ],
+            [
+                [
+                    "sample1",
+                    "test1",
+                    "sample1_m4_n10_toGenome_sorted.bam.bai:md5,afa4023ac7c17c64aa67d833cf9276e3",
+                    "bam",
+                    "GenomeAlignments",
+                    true
+                ]
+            ],
+            [
+                [
+                    "sample1",
+                    "test1",
+                    "sample1_m4_n10_toTranscriptome.bam:md5,e6a72cca10b1ac084ff2ae4f572987b8",
+                    "bam",
+                    "TranscriptomeAlignments",
+                    true
+                ]
+            ],
+            [
+                [
+                    "sample1",
+                    "test1",
+                    "SJ.out.tab:md5,ec651e0f3bc8338345aa15c8f74038c2",
+                    "tsv",
+                    "STARjunctions",
+                    true
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-17T15:01:17.646174"
+    },
+    "Should run STAR mapping sorting with sambamba": {
+        "content": [
+            [
+                [
+                    "sample1",
+                    "test1",
+                    "sample1_m4_n10_toGenome_sorted.bam:md5,a7a3d9267bd0c57c568857e729219a0e",
+                    "bam",
+                    "GenomeAlignments",
+                    true
+                ]
+            ],
+            [
+                [
+                    "sample1",
+                    "test1",
+                    "sample1_m4_n10_toGenome_sorted.bam.bai:md5,8f0bdb7f22db60c70983eb6a56e66b3c",
+                    "bam",
+                    "GenomeAlignments",
+                    true
+                ]
+            ],
+            [
+                [
+                    "sample1",
+                    "test1",
+                    "sample1_m4_n10_toTranscriptome.bam:md5,e6a72cca10b1ac084ff2ae4f572987b8",
+                    "bam",
+                    "TranscriptomeAlignments",
+                    true
+                ]
+            ],
+            [
+                [
+                    "sample1",
+                    "test1",
+                    "SJ.out.tab:md5,ec651e0f3bc8338345aa15c8f74038c2",
+                    "tsv",
+                    "STARjunctions",
+                    true
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-17T15:00:46.24496"
+    }
+}

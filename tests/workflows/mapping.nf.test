@@ -1,0 +1,79 @@
+nextflow_workflow {
+
+    name "Test Workflow mapping"
+    script "workflows/mapping.nf"
+    workflow "mapping"
+
+    test("Should run STAR mapping sorting with sambamba") {
+
+        when {
+            params {
+                mappingTool  = "STAR"
+                quantificationTool = "RSEM"
+                sortBamTool = "sambamba"
+                sjOverHang = 100
+                maxMismatches = 4
+                maxMultimaps = 10    
+            }
+            workflow {
+                """
+                input[0] = file("${baseDir}/data/genome.fa.gz")
+                input[1] = file("${baseDir}/data/annotation.gtf.gz")
+                input[2] = Channel.from(
+                    [
+                        [ "sample1", "test1", file("${baseDir}/data/test1_*.fastq.gz"), "fastq", ["fqRd1", "fqRd2"], '']
+                    ]
+                )
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert snapshot(
+                workflow.out.genomeAlignments,
+                workflow.out.genomeAlignmentsIndices,
+                workflow.out.transcriptomeAlignments,
+                workflow.out.junctions
+            ).match()
+        }
+
+    }
+
+    test("Should run STAR mapping sorting with samtools") {
+
+        when {
+            params {
+                mappingTool  = "STAR"
+                quantificationTool = "RSEM"
+                sortBamTool = "samtools"
+                sjOverHang = 100
+                maxMismatches = 4
+                maxMultimaps = 10    
+            }
+            workflow {
+                """
+                input[0] = file("${baseDir}/data/genome.fa")
+                input[1] = file("${baseDir}/data/annotation.gtf")
+                input[2] = Channel.from(
+                    [
+                        [ "sample1", "test1", file("${baseDir}/data/test1_*.fastq.gz"), "fastq", ["fqRd1", "fqRd2"], '']
+                    ]
+                )
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert snapshot(
+                workflow.out.genomeAlignments,
+                workflow.out.genomeAlignmentsIndices,
+                workflow.out.transcriptomeAlignments,
+                workflow.out.junctions
+            ).match()
+        }
+
+    }
+
+}

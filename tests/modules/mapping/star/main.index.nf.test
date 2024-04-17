@@ -1,0 +1,88 @@
+nextflow_process {
+
+    name "Test Process index"
+    script "modules/mapping/star/main.nf"
+    process "index"
+    
+    test("Should index compressed references") {
+
+        when {
+            params {
+                sjOverHang = 100
+            }
+            process {
+                """
+                input[0] = file("${baseDir}/data/genome.fa.gz")
+                input[1] = file("${baseDir}/data/annotation.gtf.gz")
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            with(process.out) {
+                def genomeDir = get(0)[0]
+                assert path(genomeDir).list().size() == 15
+                assert snapshot(
+                    path("${genomeDir}/Genome"),
+                    path("${genomeDir}/SA"),
+                    path("${genomeDir}/SAindex"),
+                    path("${genomeDir}/chrLength.txt"),
+                    path("${genomeDir}/chrName.txt"),
+                    path("${genomeDir}/chrNameLength.txt"),
+                    path("${genomeDir}/chrStart.txt"),
+                    path("${genomeDir}/exonGeTrInfo.tab"),
+                    path("${genomeDir}/exonInfo.tab"),
+                    path("${genomeDir}/geneInfo.tab"),
+                    path("${genomeDir}/genomeParameters.txt"),
+                    path("${genomeDir}/sjdbInfo.txt"),
+                    path("${genomeDir}/sjdbList.fromGTF.out.tab"),
+                    path("${genomeDir}/sjdbList.out.tab"),
+                    path("${genomeDir}/transcriptInfo.tab")
+                ).match()
+            }
+        }
+
+    }
+
+    test("Should index uncompressed references") {
+
+        when {
+            params {
+                sjOverHang = 100
+            }
+            process {
+                """
+                input[0] = file("${baseDir}/data/genome.fa")
+                input[1] = file("${baseDir}/data/annotation.gtf")
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            with(process.out) {
+                def genomeDir = get(0)[0]
+                assert path(genomeDir).list().size() == 15
+                assert snapshot(
+                    path("${genomeDir}/Genome"),
+                    path("${genomeDir}/SA"),
+                    path("${genomeDir}/SAindex"),
+                    path("${genomeDir}/chrLength.txt"),
+                    path("${genomeDir}/chrName.txt"),
+                    path("${genomeDir}/chrNameLength.txt"),
+                    path("${genomeDir}/chrStart.txt"),
+                    path("${genomeDir}/exonGeTrInfo.tab"),
+                    path("${genomeDir}/exonInfo.tab"),
+                    path("${genomeDir}/geneInfo.tab"),
+                    path("${genomeDir}/genomeParameters.txt"),
+                    path("${genomeDir}/sjdbInfo.txt"),
+                    path("${genomeDir}/sjdbList.fromGTF.out.tab"),
+                    path("${genomeDir}/sjdbList.out.tab"),
+                    path("${genomeDir}/transcriptInfo.tab")
+                ).match()
+            }
+        }
+
+    }
+}

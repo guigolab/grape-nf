@@ -1,0 +1,28 @@
+nextflow_process {
+
+    name "Test Process fastaIndex"
+    script "modules/fastaIndex/samtools/main.nf"
+    process "fastaIndex"
+
+    test("Should produce the fasta index") {
+
+        when {
+            process {
+                """
+                input[0] = "${baseDir}/data/genome.fa"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+            with(process.out[0]) {
+              assert size() == 1
+              assert path(get(0)).md5 == "12d36d122df8dfe8fcfc96d78f785328"
+            }
+        }
+
+    }
+
+}

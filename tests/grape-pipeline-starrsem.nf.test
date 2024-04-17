@@ -1,0 +1,29 @@
+nextflow_pipeline {
+
+    name "Test Workflow grape-pipeline.nf"
+    script "grape-pipeline.nf"
+
+    profile "+starrsem"
+    
+    test("Should run starrsem pipeline") {
+
+        
+        when {
+            params {
+                // define parameters here. Example: 
+                // outdir = "tests/results"
+                steps = 'mapping'
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert workflow.trace.failed().size() == 0
+            assert workflow.trace.succeeded().size() == 17
+            def lines = file("${launchDir}/pipeline.db").readLines()
+            assert lines.size() == 9
+        }
+
+    }
+
+}

@@ -1,0 +1,50 @@
+{
+    "Should index compressed references": {
+        "content": [
+            "Genome:md5,7ede3c93094305c2b5c18e2f52110194",
+            "SA:md5,66c24435d4e28eeddb6a5014ac90c4ef",
+            "SAindex:md5,71a85071f83b3df03194ded791487bd8",
+            "chrLength.txt:md5,d5218aeba91780be1b6e6d122fc16089",
+            "chrName.txt:md5,c6ae136a5ea0ebef9922c1e905c78e01",
+            "chrNameLength.txt:md5,5c6cc18be0eab93c65b0cf7d65ccdf40",
+            "chrStart.txt:md5,4ae3effcfe1d1c9d34fcf77a79f5e930",
+            "exonGeTrInfo.tab:md5,06545472694f13d808a021c152e407ae",
+            "exonInfo.tab:md5,a5d45fa06470ea940fee46b8278d98b7",
+            "geneInfo.tab:md5,c60a6703eaa7c4b75f4245eac7a659ab",
+            "genomeParameters.txt:md5,d32462a2f9c818b4245f57f3198ba83c",
+            "sjdbInfo.txt:md5,3bde943689ac279664d66d15b20a81c8",
+            "sjdbList.fromGTF.out.tab:md5,3204292dd60c21bc905145ec15e8f680",
+            "sjdbList.out.tab:md5,89ad4cd2dd4c868f6c32b29a57c376bb",
+            "transcriptInfo.tab:md5,3e6f9806497187a01ecbaaab6cce4f25"
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-17T17:20:31.357378"
+    },
+    "Should index uncompressed references": {
+        "content": [
+            "Genome:md5,7ede3c93094305c2b5c18e2f52110194",
+            "SA:md5,66c24435d4e28eeddb6a5014ac90c4ef",
+            "SAindex:md5,71a85071f83b3df03194ded791487bd8",
+            "chrLength.txt:md5,d5218aeba91780be1b6e6d122fc16089",
+            "chrName.txt:md5,c6ae136a5ea0ebef9922c1e905c78e01",
+            "chrNameLength.txt:md5,5c6cc18be0eab93c65b0cf7d65ccdf40",
+            "chrStart.txt:md5,4ae3effcfe1d1c9d34fcf77a79f5e930",
+            "exonGeTrInfo.tab:md5,06545472694f13d808a021c152e407ae",
+            "exonInfo.tab:md5,a5d45fa06470ea940fee46b8278d98b7",
+            "geneInfo.tab:md5,c60a6703eaa7c4b75f4245eac7a659ab",
+            "genomeParameters.txt:md5,d32462a2f9c818b4245f57f3198ba83c",
+            "sjdbInfo.txt:md5,3bde943689ac279664d66d15b20a81c8",
+            "sjdbList.fromGTF.out.tab:md5,3204292dd60c21bc905145ec15e8f680",
+            "sjdbList.out.tab:md5,89ad4cd2dd4c868f6c32b29a57c376bb",
+            "transcriptInfo.tab:md5,3e6f9806497187a01ecbaaab6cce4f25"
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-17T17:20:43.134729"
+    }
+}
