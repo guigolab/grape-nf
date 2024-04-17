@@ -10,6 +10,7 @@ process sortBam {
 
     output:
     tuple val(sample), val(id), path("${prefix}.bam"), val(type), val(view), val(pairedEnd)
+    tuple val(sample), val(id), path("${prefix}.bam.bai"), val(type), val(view), val(pairedEnd)
 
     script:
     memory = (task.memory ?: 1.GB).toBytes()
@@ -20,6 +21,7 @@ process sortBam {
               -m ${memory} \
               -o ${prefix}.bam \
               ${bam}
+    sambamba index ${prefix}.bam
     """
 }
 

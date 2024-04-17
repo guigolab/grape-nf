@@ -1,4 +1,5 @@
 include { index; map } from "../modules/mapping/${params.mappingTool.toLowerCase()}"
+include { sortBam } from "../modules/sortBam/${params.sortBamTool.toLowerCase()}"
 workflow mapping {
   take:
     genome
@@ -13,10 +14,11 @@ workflow mapping {
       log.info ""
     }
     map( annotation, genomeIndex, input )
+    sortBam( map.out.genomeAlignments )
   emit:
-    genomeAlignments = map.out.genomeAlignments
+    genomeAlignments = sortBam.out[0]
     transcriptomeAlignments = map.out.transcriptomeAlignments
-    genomeAlignmentsIndices = map.out.genomeAlignmentsIndices
+    genomeAlignmentsIndices = sortBam.out[1]
     stats = map.out.stats
     junctions = map.out.junctions
 }

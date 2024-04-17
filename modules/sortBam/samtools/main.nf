@@ -1,4 +1,4 @@
-params.samtoolsVersion = '1.3.1--h0cf4675_11'
+params.samtoolsVersion = '1.19.2--h50ea8bc_1'
 params.container = "quay.io/biocontainers/samtools:${params.samtoolsVersion}"
 
 process sortBam {
@@ -10,6 +10,7 @@ process sortBam {
 
     output:
     tuple val(sample), val(id), path("${prefix}.bam"), val(type), val(view), val(pairedEnd)
+    tuple val(sample), val(id), path("${prefix}.bam.bai"), val(type), val(view), val(pairedEnd)
 
     script:
     memory = (task.memory ?: 1.GB).toBytes() / task.cpus
@@ -20,6 +21,7 @@ process sortBam {
               -m ${memory} \
               -o ${prefix}.bam \
               ${bam}
+    samtools index ${prefix}.bam
     """
 }
 

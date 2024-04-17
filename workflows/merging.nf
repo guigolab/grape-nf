@@ -36,7 +36,7 @@ workflow merging {
         }.set { transcriptomeAlignments }
       
       sortTranscriptome( transcriptomeAlignments.merge.transpose() )
-      mergeTranscriptome( sortTranscriptome.out.groupTuple(by: [0, 3, 4, 5]) )
+      mergeTranscriptome( sortTranscriptome.out[0].groupTuple(by: [0, 3, 4, 5]) )
 
     emit:
       genomeAlignments = genomeAlignmentsOutput
