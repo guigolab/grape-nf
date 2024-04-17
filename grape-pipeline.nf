@@ -45,7 +45,7 @@ params.mappingSortTools = [ 'samtools', 'sambamba' ]
 params.comprExts = ['gz', 'bz2', 'zip']
 
 // Import functions
-include { checkParams; readTsv; resolveFile; printUsage; printLog } from './modules/functions'
+include { checkParams; readTsv; resolveFile; printUsage; printLog; writeDB } from './modules/functions'
 
 // Print pipeline usage if `--help` is passed
 printUsage()
@@ -57,7 +57,6 @@ checkParams(params)
 printLog()
 
 // Init I/O files
-def pdb = file(params.dbFile)
 def index = params.index ? file(params.index) : System.in
 def (merge, indexLines) = readTsv(index)
 params.merge = merge
@@ -127,18 +126,8 @@ workflow {
     quantification.out.genes
   )
   .set { pipelineResults }
-  
-  // Clear pipeline db
-  pdb.write('')
-  
-  // Write results to pipeline db
-  pipelineResults.collectFile(name: pdb.name, storeDir: pdb.parent, newLine: true) {
-    res = it[0..4]
-    res << (it[5] ? 'Paired-End' : 'Single-End')
-    res << it[6]
-    res.join('\t')
-  }
 
+  writeDB(params.dbFile, pipelineResults)
 }
 
 workflow.onComplete {

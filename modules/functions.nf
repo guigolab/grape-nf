@@ -203,3 +203,13 @@ def checkParams(params) {
     exit 1, "Invalid pipeline steps: ${params.stepList.join(" ")}"
   }
 }
+
+def writeDB(dbFile, results) {
+  def pdb = file(dbFile)
+  results.collectFile(name: pdb.name, storeDir: pdb.parent, newLine: true) {
+    res = it[0..4]
+    res << (it[5] ? 'Paired-End' : 'Single-End')
+    res << it[6]
+    res.join('\t')
+  }
+}
