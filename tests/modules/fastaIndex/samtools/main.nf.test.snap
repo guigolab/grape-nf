@@ -1,5 +1,5 @@
 {
-    "Should produce the fasta index": {
+    "Should produce the fasta index (compressed genome)": {
         "content": [
             {
                 "0": [
@@ -11,6 +11,20 @@
             "nf-test": "0.8.4",
             "nextflow": "23.10.1"
         },
-        "timestamp": "2024-04-16T11:50:45.127291"
+        "timestamp": "2024-04-18T18:59:06.37067"
+    },
+    "Should produce the fasta index (uncompressed genome)": {
+        "content": [
+            {
+                "0": [
+                    "genome.fa.fai:md5,12d36d122df8dfe8fcfc96d78f785328"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-18T18:59:15.457162"
     }
 }
