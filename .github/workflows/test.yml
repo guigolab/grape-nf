@@ -1,0 +1,86 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - master
+      - dev
+      - test-refactor
+  pull_request:
+    branches:
+      - master
+
+env:
+  JAVA_VERSION: 17
+  JAVA_DISTRO: zulu
+
+jobs:
+  pipeline-test:
+    name: Pipeline tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        profile:
+          - gemflux
+          - starrsem
+          - starflux
+          - markdup
+          - rmdup
+          - ihec
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ env.JAVA_DISTRO }}
+          java-version: ${{ env.JAVA_VERSION }}
+          java-package: jre
+      - name: Setup Nextflow
+        uses: nf-core/setup-nextflow@v2
+      - name: Install nf-test
+        uses: nf-core/setup-nf-test@v1
+      - name: Run tests
+        run: nf-test test --tag pipeline --profile +${CI_PROFILE}
+        env:
+          CI_PROFILE: ${{ matrix.profile }}
+
+  workflow-test:
+    name: Workflow tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ env.JAVA_DISTRO }}
+          java-version: ${{ env.JAVA_VERSION }}
+          java-package: jre
+      - name: Setup Nextflow
+        uses: nf-core/setup-nextflow@v2
+      - name: Install nf-test
+        uses: nf-core/setup-nf-test@v1
+      - name: Run tests
+        run: nf-test test --tag workflow
+
+  module-test:
+    name: Module tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ env.JAVA_DISTRO }}
+          java-version: ${{ env.JAVA_VERSION }}
+          java-package: jre
+      - name: Setup Nextflow
+        uses: nf-core/setup-nextflow@v2
+      - name: Install nf-test
+        uses: nf-core/setup-nf-test@v1
+      - name: Run tests
+        run: nf-test test --tag module

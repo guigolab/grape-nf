@@ -1,0 +1,37 @@
+import com.askimed.nf.test.util.AnsiColors;
+import com.askimed.nf.test.util.AnsiText;
+
+nextflow_pipeline {
+
+    name "Test Workflow grape-pipeline.nf"
+    script "grape-pipeline.nf"
+
+    tag "pipeline"
+
+    test("Should run pipeline") {
+
+        setup {
+            def profile = parent.profiles.last().minus('+')
+            print "(${AnsiColors.yellow(profile)}) "
+        }
+
+        then {
+            def profile = parent.profiles.last().minus('+')
+            def expected = [
+                "starrsem": [ traceSize: 28, dbSize: 30 ],
+                "starflux": [ traceSize: 24, dbSize: 28 ],
+                 "markdup": [ traceSize: 31, dbSize: 30 ],
+                 "gemflux": [ traceSize: 24, dbSize: 22 ],
+                   "rmdup": [ traceSize: 31, dbSize: 30 ],
+                    "ihec": [ traceSize: 31, dbSize: 30 ],
+            ][profile]
+            assert workflow.success
+            assert workflow.trace.failed().size() == 0
+            assert workflow.trace.succeeded().size() == expected?.traceSize
+            def lines = file("${launchDir}/pipeline.db").readLines()
+            assert lines.size() == expected?.dbSize
+        }
+
+    }
+
+}

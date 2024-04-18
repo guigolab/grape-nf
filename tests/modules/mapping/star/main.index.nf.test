@@ -3,7 +3,9 @@ nextflow_process {
     name "Test Process index"
     script "modules/mapping/star/main.nf"
     process "index"
-    
+
+    tag "module"
+
     test("Should index compressed references") {
 
         when {

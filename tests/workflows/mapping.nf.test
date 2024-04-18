@@ -4,6 +4,8 @@ nextflow_workflow {
     script "workflows/mapping.nf"
     workflow "mapping"
 
+    tag "workflow"
+
     test("Should run STAR mapping sorting with sambamba") {
 
         when {
@@ -13,7 +15,7 @@ nextflow_workflow {
                 sortBamTool = "sambamba"
                 sjOverHang = 100
                 maxMismatches = 4
-                maxMultimaps = 10    
+                maxMultimaps = 10
             }
             workflow {
                 """
@@ -49,7 +51,7 @@ nextflow_workflow {
                 sortBamTool = "samtools"
                 sjOverHang = 100
                 maxMismatches = 4
-                maxMultimaps = 10    
+                maxMultimaps = 10
             }
             workflow {
                 """

@@ -4,6 +4,8 @@ nextflow_process {
     script "modules/fastaIndex/samtools/main.nf"
     process "fastaIndex"
 
+    tag "module"
+
     test("Should produce the fasta index") {
 
         when {
