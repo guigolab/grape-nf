@@ -1,0 +1,47 @@
+nextflow_process {
+
+    name "Test Process inferExp"
+    script "modules/inferExp/rseqc/main.nf"
+    process "inferExp"
+
+    test("Should infer strendedness from BAM (compressed annotation)") {
+
+        when {
+            process {
+                """
+                input[0] = file("${baseDir}/data/annotation.gtf.gz")
+                input[1] = Channel.from([
+                    [ "sample3", "test3", file("${baseDir}/data/sample3_m4_n10_toGenome.bam"), "bam", "GenomeAlignments", true]
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+
+    }
+
+    test("Should infer strendedness from BAM (uncompressed annotation)") {
+
+        when {
+            process {
+                """
+                input[0] = file("${baseDir}/data/annotation.gtf.gz")
+                input[1] = Channel.from([
+                    [ "sample3", "test3", file("${baseDir}/data/sample3_m4_n10_toGenome.bam"), "bam", "GenomeAlignments", true]
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+
+    }
+
+}

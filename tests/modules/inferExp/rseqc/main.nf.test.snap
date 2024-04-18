@@ -1,0 +1,38 @@
+{
+    "Should infer strendedness from BAM (uncompressed annotation)": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample3",
+                        "test3",
+                        "{\"paired\": true, \"exp\": \"MATE2_SENSE\"}"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-18T18:54:10.824148"
+    },
+    "Should infer strendedness from BAM (compressed annotation)": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample3",
+                        "test3",
+                        "{\"paired\": true, \"exp\": \"MATE2_SENSE\"}"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-18T18:54:02.195879"
+    }
+}
