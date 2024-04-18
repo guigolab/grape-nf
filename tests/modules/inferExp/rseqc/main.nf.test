@@ -4,6 +4,8 @@ nextflow_process {
     script "modules/inferExp/rseqc/main.nf"
     process "inferExp"
 
+    tag "module"
+
     test("Should infer strendedness from BAM (compressed annotation)") {
 
         when {
