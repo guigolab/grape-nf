@@ -1,0 +1,44 @@
+{
+    "Should produce BAM stats (uncompressed annotation)": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3_stats.json:md5,77c72bef6f1410e33c90dbc01697fffc",
+                        "json",
+                        "BamStats",
+                        true
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-18T17:10:13.589448"
+    },
+    "Should produce BAM stats (compressed annotation)": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3_stats.json:md5,77c72bef6f1410e33c90dbc01697fffc",
+                        "json",
+                        "BamStats",
+                        true
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-18T17:10:05.978606"
+    }
+}
