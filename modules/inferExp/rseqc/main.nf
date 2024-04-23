@@ -1,11 +1,52 @@
-params.rseqcVersion = '2.6.4'
-params.container = "grapenf/inferexp:rseqc-${params.rseqcVersion}"
+params.rseqcVersion = '2.6.4--py27hf8a1672_2'
+params.ucscVersion = '447--h2a80c09_1'
+params.gtfToGenePredContainer = "quay.io/biocontainers/ucsc-gtftogenepred:${params.ucscVersion}"
+params.genePredContainer = "quay.io/biocontainers/ucsc-genepredtobed:${params.ucscVersion}"
+params.rseqcContainer = "quay.io/biocontainers/rseqc:${params.rseqcVersion}"
 params.inferExpThreshold = '0.8'
+
+process gtfToGenePred {
+
+    tag "${prefix}"
+    container params.gtfToGenePredContainer
+
+    input:
+    path(annotation)
+
+    output:
+    path("${prefix}.genePred")
+
+    script:
+    prefix = annotation.simpleName
+
+    """
+    gtfToGenePred ${annotation} -allErrors -ignoreGroupsWithoutExons ${prefix}.genePred 2> ${prefix}.genePred.err
+    """
+}
+
+process genePredToBed {
+
+    tag "${prefix}"
+    container params.genePredContainer
+
+    input:
+    path(genePred)
+
+    output:
+    path("${prefix}.bed")
+
+    script:
+    prefix = "${genePred.simpleName}"
+
+    """
+    genePredToBed ${genePred} ${prefix}.bed
+    """
+}
 
 process inferExp {
 
     tag "${sample}"
-    container params.container
+    container params.rseqcContainer
 
     input:
     path(annotation)
@@ -20,8 +61,6 @@ process inferExp {
     """
     set -o pipefail
 
-    gtfToGenePred ${annotation} -allErrors -ignoreGroupsWithoutExons ${prefix}.genePred 2> ${prefix}.genePred.err
-    genePredToBed ${prefix}.genePred ${prefix}.bed
-    grape_infer_experiment.py -i ${bam} -r ${prefix}.bed --threshold ${params.inferExpThreshold} | tr -d '\\n'
+    grape_infer_experiment.py -i ${bam} -r ${annotation} --threshold ${params.inferExpThreshold} | tr -d '\\n'
     """
 }

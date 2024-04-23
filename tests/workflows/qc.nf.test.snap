@@ -1,0 +1,156 @@
+{
+    "Should run BAM QC (uncompressed annotation)": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3_m4_n10_toGenome.bam:md5,2fea3e65b19a08afbf9b1279e97fe7e0",
+                        "bam",
+                        "GenomeAlignments",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "1": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3_m4_n10_toTranscriptome.bam:md5,3a8316414e15048a188e532fd51216c9",
+                        "bam",
+                        "TranscriptomeAlignments",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "2": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3_stats.json:md5,77c72bef6f1410e33c90dbc01697fffc",
+                        "json",
+                        "BamStats",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "bamStats": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3_stats.json:md5,77c72bef6f1410e33c90dbc01697fffc",
+                        "json",
+                        "BamStats",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "genomeAlignments": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3_m4_n10_toGenome.bam:md5,2fea3e65b19a08afbf9b1279e97fe7e0",
+                        "bam",
+                        "GenomeAlignments",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "transcriptomeAlignments": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3_m4_n10_toTranscriptome.bam:md5,3a8316414e15048a188e532fd51216c9",
+                        "bam",
+                        "TranscriptomeAlignments",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-19T17:01:24.605245"
+    },
+    "Should run BAM QC (compressed annotation)": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3_m4_n10_toGenome.bam:md5,2fea3e65b19a08afbf9b1279e97fe7e0",
+                        "bam",
+                        "GenomeAlignments",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "1": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3_m4_n10_toTranscriptome.bam:md5,3a8316414e15048a188e532fd51216c9",
+                        "bam",
+                        "TranscriptomeAlignments",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "2": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3_stats.json:md5,77c72bef6f1410e33c90dbc01697fffc",
+                        "json",
+                        "BamStats",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "bamStats": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3_stats.json:md5,77c72bef6f1410e33c90dbc01697fffc",
+                        "json",
+                        "BamStats",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "genomeAlignments": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3_m4_n10_toGenome.bam:md5,2fea3e65b19a08afbf9b1279e97fe7e0",
+                        "bam",
+                        "GenomeAlignments",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "transcriptomeAlignments": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3_m4_n10_toTranscriptome.bam:md5,3a8316414e15048a188e532fd51216c9",
+                        "bam",
+                        "TranscriptomeAlignments",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-19T17:01:53.25532"
+    }
+}

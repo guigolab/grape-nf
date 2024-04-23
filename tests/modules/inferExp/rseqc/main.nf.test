@@ -6,12 +6,31 @@ nextflow_process {
 
     tag "module"
 
-    test("Should infer strendedness from BAM (compressed annotation)") {
+    setup {
+        run("gtfToGenePred") {
+            script "modules/inferExp/rseqc/main.nf"
+            process {
+                """
+                input[0] = file("${baseDir}/data/annotation.gtf.gz")
+                """
+            }
+        }
+        run("genePredToBed") {
+            script "modules/inferExp/rseqc/main.nf"
+            process {
+                """
+                input[0] = gtfToGenePred.out
+                """
+            }
+        }
+    }
+
+    test("Should infer strandedness from BAM (compressed annotation)") {
 
         when {
             process {
                 """
-                input[0] = file("${baseDir}/data/annotation.gtf.gz")
+                input[0] = genePredToBed.out
                 input[1] = Channel.from([
                     [ "sample3", "test3", file("${baseDir}/data/sample3_m4_n10_toGenome.bam"), "bam", "GenomeAlignments", true]
                 ])
@@ -26,12 +45,12 @@ nextflow_process {
 
     }
 
-    test("Should infer strendedness from BAM (uncompressed annotation)") {
+    test("Should infer strandedness from BAM (uncompressed annotation)") {
 
         when {
             process {
                 """
-                input[0] = file("${baseDir}/data/annotation.gtf.gz")
+                input[0] = genePredToBed.out
                 input[1] = Channel.from([
                     [ "sample3", "test3", file("${baseDir}/data/sample3_m4_n10_toGenome.bam"), "bam", "GenomeAlignments", true]
                 ])

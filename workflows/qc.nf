@@ -1,5 +1,5 @@
 include { parseJSON } from "../modules/functions"
-include { inferExp } from "../modules/inferExp/${params.inferExpTool.toLowerCase()}"
+include { gtfToGenePred; genePredToBed; inferExp } from "../modules/inferExp/${params.inferExpTool.toLowerCase()}"
 include { bamStats } from "../modules/bamStats/${params.bamStatsTool}"
 
 workflow QC {
@@ -7,10 +7,11 @@ workflow QC {
     genomeAlignments
     transcriptomeAlignments
   main:
-
     def annotation = file(params.annotation)
-    
-    inferExp(annotation, genomeAlignments)
+
+    gtfToGenePred(annotation)
+    genePredToBed(gtfToGenePred.out)
+    inferExp(genePredToBed.out, genomeAlignments)
     bamStats(annotation, genomeAlignments)
 
     inferExp.out.map {
