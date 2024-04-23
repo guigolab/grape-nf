@@ -1,0 +1,91 @@
+nextflow_process {
+
+    name "Test Process map"
+    script "modules/mapping/star/main.nf"
+    process "map"
+
+    tag "module"
+
+    setup {
+        run("index") {
+            script "modules/mapping/star/main.nf"
+            process {
+                """
+                input[0] = file("${baseDir}/data/genome.fa")
+                input[1] = file("${baseDir}/data/annotation.gtf")
+                """
+            }
+        }
+    }
+
+    test("Should align reads to the reference with compressed annotation") {
+
+        when {
+            params {
+                mappingTool  = "STAR"
+                sjOverHang = 100
+                quantificationTool = "RSEM"
+                maxMismatches = 4
+                maxMultimaps = 10
+            }
+            process {
+                """
+                input[0] = file("${baseDir}/data/annotation.gtf.gz")
+                input[1] = index.out
+                input[2] = Channel.from(
+                    [
+                        [ "sample1", "test1", file("${baseDir}/data/test1_*.fastq.gz"), "fastq", ["fqRd1", "fqRd2"], '']
+                    ]
+                )
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert snapshot(
+                process.out.genomeAlignments,
+                process.out.genomeAlignmentsIndices,
+                process.out.transcriptomeAlignments,
+                process.out.junctions
+            ).match()
+        }
+
+    }
+
+    test("Should align reads to the reference with uncompressed annotation") {
+
+        when {
+            params {
+                mappingTool  = "STAR"
+                sjOverHang = 100
+                quantificationTool = "RSEM"
+                maxMismatches = 4
+                maxMultimaps = 10
+            }
+            process {
+                """
+                input[0] = file("${baseDir}/data/annotation.gtf")
+                input[1] = index.out
+                input[2] = Channel.from(
+                    [
+                        [ "sample1", "test1", file("${baseDir}/data/test1_*.fastq.gz"), "fastq", ["fqRd1", "fqRd2"], '']
+                    ]
+                )
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert snapshot(
+                process.out.genomeAlignments,
+                process.out.genomeAlignmentsIndices,
+                process.out.transcriptomeAlignments,
+                process.out.junctions
+            ).match()
+        }
+
+    }
+
+}
