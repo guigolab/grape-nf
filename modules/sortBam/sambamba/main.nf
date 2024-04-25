@@ -1,5 +1,5 @@
-params.sambambaVersion = '0.7.1'
-params.container = "grapenf/sambamba:${params.sambambaVersion}"
+params.sambambaVersion = '0.7.1--h984e79f_3'
+params.container = "quay.io/biocontainers/sambamba:${params.sambambaVersion}"
 
 process sortBam {
     tag "${sample}"
@@ -24,4 +24,3 @@ process sortBam {
     sambamba index ${prefix}.bam
     """
 }
-

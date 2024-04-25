@@ -1,0 +1,33 @@
+{
+    "Should sort BAM file with sambamba": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3_m4_n10_toGenome_sorted.bam:md5,9b72491669335addf88cf1a631b6e5d1",
+                        "bam",
+                        "GenomeAlignments",
+                        true
+                    ]
+                ],
+                "1": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3_m4_n10_toGenome_sorted.bam.bai:md5,2a87071e7749c3c170e52def44795307",
+                        "bam",
+                        "GenomeAlignments",
+                        true
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-25T16:39:05.913863"
+    }
+}

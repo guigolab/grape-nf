@@ -1,0 +1,33 @@
+{
+    "Should sort BAM file with samtools": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3_m4_n10_toGenome_sorted.bam:md5,c3576e0170a7af2a64d0cdeabc25f214",
+                        "bam",
+                        "GenomeAlignments",
+                        true
+                    ]
+                ],
+                "1": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3_m4_n10_toGenome_sorted.bam.bai:md5,457175c88447c01e0d10ebc16adad070",
+                        "bam",
+                        "GenomeAlignments",
+                        true
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-25T16:39:14.075944"
+    }
+}
