@@ -1,0 +1,34 @@
+{
+    "Should convert STAR signal files to BigWig": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample3",
+                        "test3",
+                        [
+                            "sample3.Unique.minusRaw.bw:md5,1363d4e278c9024433c2901996ab730a",
+                            "sample3.Unique.plusRaw.bw:md5,1b9adcfb8312cde4f51d48d5b0772d01",
+                            "sample3.UniqueMultiple.minusRaw.bw:md5,2deb1fd284c866ff5faec6ceba351d56",
+                            "sample3.UniqueMultiple.plusRaw.bw:md5,f60e3c597e32fce7b5caf13843080bd6"
+                        ],
+                        "bigWig",
+                        [
+                            "MinusRawSignal",
+                            "PlusRawSignal",
+                            "MultipleMinusRawSignal",
+                            "MultiplePlusRawSignal"
+                        ],
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-25T12:34:53.753279"
+    }
+}

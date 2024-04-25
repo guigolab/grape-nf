@@ -1,15 +1,44 @@
-params.starVersion = '2.4.0j'
-params.container = "grapenf/bigwig:star-${params.starVersion}"
+params.starVersion = "2.4.0j--h9ee0642_2"
+// params.starVersion = "2.7.10a--h9ee0642_0"
+params.ucscVersion = '455--h2a80c09_1'
+params.starContainer = "quay.io/biocontainers/star:${params.starVersion}"
+params.bgtobwContainer = "quay.io/biocontainers/ucsc-bedgraphtobigwig:${params.ucscVersion}"
 params.wigRefPrefix = '-'
 
-process bigwig {
-
+process signal {
     tag "${sample}"
-    container params.container
+    container params.starContainer
 
     input:
     path(genomeFai)
     tuple val(sample), val(id), path(bam), val(type), val(view), val(pairedEnd), val(readStrand)
+
+    output:
+    tuple val(sample), val(id), path('Signal'), val(type), val('SignalBedgraphs'), val(pairedEnd), val(readStrand)
+
+    script:
+    type = "bedGraph"
+    outWigStrand = readStrand == "NONE" ? 'Unstranded' : 'Stranded'
+    """
+    mkdir Signal
+    STAR --runThreadN ${task.cpus} \\
+         --runMode inputAlignmentsFromBAM \\
+         --inputBAMfile ${bam} \\
+         --outWigType bedGraph \\
+         --outWigStrand ${outWigStrand} \\
+         --outWigReferencesPrefix ${params.wigRefPrefix} \\
+         --outFileNamePrefix ./Signal/
+    """
+}
+
+process bigwig {
+
+    tag "${sample}"
+    container params.bgtobwContainer
+
+    input:
+    path(genomeFai)
+    tuple val(sample), val(id), path(signal), val(type), val(view), val(pairedEnd), val(readStrand)
 
     output:
     tuple val(sample), val(id), path('*.bw'), val(type), val(views), val(pairedEnd), val(readStrand)
@@ -17,7 +46,7 @@ process bigwig {
     script:
     type = "bigWig"
     prefix = "${sample}"
-    
+
     def str1Prefix = null
     def str2Prefix = null
     def outWigStrand = null
@@ -42,16 +71,6 @@ process bigwig {
     }
 
     def cmd = []
-    cmd << 'mkdir Signal'
-    cmd << """\
-        STAR --runThreadN ${task.cpus} \\
-             --runMode inputAlignmentsFromBAM \\
-             --inputBAMfile ${bam} \\
-             --outWigType bedGraph \\
-             --outWigStrand ${outWigStrand} \\
-             --outWigReferencesPrefix ${params.wigRefPrefix} \\
-             --outFileNamePrefix ./Signal/""".stripIndent()
-
     cmd << """\
         bedGraphToBigWig Signal/Signal.UniqueMultiple.str1.out.bg \\
                         ${genomeFai} \\

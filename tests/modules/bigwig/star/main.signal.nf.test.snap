@@ -1,0 +1,25 @@
+{
+    "Should produce signal files with STAR": {
+        "content": [
+            [
+                "sample3",
+                "test3",
+                "bedGraph",
+                "SignalBedgraphs",
+                true,
+                "MATE2_SENSE"
+            ],
+            [
+                "Signal.Unique.str1.out.bg:md5,68d27d2751d4ad7d6cddedcf2111cc87",
+                "Signal.Unique.str2.out.bg:md5,47008cc228a8dd00167430c22edb8033",
+                "Signal.UniqueMultiple.str1.out.bg:md5,93302fecb5013e7e6ad5dc21b0811d73",
+                "Signal.UniqueMultiple.str2.out.bg:md5,d4c1161f9d27d2492efe6b24348a3501"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-25T12:33:44.577831"
+    }
+}
