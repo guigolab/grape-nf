@@ -1,6 +1,6 @@
 include { fastaIndex } from "../modules/fastaIndex/${params.fastaIndexTool}"
 include { contig } from "../modules/contig/${params.contigTool.toLowerCase()}"
-include { bigwig } from "../modules/bigwig/${params.bigwigTool.toLowerCase()}"
+include { signal as bedgraph; bigwig } from "../modules/bigwig/${params.bigwigTool.toLowerCase()}"
 
 doBigwig = ( 'bigwig' in params.stepList )
 doContig = ( 'contig' in params.stepList )
@@ -15,7 +15,8 @@ workflow signal {
         fastaIndex( genome )
       }
       if ( doBigwig ) {
-        bigwig( fastaIndex.out, genomeAlignments )
+        bedgraph( fastaIndex.out, genomeAlignments )
+        bigwig( fastaIndex.out, bedgraph.out )
       }
       if ( doContig ) {
         contig( fastaIndex.out, genomeAlignments )

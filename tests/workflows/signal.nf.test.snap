@@ -1,0 +1,134 @@
+{
+    "Should produce contig files": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.contigs.bed:md5,89f19344b1f1a346a105f2b3f9443f9e",
+                        "bed",
+                        "Contigs",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "1": [
+                    
+                ],
+                "bigwigs": [
+                    
+                ],
+                "contigs": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.contigs.bed:md5,89f19344b1f1a346a105f2b3f9443f9e",
+                        "bed",
+                        "Contigs",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-25T14:05:02.995265"
+    },
+    "Should produce bigwig files": {
+        "content": [
+            {
+                "0": [
+                    
+                ],
+                "1": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.Unique.minusRaw.bw:md5,1363d4e278c9024433c2901996ab730a",
+                        "bigWig",
+                        "MinusRawSignal",
+                        true,
+                        "MATE2_SENSE"
+                    ],
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.Unique.plusRaw.bw:md5,1b9adcfb8312cde4f51d48d5b0772d01",
+                        "bigWig",
+                        "PlusRawSignal",
+                        true,
+                        "MATE2_SENSE"
+                    ],
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.UniqueMultiple.minusRaw.bw:md5,2deb1fd284c866ff5faec6ceba351d56",
+                        "bigWig",
+                        "MultipleMinusRawSignal",
+                        true,
+                        "MATE2_SENSE"
+                    ],
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.UniqueMultiple.plusRaw.bw:md5,f60e3c597e32fce7b5caf13843080bd6",
+                        "bigWig",
+                        "MultiplePlusRawSignal",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "bigwigs": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.Unique.minusRaw.bw:md5,1363d4e278c9024433c2901996ab730a",
+                        "bigWig",
+                        "MinusRawSignal",
+                        true,
+                        "MATE2_SENSE"
+                    ],
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.Unique.plusRaw.bw:md5,1b9adcfb8312cde4f51d48d5b0772d01",
+                        "bigWig",
+                        "PlusRawSignal",
+                        true,
+                        "MATE2_SENSE"
+                    ],
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.UniqueMultiple.minusRaw.bw:md5,2deb1fd284c866ff5faec6ceba351d56",
+                        "bigWig",
+                        "MultipleMinusRawSignal",
+                        true,
+                        "MATE2_SENSE"
+                    ],
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.UniqueMultiple.plusRaw.bw:md5,f60e3c597e32fce7b5caf13843080bd6",
+                        "bigWig",
+                        "MultiplePlusRawSignal",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "contigs": [
+                    
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-25T14:04:52.79812"
+    }
+}
