@@ -1,5 +1,5 @@
 {
-    "Should produce contig files": {
+    "Should produce BED file with contigs": {
         "content": [
             {
                 "0": [
@@ -14,10 +14,10 @@
                     ]
                 ],
                 "1": [
-                    
+
                 ],
                 "bigwigs": [
-                    
+
                 ],
                 "contigs": [
                     [
@@ -38,11 +38,11 @@
         },
         "timestamp": "2024-04-30T18:20:00.779747"
     },
-    "Should produce bigwig files with RGCRG": {
+    "Should produce bigwig files using RGCRG tools": {
         "content": [
             {
                 "0": [
-                    
+
                 ],
                 "1": [
                     [
@@ -85,7 +85,7 @@
                     ]
                 ],
                 "contigs": [
-                    
+
                 ]
             }
         ],
@@ -95,11 +95,11 @@
         },
         "timestamp": "2024-04-30T18:14:51.685863"
     },
-    "Should produce bigwig files with STAR": {
+    "Should produce bigwig files using STAR": {
         "content": [
             {
                 "0": [
-                    
+
                 ],
                 "1": [
                     [
@@ -178,7 +178,7 @@
                     ]
                 ],
                 "contigs": [
-                    
+
                 ]
             }
         ],

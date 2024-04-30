@@ -1,5 +1,5 @@
 {
-    "Should convert STAR signal files to BigWig": {
+    "Should convert STAR signal files to bigwig": {
         "content": [
             {
                 "0": [

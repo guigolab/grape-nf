@@ -6,7 +6,7 @@ nextflow_workflow {
 
     tag "workflow"
 
-    test("Should produce bigwig files with STAR") {
+    test("Should produce bigwig files using STAR") {
 
         when {
             params {
@@ -32,7 +32,7 @@ nextflow_workflow {
 
     }
 
-    test("Should produce bigwig files with RGCRG") {
+    test("Should produce bigwig files using RGCRG tools") {
 
         when {
             params {
@@ -58,7 +58,7 @@ nextflow_workflow {
 
     }
 
-    test("Should produce contig files") {
+    test("Should produce BED file with contigs") {
 
         when {
             params {

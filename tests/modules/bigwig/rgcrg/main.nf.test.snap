@@ -1,0 +1,30 @@
+{
+    "Should produce bigwig files using RGCRG tools": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample3",
+                        "test3",
+                        [
+                            "sample3.minusRaw.bw:md5,db10a50bb7eebec0f3421f4460d4cae8",
+                            "sample3.plusRaw.bw:md5,235e2d65c856c969048e432234c04ff4"
+                        ],
+                        "bigWig",
+                        [
+                            "MinusRawSignal",
+                            "PlusRawSignal"
+                        ],
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-30T19:01:02.919082"
+    }
+}

@@ -1,5 +1,5 @@
 {
-    "Should produce signal files with STAR": {
+    "Should produce signal files using STAR": {
         "content": [
             [
                 "sample3",

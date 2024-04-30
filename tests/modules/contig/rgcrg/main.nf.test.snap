@@ -1,0 +1,24 @@
+{
+    "Should produce BED file with contigs": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.contigs.bed:md5,89f19344b1f1a346a105f2b3f9443f9e",
+                        "bed",
+                        "Contigs",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-30T18:57:32.893994"
+    }
+}
