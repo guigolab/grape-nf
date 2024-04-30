@@ -1,5 +1,5 @@
-params.sambambaVersion = '0.7.1'
-params.container = "grapenf/sambamba:${params.sambambaVersion}"
+params.sambambaVersion = '0.7.1--h984e79f_3'
+params.container = "quay.io/biocontainers/sambamba:${params.sambambaVersion}"
 
 process markdup {
 
@@ -17,7 +17,7 @@ process markdup {
     script:
     memory = (task.memory ?: 2.GB).toMega()
     prefix = "${bam.baseName}.markdup"
-    
+
     def cmd = []
     cmd << """\
         sambamba markdup -t ${task.cpus} \\

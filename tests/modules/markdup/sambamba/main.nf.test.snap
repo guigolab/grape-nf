@@ -1,0 +1,53 @@
+{
+    "Should mark duplicates using sambamba": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3_m4_n10_toGenome.markdup.bam:md5,c720dedc6b6d94a7a507543fd44b1e3a",
+                        "bam",
+                        "GenomeAlignments",
+                        true
+                    ]
+                ],
+                "1": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3_m4_n10_toGenome.markdup.bam.bai:md5,9696c48348b5e0d26d4c45a211fc9bdd",
+                        "bai",
+                        "GenomeAlignmentsIndex",
+                        true
+                    ]
+                ],
+                "dedupedAlignments": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3_m4_n10_toGenome.markdup.bam:md5,c720dedc6b6d94a7a507543fd44b1e3a",
+                        "bam",
+                        "GenomeAlignments",
+                        true
+                    ]
+                ],
+                "dedupedAlignmentsIndices": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3_m4_n10_toGenome.markdup.bam.bai:md5,9696c48348b5e0d26d4c45a211fc9bdd",
+                        "bai",
+                        "GenomeAlignmentsIndex",
+                        true
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-30T19:38:12.840625"
+    }
+}
