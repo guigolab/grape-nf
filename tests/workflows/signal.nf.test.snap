@@ -36,9 +36,66 @@
             "nf-test": "0.8.4",
             "nextflow": "23.10.1"
         },
-        "timestamp": "2024-04-25T14:05:02.995265"
+        "timestamp": "2024-04-30T18:20:00.779747"
     },
-    "Should produce bigwig files": {
+    "Should produce bigwig files with RGCRG": {
+        "content": [
+            {
+                "0": [
+                    
+                ],
+                "1": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.minusRaw.bw:md5,db10a50bb7eebec0f3421f4460d4cae8",
+                        "bigWig",
+                        "MinusRawSignal",
+                        true,
+                        "MATE2_SENSE"
+                    ],
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.plusRaw.bw:md5,235e2d65c856c969048e432234c04ff4",
+                        "bigWig",
+                        "PlusRawSignal",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "bigwigs": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.minusRaw.bw:md5,db10a50bb7eebec0f3421f4460d4cae8",
+                        "bigWig",
+                        "MinusRawSignal",
+                        true,
+                        "MATE2_SENSE"
+                    ],
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.plusRaw.bw:md5,235e2d65c856c969048e432234c04ff4",
+                        "bigWig",
+                        "PlusRawSignal",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "contigs": [
+                    
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-30T18:14:51.685863"
+    },
+    "Should produce bigwig files with STAR": {
         "content": [
             {
                 "0": [
@@ -129,6 +186,6 @@
             "nf-test": "0.8.4",
             "nextflow": "23.10.1"
         },
-        "timestamp": "2024-04-25T14:04:52.79812"
+        "timestamp": "2024-04-30T18:20:54.929343"
     }
 }

@@ -6,13 +6,39 @@ nextflow_workflow {
 
     tag "workflow"
 
-    test("Should produce bigwig files") {
+    test("Should produce bigwig files with STAR") {
 
         when {
             params {
                 fastaIndexTool = "samtools"
                 contigTool = "rgcrg"
                 bigwigTool = "STAR"
+                stepList = ['bigwig']
+            }
+            workflow {
+                """
+                input[0] = file("${baseDir}/data/genome.fa.gz")
+                input[1] = Channel.from([
+                    [ "sample3", "test3", file("${baseDir}/data/sample3_m4_n10_toGenome.bam"), "bam", "GenomeAlignments", true, "MATE2_SENSE"]
+                ])
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert snapshot(workflow.out).match()
+        }
+
+    }
+
+    test("Should produce bigwig files with RGCRG") {
+
+        when {
+            params {
+                fastaIndexTool = "samtools"
+                contigTool = "rgcrg"
+                bigwigTool = "rgcrg"
                 stepList = ['bigwig']
             }
             workflow {

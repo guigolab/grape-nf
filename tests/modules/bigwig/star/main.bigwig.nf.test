@@ -2,7 +2,7 @@ nextflow_process {
 
     name "Test Process bigwig"
     script "modules/bigwig/star/main.nf"
-    process "bigwig"
+    process "bw"
 
     tag "module"
 

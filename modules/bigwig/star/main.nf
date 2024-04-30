@@ -31,7 +31,7 @@ process signal {
     """
 }
 
-process bigwig {
+process bw {
 
     tag "${sample}"
     container params.bgtobwContainer
@@ -88,4 +88,17 @@ process bigwig {
                             ${prefix}.Unique.${str2Prefix}.bw""".stripIndent()
     }
     cmd.join('\n')
+}
+
+workflow bigwig {
+    take:
+      fastaIndex
+      genomeAlignments
+
+    main:
+      signal( fastaIndex, genomeAlignments )
+      bw( fastaIndex, signal.out )
+
+    emit:
+      bw.out
 }
