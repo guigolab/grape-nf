@@ -1,0 +1,46 @@
+{
+    "Should create index for RSEM quantification (compressed references)": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "RSEMref.chrlist:md5,5c6cc18be0eab93c65b0cf7d65ccdf40",
+                        "RSEMref.grp:md5,0f456a742fad8dbc1e1f042ba6d2eb80",
+                        "RSEMref.idx.fa:md5,01a65f27053fc82b169cb3856c882314",
+                        "RSEMref.n2g.idx.fa:md5,01a65f27053fc82b169cb3856c882314",
+                        "RSEMref.seq:md5,a774142fe7d5764339a5302cb581791e",
+                        "RSEMref.ti:md5,7bb3a569b9c2ac5dac74b1230f8b1dd0",
+                        "RSEMref.transcripts.fa:md5,36e748ee42105667941d667db18c651d"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-30T17:34:01.107753"
+    },
+    "Should create index for RSEM quantification (uncompressed references)": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "RSEMref.chrlist:md5,5c6cc18be0eab93c65b0cf7d65ccdf40",
+                        "RSEMref.grp:md5,0f456a742fad8dbc1e1f042ba6d2eb80",
+                        "RSEMref.idx.fa:md5,01a65f27053fc82b169cb3856c882314",
+                        "RSEMref.n2g.idx.fa:md5,01a65f27053fc82b169cb3856c882314",
+                        "RSEMref.seq:md5,a774142fe7d5764339a5302cb581791e",
+                        "RSEMref.ti:md5,7bb3a569b9c2ac5dac74b1230f8b1dd0",
+                        "RSEMref.transcripts.fa:md5,36e748ee42105667941d667db18c651d"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-30T17:39:07.828051"
+    }
+}

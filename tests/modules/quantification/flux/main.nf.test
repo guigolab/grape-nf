@@ -1,0 +1,49 @@
+nextflow_process {
+
+    name "Test Process quantify"
+    script "modules/quantification/flux/main.nf"
+    process "quantify"
+
+    tag "module"
+
+    test("Should quantify with Flux Capacitor (uncompressed annotation)") {
+
+        when {
+            process {
+                """
+                input[0] = file("${baseDir}/data/annotation.gtf")
+                input[1] = Channel.from([
+                    [ "sample3", "test3", file("${baseDir}/data/sample3_m4_n10_toGenome.bam"), "bam", "GenomeAlignments", true, "MATE2_SENSE" ]
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+
+    }
+
+    test("Should quantify with Flux Capacitor (compressed annotation)") {
+
+        when {
+            process {
+                """
+                input[0] = file("${baseDir}/data/annotation.gtf.gz")
+                input[1] = Channel.from([
+                    [ "sample3", "test3", file("${baseDir}/data/sample3_m4_n10_toGenome.bam"), "bam", "GenomeAlignments", true, "MATE2_SENSE" ]
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+
+    }
+
+}

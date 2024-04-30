@@ -1,0 +1,112 @@
+{
+    "Should quantify with Flux Capacitor (uncompressed annotation)": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.isoforms.gtf:md5,1a039c489fdeb3e0ab4ff768424b5997",
+                        "gtf",
+                        "TranscriptQuantifications",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "1": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.genes.gff:md5,74f9de8e31ff2c24bc45af5f8ec73530",
+                        "gtf",
+                        "GeneQuantifications",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "genes": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.genes.gff:md5,74f9de8e31ff2c24bc45af5f8ec73530",
+                        "gtf",
+                        "GeneQuantifications",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "isoforms": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.isoforms.gtf:md5,1a039c489fdeb3e0ab4ff768424b5997",
+                        "gtf",
+                        "TranscriptQuantifications",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-30T17:41:10.263296"
+    },
+    "Should quantify with Flux Capacitor (compressed annotation)": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.isoforms.gtf:md5,1a039c489fdeb3e0ab4ff768424b5997",
+                        "gtf",
+                        "TranscriptQuantifications",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "1": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.genes.gff:md5,74f9de8e31ff2c24bc45af5f8ec73530",
+                        "gtf",
+                        "GeneQuantifications",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "genes": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.genes.gff:md5,74f9de8e31ff2c24bc45af5f8ec73530",
+                        "gtf",
+                        "GeneQuantifications",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "isoforms": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.isoforms.gtf:md5,1a039c489fdeb3e0ab4ff768424b5997",
+                        "gtf",
+                        "TranscriptQuantifications",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-30T17:30:38.512548"
+    }
+}

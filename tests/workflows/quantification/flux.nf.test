@@ -1,0 +1,36 @@
+nextflow_workflow {
+
+    name "Test Workflow quantification"
+    script "workflows/quantification/flux.nf"
+    workflow "quantification"
+
+    tag "workflow"
+
+    test("Should run quantification with Flux Capacitor") {
+
+        when {
+            params {
+                stepList = [ "quantification" ]
+            }
+            workflow {
+                """
+                input[0] = file("${baseDir}/data/genome.fa")
+                input[1] = file("${baseDir}/data/annotation.gtf")
+                input[2] = Channel.from([
+                    [ "sample3", "test3", file("${baseDir}/data/sample3_m4_n10_toGenome.bam"), "bam", "GenomeAlignments", true, "MATE2_SENSE" ]
+                ])
+                input[3] = Channel.from([
+                    [ "sample3", "test3", file("${baseDir}/data/sample3_m4_n10_toTranscriptome.bam"), "bam", "TranscriptomeAlignments", true, "MATE2_SENSE" ]
+                ])
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert snapshot(workflow.out).match()
+        }
+
+    }
+
+}

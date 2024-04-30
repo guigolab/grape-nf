@@ -1,6 +1,6 @@
-include { quantify } from "${baseDir}/modules/quantification/flux"
+include { quantify } from "../../modules/quantification/flux"
 
-def doQuantify = ( 'quantification' in params.stepList ) 
+def doQuantify = ( 'quantification' in params.stepList )
 
 workflow quantification {
   take:

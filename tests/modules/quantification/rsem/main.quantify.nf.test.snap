@@ -1,0 +1,57 @@
+{
+    "Should quantify with RSEM": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.isoforms.results:md5,a2ddfd7d7919830d69f941176ddff86f",
+                        "tsv",
+                        "TranscriptQuantifications",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "1": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.genes.results:md5,568855cd154369988f0e9120660dcea6",
+                        "tsv",
+                        "GeneQuantifications",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "genes": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.genes.results:md5,568855cd154369988f0e9120660dcea6",
+                        "tsv",
+                        "GeneQuantifications",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "isoforms": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.isoforms.results:md5,a2ddfd7d7919830d69f941176ddff86f",
+                        "tsv",
+                        "TranscriptQuantifications",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-30T17:37:25.520162"
+    }
+}

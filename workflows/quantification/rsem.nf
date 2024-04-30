@@ -1,6 +1,6 @@
-include { index;  quantify } from "${baseDir}/modules/quantification/rsem"
+include { index;  quantify } from "../../modules/quantification/rsem"
 
-def doQuantify = ( 'quantification' in params.stepList ) 
+def doQuantify = ( 'quantification' in params.stepList )
 
 workflow quantification {
   take:
