@@ -1,5 +1,5 @@
 {
-    "Should quantify with RSEM": {
+    "Should quantify with RSEM (with credibility intervals)": {
         "content": [
             {
                 "0": [
@@ -53,5 +53,60 @@
             "nextflow": "23.10.1"
         },
         "timestamp": "2024-04-30T17:37:25.520162"
+    },
+    "Should quantify with RSEM": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.isoforms.results:md5,2f825c2b612114534df653ec4c172c18",
+                        "tsv",
+                        "TranscriptQuantifications",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "1": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.genes.results:md5,d76a7103c9d815fa46dc7b3ab38ae4b1",
+                        "tsv",
+                        "GeneQuantifications",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "genes": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.genes.results:md5,d76a7103c9d815fa46dc7b3ab38ae4b1",
+                        "tsv",
+                        "GeneQuantifications",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ],
+                "isoforms": [
+                    [
+                        "sample3",
+                        "test3",
+                        "sample3.isoforms.results:md5,2f825c2b612114534df653ec4c172c18",
+                        "tsv",
+                        "TranscriptQuantifications",
+                        true,
+                        "MATE2_SENSE"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-05-02T16:57:55.746438"
     }
 }
