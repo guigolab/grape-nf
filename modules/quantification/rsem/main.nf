@@ -1,6 +1,6 @@
 params.rsemVersion = '1.2.21'
 params.container = "grapenf/quantification:rsem-${params.rsemVersion}"
-params.rsemSkipCi = false
+params.rsemCalcCI = false
 params.rsemPlotModel = false
 
 process index {
@@ -61,7 +61,7 @@ process quantify {
     viewTx = "TranscriptQuantifications"
     viewGn = "GeneQuantifications"
     def memory = (task.memory ?: 1.GB).toMega()
-    def sortMemFrac = params.rsemSkipCi ? 0.75 : 0.5
+    def sortMemFrac = params.rsemCalcCI ? 0.5 : 0.75
     def sortMemory = Math.max(1024, (memory * sortMemFrac) as long)
     def forwardProb = null
 
@@ -73,7 +73,7 @@ process quantify {
             forwardProb = '1'
             break
     }
-    
+
     def cmd = []
     cmd << "sambamba sort -t ${task.cpus} -m ${sortMemory}MB -N -M -l 0 -o - ${bam} \\"
     cmd << """\
@@ -90,7 +90,7 @@ process quantify {
         cmd << """\
                             --forward-prob ${forwardProb} \\"""
     }
-    if ( ! params.rsemSkipCi ) {
+    if ( params.rsemCalcCI ) {
         def ciMemory = Math.max(1024, (memory / 4) as long)
         cmd << """\
                             --calc-ci \\

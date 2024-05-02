@@ -61,7 +61,7 @@ def printUsage() {
 // Print pipeline log
 def printLog() {
     def paramNames = params.keySet()
-    
+
     def duplicatesMode = 'keep'
     if ( params.markDuplicates ) duplicatesMode = 'mark'
     if ( params.removeDuplicates ) duplicatesMode = 'remove'
@@ -115,7 +115,7 @@ def printLog() {
         log.info "-------------------------"
         log.info "Tool                            : ${params.quantificationTool}"
         if ( params.quantificationTool.toLowerCase() == 'rsem' ) {
-          log.info "Skip CI                         : ${'rsemSkipCi' in paramNames ? params.rsemSkipCi : false}"
+          log.info "Compute credibility intervals   : ${'rsemCalcCI' in paramNames ? params.rsemCalcCI : false}"
           log.info "Save RSEM model plot            : ${'rsemPlotModel' in paramNames ? params.rsemPlotModel : false}"
         }
         if ( 'quantificationMode' in paramNames ) {
