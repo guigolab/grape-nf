@@ -22,7 +22,7 @@ workflow merging {
       mergeGenome( genomeAlignments.merge )
 
       genomeAlignmentsOutput = mergeGenome.out.mix( genomeAlignments.single.transpose() )
-      
+
       if ( markDuplicates ) {
         markdup( genomeAlignmentsOutput )
         genomeAlignmentsOutput = markdup.out.dedupedAlignments
@@ -34,9 +34,13 @@ workflow merging {
           merge: it[2].size() > 1
           single: it[2].size() == 1
         }.set { transcriptomeAlignments }
-      
+
       sortTranscriptome( transcriptomeAlignments.merge.transpose() )
-      mergeTranscriptome( sortTranscriptome.out[0].groupTuple(by: [0, 3, 4, 5]) )
+      sortTranscriptome.out[0].groupTuple(by: [0, 3, 4, 5]).map { sample, ids, bams, type, view, pairedEnd ->
+        def sortedPaths = [ids, bams].transpose().sort { it[0] }.transpose()
+        [sample, sortedPaths[0], sortedPaths[1], type, view, pairedEnd ]
+      }.set { sortedTranscriptomeAlignments }
+      mergeTranscriptome( sortedTranscriptomeAlignments )
 
     emit:
       genomeAlignments = genomeAlignmentsOutput

@@ -1,0 +1,123 @@
+nextflow_workflow {
+
+    name "Test Workflow merging"
+    script "workflows/merging.nf"
+    workflow "merging"
+
+    tag "workflow"
+
+    test("Should merge genome BAM files using sambamba") {
+
+        when {
+            params {
+                maxMismatches = 4
+                maxMultimaps = 10
+                mergeBamTool = "sambamba"
+                markdupTool = "sambamba"
+            }
+            workflow {
+                """
+                input[0] = Channel.from([
+                    [ "sample2", "test2", file("${baseDir}/data/test2/sample2_m4_n10_toGenome_sorted.bam"), "bam", "GenomeAlignments", true],
+                    [ "sample2", "test3", file("${baseDir}/data/test3/sample2_m4_n10_toGenome_sorted.bam"), "bam", "GenomeAlignments", true]
+                ])
+                input[1] = Channel.empty()
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert snapshot(workflow.out).match()
+        }
+
+    }
+
+    test("Should merge genome BAM files using samtools") {
+
+        when {
+            params {
+                maxMismatches = 4
+                maxMultimaps = 10
+                mergeBamTool = "samtools"
+                markdupTool = "sambamba"
+            }
+            workflow {
+                """
+                input[0] = Channel.from([
+                    [ "sample2", "test2", file("${baseDir}/data/test2/sample2_m4_n10_toGenome_sorted.bam"), "bam", "GenomeAlignments", true],
+                    [ "sample2", "test3", file("${baseDir}/data/test3/sample2_m4_n10_toGenome_sorted.bam"), "bam", "GenomeAlignments", true]
+                ])
+                input[1] = Channel.empty()
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert snapshot(workflow.out).match()
+        }
+
+    }
+
+    test("Should merge all BAM files using samtools") {
+
+        when {
+            params {
+                maxMismatches = 4
+                maxMultimaps = 10
+                mergeBamTool = "samtools"
+                markdupTool = "sambamba"
+            }
+            workflow {
+                """
+                input[0] = Channel.from([
+                    [ "sample2", "test2", file("${baseDir}/data/test2/sample2_m4_n10_toGenome_sorted.bam"), "bam", "GenomeAlignments", true],
+                    [ "sample2", "test3", file("${baseDir}/data/test3/sample2_m4_n10_toGenome_sorted.bam"), "bam", "GenomeAlignments", true]
+                ])
+                input[1] = Channel.from([
+                    [ "sample2", "test2", file("${baseDir}/data/test2/sample2_m4_n10_toTranscriptome_sorted.bam"), "bam", "TranscriptomeAlignments", true],
+                    [ "sample2", "test3", file("${baseDir}/data/test3/sample2_m4_n10_toTranscriptome_sorted.bam"), "bam", "TranscriptomeAlignments", true]
+                ])
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert snapshot(workflow.out).match()
+        }
+
+    }
+
+    test("Should merge all BAM files using sambamba") {
+
+        when {
+            params {
+                maxMismatches = 4
+                maxMultimaps = 10
+                mergeBamTool = "sambamba"
+                markdupTool = "sambamba"
+            }
+            workflow {
+                """
+                input[0] = Channel.from([
+                    [ "sample2", "test2", file("${baseDir}/data/test2/sample2_m4_n10_toGenome_sorted.bam"), "bam", "GenomeAlignments", true],
+                    [ "sample2", "test3", file("${baseDir}/data/test3/sample2_m4_n10_toGenome_sorted.bam"), "bam", "GenomeAlignments", true]
+                ])
+                input[1] = Channel.from([
+                    [ "sample2", "test2", file("${baseDir}/data/test2/sample2_m4_n10_toTranscriptome_sorted.bam"), "bam", "TranscriptomeAlignments", true],
+                    [ "sample2", "test3", file("${baseDir}/data/test3/sample2_m4_n10_toTranscriptome_sorted.bam"), "bam", "TranscriptomeAlignments", true]
+                ])
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert snapshot(workflow.out).match()
+        }
+
+    }
+
+}

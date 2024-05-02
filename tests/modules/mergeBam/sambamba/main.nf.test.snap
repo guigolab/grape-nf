@@ -1,0 +1,23 @@
+{
+    "Should merge BAM files using sambamba": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample2",
+                        "test2:test3",
+                        "sample2_m4_n10_toGenome.bam:md5,724ebe0d965d40decaa80c6b09e47ba5",
+                        "bam",
+                        "GenomeAlignments",
+                        true
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-05-02T11:08:00.400122"
+    }
+}

@@ -1,0 +1,178 @@
+{
+    "Should merge genome BAM files using sambamba": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample2",
+                        "test2:test3",
+                        "sample2_m4_n10_toGenome.bam:md5,92d1c59a6e5b111f7a277135310415c2",
+                        "bam",
+                        "GenomeAlignments",
+                        true
+                    ]
+                ],
+                "1": [
+                    
+                ],
+                "genomeAlignments": [
+                    [
+                        "sample2",
+                        "test2:test3",
+                        "sample2_m4_n10_toGenome.bam:md5,92d1c59a6e5b111f7a277135310415c2",
+                        "bam",
+                        "GenomeAlignments",
+                        true
+                    ]
+                ],
+                "transcriptomeAlignments": [
+                    
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-05-02T15:07:56.427844"
+    },
+    "Should merge genome BAM files using samtools": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample2",
+                        "test2:test3",
+                        "sample2_m4_n10_toGenome.bam:md5,9c721443896d97df3f2151ce5397c512",
+                        "bam",
+                        "GenomeAlignments",
+                        true
+                    ]
+                ],
+                "1": [
+                    
+                ],
+                "genomeAlignments": [
+                    [
+                        "sample2",
+                        "test2:test3",
+                        "sample2_m4_n10_toGenome.bam:md5,9c721443896d97df3f2151ce5397c512",
+                        "bam",
+                        "GenomeAlignments",
+                        true
+                    ]
+                ],
+                "transcriptomeAlignments": [
+                    
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-05-02T15:08:05.780447"
+    },
+    "Should merge all BAM files using sambamba": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample2",
+                        "test2:test3",
+                        "sample2_m4_n10_toGenome.bam:md5,92d1c59a6e5b111f7a277135310415c2",
+                        "bam",
+                        "GenomeAlignments",
+                        true
+                    ]
+                ],
+                "1": [
+                    [
+                        "sample2",
+                        "test2:test3",
+                        "sample2_m4_n10_toTranscriptome.bam:md5,933baf1446265d924a5bc02a1f75158c",
+                        "bam",
+                        "TranscriptomeAlignments",
+                        true
+                    ]
+                ],
+                "genomeAlignments": [
+                    [
+                        "sample2",
+                        "test2:test3",
+                        "sample2_m4_n10_toGenome.bam:md5,92d1c59a6e5b111f7a277135310415c2",
+                        "bam",
+                        "GenomeAlignments",
+                        true
+                    ]
+                ],
+                "transcriptomeAlignments": [
+                    [
+                        "sample2",
+                        "test2:test3",
+                        "sample2_m4_n10_toTranscriptome.bam:md5,933baf1446265d924a5bc02a1f75158c",
+                        "bam",
+                        "TranscriptomeAlignments",
+                        true
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-05-02T15:08:27.346896"
+    },
+    "Should merge all BAM files using samtools": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample2",
+                        "test2:test3",
+                        "sample2_m4_n10_toGenome.bam:md5,9c721443896d97df3f2151ce5397c512",
+                        "bam",
+                        "GenomeAlignments",
+                        true
+                    ]
+                ],
+                "1": [
+                    [
+                        "sample2",
+                        "test2:test3",
+                        "sample2_m4_n10_toTranscriptome.bam:md5,2b2f97df2a0f72d280834ced7e046ed3",
+                        "bam",
+                        "TranscriptomeAlignments",
+                        true
+                    ]
+                ],
+                "genomeAlignments": [
+                    [
+                        "sample2",
+                        "test2:test3",
+                        "sample2_m4_n10_toGenome.bam:md5,9c721443896d97df3f2151ce5397c512",
+                        "bam",
+                        "GenomeAlignments",
+                        true
+                    ]
+                ],
+                "transcriptomeAlignments": [
+                    [
+                        "sample2",
+                        "test2:test3",
+                        "sample2_m4_n10_toTranscriptome.bam:md5,2b2f97df2a0f72d280834ced7e046ed3",
+                        "bam",
+                        "TranscriptomeAlignments",
+                        true
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-05-02T15:08:16.222547"
+    }
+}
