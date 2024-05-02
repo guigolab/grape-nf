@@ -1,5 +1,5 @@
 {
-    "Should index compressed references": {
+    "Should create index using STAR (compressed references)": {
         "content": [
             "Genome:md5,7ede3c93094305c2b5c18e2f52110194",
             "SA:md5,66c24435d4e28eeddb6a5014ac90c4ef",
@@ -23,7 +23,7 @@
         },
         "timestamp": "2024-04-17T17:20:31.357378"
     },
-    "Should index uncompressed references": {
+    "Should create index using STAR (uncompressed references)": {
         "content": [
             "Genome:md5,7ede3c93094305c2b5c18e2f52110194",
             "SA:md5,66c24435d4e28eeddb6a5014ac90c4ef",

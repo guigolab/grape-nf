@@ -1,5 +1,5 @@
 {
-    "Should align reads to the reference with uncompressed annotation": {
+    "Should align reads to the reference using STAR (uncompressed annotation)": {
         "content": [
             [
                 [
@@ -12,7 +12,7 @@
                 ]
             ],
             [
-                
+
             ],
             [
                 [
@@ -41,7 +41,7 @@
         },
         "timestamp": "2024-04-23T23:19:28.403716"
     },
-    "Should align reads to the reference with compressed annotation": {
+    "Should align reads to the reference using STAR (compressed annotation)": {
         "content": [
             [
                 [
@@ -54,7 +54,7 @@
                 ]
             ],
             [
-                
+
             ],
             [
                 [

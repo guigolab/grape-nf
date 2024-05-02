@@ -1,0 +1,65 @@
+nextflow_process {
+
+    name "Test Process index"
+    script "modules/mapping/gem/main.nf"
+    process "index"
+
+    tag "module"
+
+    test("Should create index using GEM (compressed references)") {
+
+        when {
+            process {
+                """
+                input[0] = file("${baseDir}/data/genome.fa.gz")
+                input[1] = file("${baseDir}/data/annotation.gtf.gz")
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            with(process.out) {
+                def genomeDir = get(0)[0]
+                assert path(genomeDir).list().size() == 7
+                assert snapshot(
+                    path("${genomeDir}/genome_index.gem"),
+                    path("${genomeDir}/transcript_index.junctions"),
+                    path("${genomeDir}/transcript_index.junctions.fa"),
+                    path("${genomeDir}/transcript_index.junctions.gem"),
+                    path("${genomeDir}/transcript_index.junctions.keys"),
+                ).match()
+            }
+        }
+
+    }
+
+    test("Should create index using GEM (uncompressed references)") {
+
+        when {
+            process {
+                """
+                input[0] = file("${baseDir}/data/genome.fa")
+                input[1] = file("${baseDir}/data/annotation.gtf")
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            with(process.out) {
+                def genomeDir = get(0)[0]
+                assert path(genomeDir).list().size() == 7
+                assert snapshot(
+                    path("${genomeDir}/genome_index.gem"),
+                    path("${genomeDir}/transcript_index.junctions"),
+                    path("${genomeDir}/transcript_index.junctions.fa"),
+                    path("${genomeDir}/transcript_index.junctions.gem"),
+                    path("${genomeDir}/transcript_index.junctions.keys"),
+                ).match()
+            }
+        }
+
+    }
+
+}

@@ -1,0 +1,140 @@
+{
+    "Should align reads to the reference using GEM (compressed annotation)": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample1",
+                        "test1",
+                        "sample1_m4_n10_toGenome.bam:md5,48faeddd5179ce7b5d629ad937851b45",
+                        "bam",
+                        "GenomeAlignments",
+                        true
+                    ]
+                ],
+                "1": [
+                    
+                ],
+                "2": [
+                    [
+                        "sample1",
+                        "test1",
+                        "sample1_m4_n10_toGenome.bam.bai:md5,f0b712d99d68ae3132bdb287ed5a5e5d",
+                        "bai",
+                        "GenomeAlignmentsIndex",
+                        true
+                    ]
+                ],
+                "3": [
+                    
+                ],
+                "4": [
+                    
+                ],
+                "genomeAlignments": [
+                    [
+                        "sample1",
+                        "test1",
+                        "sample1_m4_n10_toGenome.bam:md5,48faeddd5179ce7b5d629ad937851b45",
+                        "bam",
+                        "GenomeAlignments",
+                        true
+                    ]
+                ],
+                "genomeAlignmentsIndices": [
+                    [
+                        "sample1",
+                        "test1",
+                        "sample1_m4_n10_toGenome.bam.bai:md5,f0b712d99d68ae3132bdb287ed5a5e5d",
+                        "bai",
+                        "GenomeAlignmentsIndex",
+                        true
+                    ]
+                ],
+                "junctions": [
+                    
+                ],
+                "stats": [
+                    
+                ],
+                "transcriptomeAlignments": [
+                    
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.0"
+        },
+        "timestamp": "2024-05-02T08:54:34.740923082"
+    },
+    "Should align reads to the reference using GEM (uncompressed annotation)": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample1",
+                        "test1",
+                        "sample1_m4_n10_toGenome.bam:md5,48faeddd5179ce7b5d629ad937851b45",
+                        "bam",
+                        "GenomeAlignments",
+                        true
+                    ]
+                ],
+                "1": [
+                    
+                ],
+                "2": [
+                    [
+                        "sample1",
+                        "test1",
+                        "sample1_m4_n10_toGenome.bam.bai:md5,f0b712d99d68ae3132bdb287ed5a5e5d",
+                        "bai",
+                        "GenomeAlignmentsIndex",
+                        true
+                    ]
+                ],
+                "3": [
+                    
+                ],
+                "4": [
+                    
+                ],
+                "genomeAlignments": [
+                    [
+                        "sample1",
+                        "test1",
+                        "sample1_m4_n10_toGenome.bam:md5,48faeddd5179ce7b5d629ad937851b45",
+                        "bam",
+                        "GenomeAlignments",
+                        true
+                    ]
+                ],
+                "genomeAlignmentsIndices": [
+                    [
+                        "sample1",
+                        "test1",
+                        "sample1_m4_n10_toGenome.bam.bai:md5,f0b712d99d68ae3132bdb287ed5a5e5d",
+                        "bai",
+                        "GenomeAlignmentsIndex",
+                        true
+                    ]
+                ],
+                "junctions": [
+                    
+                ],
+                "stats": [
+                    
+                ],
+                "transcriptomeAlignments": [
+                    
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.0"
+        },
+        "timestamp": "2024-05-02T08:55:30.059497532"
+    }
+}

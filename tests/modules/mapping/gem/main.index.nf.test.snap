@@ -1,0 +1,30 @@
+{
+    "Should create index using GEM (compressed references)": {
+        "content": [
+            "genome_index.gem:md5,ebd155f05251ace3a35ce3edd8816211",
+            "transcript_index.junctions:md5,a0433e39f0c35e798609ff15332e12d4",
+            "transcript_index.junctions.fa:md5,be0a28c75266e6969c11e308341810ae",
+            "transcript_index.junctions.gem:md5,b53971e7b5358fd8cae8bb7f2a4a729d",
+            "transcript_index.junctions.keys:md5,34985e55c280acd027d2dd32906ad59c"
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.0"
+        },
+        "timestamp": "2024-05-02T09:01:47.328374722"
+    },
+    "Should create index using GEM (uncompressed references)": {
+        "content": [
+            "genome_index.gem:md5,ebd155f05251ace3a35ce3edd8816211",
+            "transcript_index.junctions:md5,a0433e39f0c35e798609ff15332e12d4",
+            "transcript_index.junctions.fa:md5,be0a28c75266e6969c11e308341810ae",
+            "transcript_index.junctions.gem:md5,b53971e7b5358fd8cae8bb7f2a4a729d",
+            "transcript_index.junctions.keys:md5,34985e55c280acd027d2dd32906ad59c"
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.0"
+        },
+        "timestamp": "2024-05-02T09:02:27.226869622"
+    }
+}

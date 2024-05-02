@@ -1,14 +1,14 @@
 nextflow_process {
 
     name "Test Process map"
-    script "modules/mapping/star/main.nf"
+    script "modules/mapping/gem/main.nf"
     process "map"
 
     tag "module"
 
     setup {
         run("index") {
-            script "modules/mapping/star/main.nf"
+            script "modules/mapping/gem/main.nf"
             process {
                 """
                 input[0] = file("${baseDir}/data/genome.fa")
@@ -18,22 +18,22 @@ nextflow_process {
         }
     }
 
-    test("Should align reads to the reference using STAR (compressed annotation)") {
+    test("Should align reads to the reference using GEM (compressed annotation)") {
 
         when {
             params {
-                sjOverHang = 100
-                quantificationTool = "RSEM"
                 maxMismatches = 4
                 maxMultimaps = 10
             }
             process {
                 """
+                def fastqs = file("${baseDir}/data/test1_*.fastq.gz")
+                def qScore = fastq(fastqs[0]).qualityScore()
                 input[0] = file("${baseDir}/data/annotation.gtf.gz")
                 input[1] = index.out
                 input[2] = Channel.from(
                     [
-                        [ "sample1", "test1", file("${baseDir}/data/test1_*.fastq.gz"), "fastq", ["fqRd1", "fqRd2"], '']
+                        [ "sample1", "test1", fastqs, "fastq", ["fqRd1", "fqRd2"], qScore]
                     ]
                 )
                 """
@@ -42,32 +42,27 @@ nextflow_process {
 
         then {
             assert process.success
-            assert snapshot(
-                process.out.genomeAlignments,
-                process.out.genomeAlignmentsIndices,
-                process.out.transcriptomeAlignments,
-                process.out.junctions
-            ).match()
+            assert snapshot(process.out).match()
         }
 
     }
 
-    test("Should align reads to the reference using STAR (uncompressed annotation)") {
+    test("Should align reads to the reference using GEM (uncompressed annotation)") {
 
         when {
             params {
-                sjOverHang = 100
-                quantificationTool = "RSEM"
                 maxMismatches = 4
                 maxMultimaps = 10
             }
             process {
                 """
+                def fastqs = file("${baseDir}/data/test1_*.fastq.gz")
+                def qScore = fastq(fastqs[0]).qualityScore()
                 input[0] = file("${baseDir}/data/annotation.gtf")
                 input[1] = index.out
                 input[2] = Channel.from(
                     [
-                        [ "sample1", "test1", file("${baseDir}/data/test1_*.fastq.gz"), "fastq", ["fqRd1", "fqRd2"], '']
+                        [ "sample1", "test1", fastqs, "fastq", ["fqRd1", "fqRd2"], qScore]
                     ]
                 )
                 """
@@ -76,12 +71,7 @@ nextflow_process {
 
         then {
             assert process.success
-            assert snapshot(
-                process.out.genomeAlignments,
-                process.out.genomeAlignmentsIndices,
-                process.out.transcriptomeAlignments,
-                process.out.junctions
-            ).match()
+            assert snapshot(process.out).match()
         }
 
     }

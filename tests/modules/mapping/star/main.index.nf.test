@@ -6,7 +6,7 @@ nextflow_process {
 
     tag "module"
 
-    test("Should index compressed references") {
+    test("Should create index using STAR (compressed references)") {
 
         when {
             params {
@@ -47,7 +47,7 @@ nextflow_process {
 
     }
 
-    test("Should index uncompressed references") {
+    test("Should create index using STAR (uncompressed references)") {
 
         when {
             params {
