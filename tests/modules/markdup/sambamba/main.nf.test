@@ -4,13 +4,11 @@ nextflow_process {
     script "modules/markdup/sambamba/main.nf"
     process "markdup"
 
+    tag "module"
+
     test("Should mark duplicates using sambamba") {
 
         when {
-            params {
-                // define parameters here. Example:
-                // outdir = "tests/results"
-            }
             process {
                 """
                 input[0] = Channel.from([
