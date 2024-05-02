@@ -1,4 +1,4 @@
-params.samtoolsVersion = '1.3.1--h0cf4675_11'
+params.samtoolsVersion = '1.19.2--h50ea8bc_1'
 params.container = "quay.io/biocontainers/samtools:${params.samtoolsVersion}"
 
 process mergeBam {
@@ -17,14 +17,8 @@ process mergeBam {
     prefix = "${sample}_m${params.maxMismatches}_n${params.maxMultimaps}_to${view.replace('Alignments','')}"
 
     """
-    (
-        samtools view -H *.bam | grep -v "@RG";
-        for f in *.bam; do 
-            samtools view -H \$f | grep "@RG";
-        done
-    ) > header.txt && \\
     samtools merge -@ ${task.cpus} \\
-                -h header.txt \\
+                -p \\
                 ${prefix}.bam \\
                 *.bam && \\
     samtools index ${prefix}.bam
