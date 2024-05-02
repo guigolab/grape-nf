@@ -35,7 +35,11 @@ nextflow_process {
             with(process.out) {
                 def signalDir = get(0)[0][2]
                 def meta = get(0)[0] - signalDir
-                def signalFiles = path(signalDir).list().findAll({ "${it.fileName}" != "Log.out" })
+                def signalFiles = path(signalDir)
+                                    .list()
+                                    .findAll({
+                                        "${it.fileName}" != "Log.out"
+                                    })
                 assert signalFiles.size() == 4
                 assert snapshot(
                     meta,
