@@ -1,0 +1,47 @@
+nextflow_process {
+
+    name "Test Process validate"
+    script "modules/quantification/rsem/main.nf"
+    process "validateBam"
+
+    tag "module"
+
+    test("Should validate BAM file for RSEM") {
+
+        when {
+            process {
+                """
+                input[0] = Channel.from([
+                    [ "sample3", "test3", file("${baseDir}/data/sample3_m4_n10_toTranscriptome.bam"), "bam", "TranscriptomeAlignments", true, "MATE2_SENSE" ]
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+
+    }
+
+    test("Should not validate BAM file for RSEM") {
+
+        when {
+            process {
+                """
+                input[0] = Channel.from([
+                    [ "sample3", "test3", file("${baseDir}/data/sample3_m4_n10_toGenome.bam"), "bam", "GenomeAlignments", true, "MATE2_SENSE" ]
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+
+    }
+
+}

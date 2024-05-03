@@ -1,0 +1,36 @@
+{
+    "Should not validate BAM file for RSEM": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample3",
+                        ".\nSkipped region is detected (cigar N) for read HWI-ST985:81:C0C5PACXX:8:1104:20582:12084!\nTo use RSEM, please align your reads to a set of transcript sequences instead of a genome.\nThe input file is not valid!\n"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-05-03T12:30:00.196523"
+    },
+    "Should validate BAM file for RSEM": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample3",
+                        ".\nThe input file is valid!\n"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-05-03T12:29:51.499688"
+    }
+}

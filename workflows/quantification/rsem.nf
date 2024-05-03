@@ -1,4 +1,4 @@
-include { index;  quantify } from "../../modules/quantification/rsem"
+include { index;  validateBam; calculateExpression } from "../../modules/quantification/rsem"
 
 def doQuantify = ( 'quantification' in params.stepList )
 
@@ -11,9 +11,15 @@ workflow quantification {
   main:
     if ( doQuantify ) {
         quantificationIndex = index( genome, annotation )
-        quantify( quantificationIndex, transcriptomeAlignments )
+        validateBam ( transcriptomeAlignments )
+        calculateExpression(
+            quantificationIndex,
+            transcriptomeAlignments.join(validateBam.out).map {
+                it[0..-2] + [ it[-1].contains("not valid") ]
+            }
+        )
     }
   emit:
-    genes = ( doQuantify ) ? quantify.out.genes : Channel.empty()
-    isoforms = ( doQuantify ) ?  quantify.out.isoforms : Channel.empty()
+    genes = ( doQuantify ) ? calculateExpression.out.genes : Channel.empty()
+    isoforms = ( doQuantify ) ?  calculateExpression.out.isoforms : Channel.empty()
 }

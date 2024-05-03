@@ -1,5 +1,5 @@
-params.rsemVersion = '1.2.21'
-params.container = "grapenf/quantification:rsem-${params.rsemVersion}"
+params.rsemVersion = '1.3.3--pl5321h0033a41_7'
+params.container = "quay.io/biocontainers/rsem:${params.rsemVersion}"
 params.rsemCalcCI = false
 params.rsemPlotModel = false
 
@@ -42,14 +42,29 @@ process index {
     cmd.join('\n')
 }
 
-process quantify {
+process validateBam {
+    tag "${sample}"
+    container params.container
+
+    input:
+    tuple val(sample), val(id),  path(bam), val(type), val(view), val(pairedEnd), val(readStrand)
+
+    output:
+    tuple val(sample), stdout
+
+    """
+    rsem-sam-validator ${bam}
+    """
+}
+
+process calculateExpression {
 
     tag "${sample}"
     container params.container
 
     input:
     path(quantRef)
-    tuple val(sample), val(id),  path(bam), val(type), val(view), val(pairedEnd), val(readStrand)
+    tuple val(sample), val(id),  path(bam), val(type), val(view), val(pairedEnd), val(readStrand), val(convertBam)
 
     output:
     tuple val(sample), val(id), path("*isoforms*"), val(type), val(viewTx), val(pairedEnd), val(readStrand), emit: isoforms
@@ -57,12 +72,11 @@ process quantify {
 
     script:
     prefix = "${sample}"
+    rsemPrefix = bam.simpleName
     type = 'tsv'
     viewTx = "TranscriptQuantifications"
     viewGn = "GeneQuantifications"
     def memory = (task.memory ?: 1.GB).toMega()
-    def sortMemFrac = params.rsemCalcCI ? 0.5 : 0.75
-    def sortMemory = Math.max(1024, (memory * sortMemFrac) as long)
     def forwardProb = null
 
     switch (readStrand) {
@@ -75,9 +89,19 @@ process quantify {
     }
 
     def cmd = []
-    cmd << "sambamba sort -t ${task.cpus} -m ${sortMemory}MB -N -M -l 0 -o - ${bam} \\"
+    if ( convertBam ) {
+        rsemPrefix = "${rsemPrefix}.rsem"
+        def convertMemory = Math.max(1024, ( memory / task.cpus / 2 ) as long)
+        cmd << """\
+            mkfifo ${rsemPrefix}.bam
+            convert-sam-for-rsem -p ${task.cpus} \\
+                                 --memory-per-thread ${convertMemory}M \\
+                                 ${bam} \\
+                                 ${rsemPrefix} &
+        """.stripIndent()
+    }
     cmd << """\
-        | rsem-calculate-expression -p ${task.cpus} \\
+        rsem-calculate-expression -p ${task.cpus} \\
                                     --bam \\
                                     --seed 12345 \\
                                     --estimate-rspd  \\
@@ -97,7 +121,7 @@ process quantify {
                             --ci-memory ${ciMemory} \\"""
     }
     cmd << """\
-                            - \\
+                            ${rsemPrefix}.bam \\
                             ${quantRef}/RSEMref \\
                             ${prefix}"""
     if ( params.rsemPlotModel ) {
