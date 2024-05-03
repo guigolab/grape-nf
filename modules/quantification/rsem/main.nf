@@ -91,11 +91,14 @@ process calculateExpression {
     def cmd = []
     if ( convertBam ) {
         rsemPrefix = "${rsemPrefix}.rsem"
-        def convertMemory = Math.max(1024, ( memory / task.cpus / 2 ) as long)
+        def convertOpts = ""
+        if ( params.rsemVersion.startsWith("1.3") ) {
+            def convertMemory = Math.max(1024, ( memory / task.cpus / 2 ) as long)
+            convertOpts = "-p ${task.cpus} --memory-per-thread ${convertMemory}M"
+        }
         cmd << """\
             mkfifo ${rsemPrefix}.bam
-            convert-sam-for-rsem -p ${task.cpus} \\
-                                 --memory-per-thread ${convertMemory}M \\
+            convert-sam-for-rsem ${convertOpts} \\
                                  ${bam} \\
                                  ${rsemPrefix} &
         """.stripIndent()
