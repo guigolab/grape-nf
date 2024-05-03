@@ -18,12 +18,12 @@ nextflow_pipeline {
         then {
             def profile = parent.profiles.last().minus('+')
             def expected = [
-                "starrsem": [ traceSize: 33, dbSize: 30 ],
+                "starrsem": [ traceSize: 36, dbSize: 30 ],
                 "starflux": [ traceSize: 29, dbSize: 28 ],
-                 "markdup": [ traceSize: 36, dbSize: 30 ],
+                 "markdup": [ traceSize: 39, dbSize: 30 ],
                  "gemflux": [ traceSize: 26, dbSize: 22 ],
-                   "rmdup": [ traceSize: 36, dbSize: 30 ],
-                    "ihec": [ traceSize: 36, dbSize: 30 ],
+                   "rmdup": [ traceSize: 39, dbSize: 30 ],
+                    "ihec": [ traceSize: 39, dbSize: 30 ],
             ][profile]
             assert workflow.success
             assert workflow.trace.failed().size() == 0
