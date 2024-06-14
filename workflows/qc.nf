@@ -7,8 +7,11 @@ workflow QC {
     genomeAlignments
     transcriptomeAlignments
   main:
-    inferExp(params.annotation, genomeAlignments)
-    bamStats(params.annotation, genomeAlignments)
+
+    def annotation = file(params.annotation)
+    
+    inferExp(annotation, genomeAlignments)
+    bamStats(annotation, genomeAlignments)
 
     inferExp.out.map {
       d = parseJSON(it[-1])
