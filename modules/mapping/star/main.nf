@@ -1,6 +1,6 @@
 params.starVersion = "2.4.0j--h9ee0642_2"
 // params.starVersion = "2.7.10a--h9ee0642_0"
-params.container = "quay.io/biocontainers/star:${params.starVersion}"
+params.container = "${params.containerRepo}/star:${params.starVersion}"
 
 def getIndexBases(genome) {
     int size = genome.size()

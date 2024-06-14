@@ -1,5 +1,5 @@
 params.samtoolsVersion = '1.19.2--h50ea8bc_1'
-params.container = "quay.io/biocontainers/samtools:${params.samtoolsVersion}"
+params.container = "${params.containerRepo}/samtools:${params.samtoolsVersion}"
 
 process fastaIndex {
 

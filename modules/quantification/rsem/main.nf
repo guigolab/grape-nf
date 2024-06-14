@@ -1,5 +1,5 @@
 params.rsemVersion = '1.3.3--pl5321h0033a41_7'
-params.container = "quay.io/biocontainers/rsem:${params.rsemVersion}"
+params.container = "${params.containerRepo}/rsem:${params.rsemVersion}"
 params.rsemCalcCI = false
 params.rsemPlotModel = false
 

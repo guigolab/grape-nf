@@ -1,5 +1,5 @@
 params.sambambaVersion = '0.7.1--h984e79f_3'
-params.container = "quay.io/biocontainers/sambamba:${params.sambambaVersion}"
+params.container = "${params.containerRepo}/sambamba:${params.sambambaVersion}"
 
 process sortBam {
     tag "${sample}"

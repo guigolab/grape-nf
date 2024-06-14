@@ -1,5 +1,5 @@
 params.bamstatsVersion = '0.3.5--he881be0_0'
-params.container = "quay.io/biocontainers/bamstats:${params.bamstatsVersion}"
+params.container = "${params.containerRepo}/bamstats:${params.bamstatsVersion}"
 params.bamStatsMaxBuf = '1000000'
 params.bamStatsLogLevel = 'info'
 

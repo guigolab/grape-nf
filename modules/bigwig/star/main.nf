@@ -1,8 +1,8 @@
 params.starVersion = "2.4.0j--h9ee0642_2"
 // params.starVersion = "2.7.10a--h9ee0642_0"
 params.ucscVersion = '455--h2a80c09_1'
-params.starContainer = "quay.io/biocontainers/star:${params.starVersion}"
-params.bgtobwContainer = "quay.io/biocontainers/ucsc-bedgraphtobigwig:${params.ucscVersion}"
+params.starContainer = "${params.containerRepo}/star:${params.starVersion}"
+params.bgtobwContainer = "${params.containerRepo}/ucsc-bedgraphtobigwig:${params.ucscVersion}"
 params.wigRefPrefix = '-'
 
 process signal {
