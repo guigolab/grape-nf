@@ -1,5 +1,9 @@
 # GRAPE-nf Changelog
 
+## Version 1.3.1
+
+* Use annotation file object as input for tasks in QC workflow - fix #84 [5ce9bde]
+
 ## Version 1.3.0
 
 * Reduce memory usage in RSEM quantification process [78fd890]
