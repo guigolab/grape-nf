@@ -27,7 +27,7 @@ nextflow_process {
             }
             process {
                 """
-                def fastqs = file("${baseDir}/data/test1_*.fastq.gz")
+                def fastqs = file("${baseDir}/data/test1_*.fastq.gz").sort()
                 def qScore = fastq(fastqs[0]).qualityScore()
                 input[0] = file("${baseDir}/data/annotation.gtf.gz")
                 input[1] = index.out
@@ -56,7 +56,7 @@ nextflow_process {
             }
             process {
                 """
-                def fastqs = file("${baseDir}/data/test1_*.fastq.gz")
+                def fastqs = file("${baseDir}/data/test1_*.fastq.gz").sort()
                 def qScore = fastq(fastqs[0]).qualityScore()
                 input[0] = file("${baseDir}/data/annotation.gtf")
                 input[1] = index.out

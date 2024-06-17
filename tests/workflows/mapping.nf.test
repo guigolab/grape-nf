@@ -23,7 +23,7 @@ nextflow_workflow {
                 input[1] = file("${baseDir}/data/annotation.gtf.gz")
                 input[2] = Channel.from(
                     [
-                        [ "sample1", "test1", file("${baseDir}/data/test1_*.fastq.gz"), "fastq", ["fqRd1", "fqRd2"], '']
+                        [ "sample1", "test1", file("${baseDir}/data/test1_*.fastq.gz").sort(), "fastq", ["fqRd1", "fqRd2"], '']
                     ]
                 )
                 """
@@ -59,7 +59,7 @@ nextflow_workflow {
                 input[1] = file("${baseDir}/data/annotation.gtf")
                 input[2] = Channel.from(
                     [
-                        [ "sample1", "test1", file("${baseDir}/data/test1_*.fastq.gz"), "fastq", ["fqRd1", "fqRd2"], '']
+                        [ "sample1", "test1", file("${baseDir}/data/test1_*.fastq.gz").sort(), "fastq", ["fqRd1", "fqRd2"], '']
                     ]
                 )
                 """

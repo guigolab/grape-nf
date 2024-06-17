@@ -16,7 +16,7 @@ nextflow_process {
             process {
                 """
                 input[0] = Channel.from([
-                    [ "sample2", [ "test2", "test3" ], file("${baseDir}/data/test*/*toGenome_sorted.bam"), "bam", "GenomeAlignments", true]
+                    [ "sample2", [ "test2", "test3" ], file("${baseDir}/data/test*/*toGenome_sorted.bam").sort() , "bam", "GenomeAlignments", true]
                 ])
                 """
             }

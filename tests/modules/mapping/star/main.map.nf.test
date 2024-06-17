@@ -33,7 +33,7 @@ nextflow_process {
                 input[1] = index.out
                 input[2] = Channel.from(
                     [
-                        [ "sample1", "test1", file("${baseDir}/data/test1_*.fastq.gz"), "fastq", ["fqRd1", "fqRd2"], '']
+                        [ "sample1", "test1", file("${baseDir}/data/test1_*.fastq.gz").sort(), "fastq", ["fqRd1", "fqRd2"], '']
                     ]
                 )
                 """
@@ -67,7 +67,7 @@ nextflow_process {
                 input[1] = index.out
                 input[2] = Channel.from(
                     [
-                        [ "sample1", "test1", file("${baseDir}/data/test1_*.fastq.gz"), "fastq", ["fqRd1", "fqRd2"], '']
+                        [ "sample1", "test1", file("${baseDir}/data/test1_*.fastq.gz").sort(), "fastq", ["fqRd1", "fqRd2"], '']
                     ]
                 )
                 """

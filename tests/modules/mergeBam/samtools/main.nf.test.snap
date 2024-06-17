@@ -6,7 +6,7 @@
                     [
                         "sample2",
                         "test2:test3",
-                        "sample2_m4_n10_toGenome.bam:md5,1aafe9aacc6e403ed8a5466a30549c85",
+                        "sample2_m4_n10_toGenome.bam:md5,9c721443896d97df3f2151ce5397c512",
                         "bam",
                         "GenomeAlignments",
                         true
@@ -16,8 +16,8 @@
         ],
         "meta": {
             "nf-test": "0.8.4",
-            "nextflow": "23.10.1"
+            "nextflow": "24.04.2"
         },
-        "timestamp": "2024-05-02T11:27:59.686395"
+        "timestamp": "2024-06-17T16:44:46.900499"
     }
 }

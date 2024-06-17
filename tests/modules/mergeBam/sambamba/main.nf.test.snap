@@ -6,7 +6,7 @@
                     [
                         "sample2",
                         "test2:test3",
-                        "sample2_m4_n10_toGenome.bam:md5,724ebe0d965d40decaa80c6b09e47ba5",
+                        "sample2_m4_n10_toGenome.bam:md5,92d1c59a6e5b111f7a277135310415c2",
                         "bam",
                         "GenomeAlignments",
                         true
@@ -18,6 +18,6 @@
             "nf-test": "0.8.4",
             "nextflow": "23.10.1"
         },
-        "timestamp": "2024-05-02T11:08:00.400122"
+        "timestamp": "2024-06-17T17:22:45.897345592"
     }
 }
