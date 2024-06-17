@@ -1,4 +1,4 @@
-params.rsemVersion = '1.3.3--pl5321h0033a41_7'
+params.rsemVersion = '1.3.3--pl5321h6b7c446_6'
 params.container = "${params.containerRepo}/rsem:${params.rsemVersion}"
 params.rsemCalcCI = false
 params.rsemPlotModel = false
