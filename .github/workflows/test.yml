@@ -17,6 +17,7 @@ jobs:
   pipeline-test:
     name: Pipeline tests
     runs-on: ubuntu-latest
+    needs: workflow-test
 
     strategy:
       fail-fast: false
@@ -49,6 +50,7 @@ jobs:
   workflow-test:
     name: Workflow tests
     runs-on: ubuntu-latest
+    needs: module-test
 
     steps:
       - uses: actions/checkout@v4
