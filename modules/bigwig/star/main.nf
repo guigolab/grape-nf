@@ -1,6 +1,6 @@
 params.starVersion = "2.4.0j--h9ee0642_2"
 // params.starVersion = "2.7.10a--h9ee0642_0"
-params.ucscVersion = '455--h2a80c09_1'
+params.ucscVersion = '445--h954228d_0'
 params.starContainer = "${params.containerRepo}/star:${params.starVersion}"
 params.bgtobwContainer = "${params.containerRepo}/ucsc-bedgraphtobigwig:${params.ucscVersion}"
 params.wigRefPrefix = '-'
