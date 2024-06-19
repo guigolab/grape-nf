@@ -2,7 +2,7 @@ params.rseqcVersion = '2.6.4--py27hf8a1672_2'
 params.ucscVersion = '447--h2a80c09_1'
 params.gtfToGenePredContainer = "${params.containerRepo}/ucsc-gtftogenepred:${params.ucscVersion}"
 params.genePredContainer = "${params.containerRepo}/ucsc-genepredtobed:${params.ucscVersion}"
-params.rseqcContainer = "${params.containerRepo}/rseqc:${params.rseqcVersion}"
+params.rseqcContainer = "public.ecr.aws/biocontainers/rseqc:${params.rseqcVersion}"
 params.inferExpThreshold = '0.8'
 
 process gtfToGenePred {
