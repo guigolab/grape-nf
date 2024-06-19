@@ -12,7 +12,12 @@ on:
 env:
   JAVA_VERSION: 17
   JAVA_DISTRO: zulu
-
+  AWS_REGION: us-east-1
+  
+permissions:
+  id-token: write
+  contents: read 
+      
 jobs:
   pipeline-test:
     name: Pipeline tests
@@ -32,6 +37,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::566365074765:role/github-actions-role
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Login to Amazon ECR Public
+        id: login-ecr-public
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -53,6 +68,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::566365074765:role/github-actions-role
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Login to Amazon ECR Public
+        id: login-ecr-public
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -72,6 +97,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::566365074765:role/github-actions-role
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Login to Amazon ECR Public
+        id: login-ecr-public
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
