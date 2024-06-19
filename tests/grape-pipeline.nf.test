@@ -24,6 +24,7 @@ nextflow_pipeline {
                  "gemflux": [ traceSize: 26, dbSize: 22 ],
                    "rmdup": [ traceSize: 39, dbSize: 30 ],
                     "ihec": [ traceSize: 39, dbSize: 30 ],
+                    "gtex": [ traceSize: 36, dbSize: 30 ],
             ][profile]
             assert workflow.success
             assert workflow.trace.failed().size() == 0
