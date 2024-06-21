@@ -1,0 +1,28 @@
+{
+    "Should convert BAM to FastQ": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "sample3",
+                        "test3",
+                        [
+                            "test3_1.fastq.gz:md5,acac9b626a3bba40b309c4fb880360f7",
+                            "test3_2.fastq.gz:md5,877a915ea5eb84a315f41a1fa54bf5f1"
+                        ],
+                        "fastq",
+                        [
+                            "FqRd1",
+                            "FqRd2"
+                        ]
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "24.04.2"
+        },
+        "timestamp": "2024-06-21T16:29:17.900642"
+    }
+}

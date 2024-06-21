@@ -1,0 +1,26 @@
+nextflow_process {
+
+    name "Test Process getProtocol"
+    script "modules/bamToFastq/samtools/main.nf"
+    process "getProtocol"
+
+    test("Should get sequencing protocol from BAM file") {
+
+        when {
+            process {
+                """
+                input[0] = Channel.from([
+                    [ "sample3", "test3", file("${baseDir}/data/sample3_m4_n10_toGenome.bam"), "bam", "GenomeAlignments" ]
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+
+    }
+
+}
