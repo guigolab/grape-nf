@@ -56,35 +56,47 @@ checkParams(params)
 // Print pipeline log
 printLog()
 
-// Init I/O files
-def index = params.index ? file(params.index) : System.in
-def (merge, indexLines) = readTsv(index)
-params.merge = merge
-
 include { mapping } from './workflows/mapping'
 include { merging } from './workflows/merging'
 include { quantification } from "./workflows/quantification/${params.quantificationTool.toLowerCase()}"
 include { QC } from './workflows/qc'
 include { signal } from './workflows/signal'
+include { bamToFastq } from "./modules/bamToFastq/samtools"
 
 workflow {
   def genome = file(params.genome)
   def annotation = file(params.annotation)
 
+  // Read input
+  def index = params.index ? file(params.index) : System.in
+  def (merge, indexLines) = readTsv(index)
+  params.merge = merge
+  inputFastqs = Channel.empty()
   Channel.from(indexLines)
     .filter { it }  // get only non-empty lines
     .map { line ->
         def (sampleId, runId, fileName, format, readId) = line.split()
         fileName = resolveFile(fileName, index)
         [sampleId, runId, fileName, format, readId]
-    }.tap {
-        inputFiles
-    }
+    }.set { inputFiles }
 
-  inputFiles
-    .filter {
-      it[3] == 'fastq'
-    }
+  inputFiles.branch {
+	fastqs: it[3] == 'fastq'
+	bams: it[3] == 'bam'
+    }.set{ input }
+    
+  if ( 'mapping' in params.stepList ) {
+    bamToFastq(
+      input.bams.filter {
+          it[4] == 'GenomeAlignments'
+      }
+    )
+    bamToFastq.out
+      .transpose()
+      .mix( input.fastqs )
+      .set { inputFastqs }
+  }
+  inputFastqs
     .groupTuple(by: [0,1,3], sort: true)
     .map {
       it << fastq(it[2][0]).qualityScore()
@@ -92,23 +104,7 @@ workflow {
 
   mapping( genome, annotation, mappingInput )
 
-  inputFiles
-    .filter {
-      it[3] == 'bam'
-    }
-    .map { 
-        it << params.pairedEnd
-        it.flatten()
-    }
-    .mix(mapping.out.genomeAlignments)
-    .mix(mapping.out.transcriptomeAlignments)
-    .branch {
-        genome: it[4] == 'GenomeAlignments'
-        transcriptome: it[4] == 'TranscriptomeAlignments'
-    }
-    .set { mappings }
-
-  merging(mappings.genome, mappings.transcriptome)
+  merging(mapping.out.genomeAlignments, mapping.out.transcriptomeAlignments)
 
   QC(merging.out)
 
