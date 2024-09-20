@@ -139,9 +139,15 @@ def printLog() {
  * - printLog: a boolean to specify whether to print a summary of the TSV file (default: true)
  */
 def readTsv(tsvFile, boolean printLog = true) {
-    def (samples, ids, lines) = [[], [], []]
+    def (samples, ids, lines, skipped) = [[], [], [], []]
     tsvFile.eachLine { line ->
-        def (sampleId, runId, fileName, format, readId) = line.split()
+	if (line.startsWith("#")) 
+	    return
+        def (sampleId, runId, fileName, format, view) = line.split()
+	if ( view == "TranscriptomeAlignments" ) {
+	    skipped << [view, sampleId]
+	    return
+	}
         samples << sampleId
         ids << "${sampleId}${runId}"
         lines << line
@@ -156,6 +162,14 @@ def readTsv(tsvFile, boolean printLog = true) {
         log.info "Number of sequencing runs       : ${nIds}"
         log.info "Merging                         : ${ doMerge ? 'by sample' : 'none' }"
         log.info ""
+
+	skipped.each {
+	    def (view, sampleId) = it
+	    log.warn "Skipping input ${view} for '${sampleId}'"
+	    if(it == skipped.last()) {
+   		log.info ""
+	    }
+	}
     }
     [ doMerge, lines ]
 }
