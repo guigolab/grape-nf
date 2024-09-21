@@ -3,7 +3,7 @@ params.starVersion = "2.4.0j--h9ee0642_2"
 params.container = "${params.containerRepo}/star:${params.starVersion}"
 
 def getIndexBases(genome) {
-    int size = genome.size()
+    long size = genome.size()
     if ( genome.extension == "gz" ) {
         RandomAccessFile raf = new RandomAccessFile(genome.toString(), "r");
         raf.seek(raf.length() - 4);
