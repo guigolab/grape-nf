@@ -1,5 +1,9 @@
 # GRAPE-nf Changelog
 
+## Version 1.3.2
+
+* Assign memory fraction to samtools sort - fix #87 [0c09f33]
+
 ## Version 1.3.1
 
 * Use annotation file object as input for tasks in QC workflow - fix #84 [5ce9bde]
