@@ -12,14 +12,13 @@ process sortBam {
     tuple val(sample), val(id), path("${prefix}.bam"), val(type), val(view), val(pairedEnd)
 
     script:
-    memory = (task.memory ?: 1.GB).toBytes() / task.cpus
+    memory = ((task.memory ?: 1.GB) / task.cpus) * 0.8
     prefix = "${bam.baseName}_sorted"
 
     """
     samtools sort -@ ${task.cpus} \
-              -m ${memory} \
+              -m ${memory.toMega()}M \
               -o ${prefix}.bam \
               ${bam}
     """
 }
-
