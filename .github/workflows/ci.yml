@@ -3,38 +3,38 @@ name: Pipeline CI
 on:
   push:
     branches:
-    - master
-    - dev
+      - master
+      - dev
   pull_request:
     branches:
-    - master
+      - master
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
         profile:
-            - gemflux
-            - starrsem
-            - starflux
-            - markdup
-            - rmdup
-            - ihec
+          - gemflux
+          - starrsem
+          - starflux
+          - markdup
+          - rmdup
+          - ihec
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Java
-      uses: actions/setup-java@v3
-      with:
-        distribution: zulu
-        java-version: 16
-        java-package: jre
+      - uses: actions/checkout@v3
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: zulu
+          java-version: 17
+          java-package: jre
 
-    - name: Run pipeline
-      run: . .circ && ci test
-      env:
-        CI_PROFILE: ${{ matrix.profile }}
+      - name: Run pipeline
+        run: . .circ && ci test
+        env:
+          NXF_VER: 25.04.8
+          CI_PROFILE: ${{ matrix.profile }}
